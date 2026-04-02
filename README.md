@@ -312,7 +312,7 @@ These are checked against your declared ceilings. Breaches emit `[high]` warning
 
 ### What changes at each stage
 
-This table follows the same progression as the demo video [[Architecture Compiler](https://youtu.be/1uh2pSOO1WA)]:
+This table follows the same progression as the demo video [[Architecture Compiler](https://www.youtube.com/watch?v=QPqNyozTArY)]:
 
 | Step | You add | What the compiler does |
 |------|---------|----------------------|
