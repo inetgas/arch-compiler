@@ -513,14 +513,14 @@ When a user asks you to create a new pattern:
 
 1. **Read `schemas/pattern-schema.yaml`** — every field, type, and required property
 2. **Read 2–3 similar existing patterns** in `patterns/` as structural reference
-3. **Write the new pattern file to a staging location** — e.g. `patterns-staging/<id>.json` — **never directly into `patterns/`**
+3. **Write the new pattern file to a human-designated staging location outside `patterns/`** — e.g. `staging/patterns/<id>.json` — **never directly into `patterns/`**
 
    **Verify before continuing:**
    ```bash
-   ls patterns-staging/<id>.json   # must exist
+   ls staging/patterns/<id>.json   # must exist
    ls patterns/<id>.json           # must NOT exist
    ```
-   If the file is in `patterns/`, move it to `patterns-staging/` before proceeding — an unapproved pattern in `patterns/` is immediately live.
+   If the file is in `patterns/`, move it back to the staging location before proceeding — an unapproved pattern in `patterns/` is immediately live.
 
 4. **Self-review against the schema** — `audit_patterns.py` only scans `patterns/` and will not validate staged files. Instead, manually verify the staged file against `schemas/pattern-schema.yaml`: check all required fields are present, ID matches filename, rules use valid JSON pointer paths, and conflict declarations are bidirectional.
 

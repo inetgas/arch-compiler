@@ -330,13 +330,17 @@ This table follows the same progression as the demo video [[Architecture Compile
 ```
 .
 ├── README.md                   This file
+├── AGENTS.md                   Canonical root guidance for agent workflows
 ├── README-AGENTS.md            Repo guide for AI agents
+├── CLAUDE.md                   Claude-specific pointer to AGENTS.md and the skills
 ├── LICENSE                     MIT License
 ├── CHANGELOG.md                Repo change log
 ├── CODE_OF_CONDUCT.md          Repo code of conduct
 ├── CONTRIBUTING.md             Repo guide for contributions
 ├── pyproject.toml              Project metadata, dependencies, and tool config
+├── .codex/                     Codex-native install and integration helpers
 ├── .github/                    GitHub configuration (CI/CD workflows)
+├── adapters/                   Cross-agent command adapters
 ├── patterns/                   180 pattern JSON files — the knowledge base
 │   ├── arch-*.json             Macro-architecture patterns (monolith, microservices, serverless, …)
 │   ├── api-*.json              API design patterns (REST, GraphQL, versioning)
@@ -470,9 +474,11 @@ This table follows the same progression as the demo video [[Architecture Compile
 │   ├── asymmetric-conflicts-fixes.json
 │   └── nfr-constraint-logic-audit.json
 │
-└── skills/                     Agent skills (AI use only)
-    ├── compiling-architecture/SKILL.md     Skill for compiling a spec into pattern selection
-    └── implementing-architecture/SKILL.md  Skill for implementing from approved architecture
+└── skills/                     Agent skills and install docs
+    ├── README.md                           Cross-agent skill install and usage notes
+    ├── using-arch-compiler/SKILL.md       Workflow router skill
+    ├── compiling-architecture/SKILL.md    Skill for compiling and finalising architecture
+    └── implementing-architecture/SKILL.md Skill for implementing from approved architecture
 ```
 
 ---
@@ -496,19 +502,21 @@ Tests cover the compiler pipeline end-to-end, pattern schema validation, conflic
 
 ## Installing the Skills
 
-This repo also publishes two reusable agent skills:
+This repo also publishes three reusable agent skills:
 
+- `using-arch-compiler`
 - `compiling-architecture`
 - `implementing-architecture`
 
 Codex users can install them directly from the GitHub repo path:
 
 ```bash
+scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/using-arch-compiler
 scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/compiling-architecture
 scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/implementing-architecture
 ```
 
-Claude Code users can use the included adapters in `adapters/claude-code/commands/` by copying them into `.claude/commands/`.
+Claude Code users can use the included adapters in `adapters/claude-code/commands/` by copying them into `.claude/commands/`, including the router command.
 
 See `skills/README.md` for install details and cross-agent usage notes.
 
