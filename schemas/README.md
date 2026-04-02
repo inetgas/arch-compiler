@@ -152,22 +152,28 @@ Patterns with type `coding` are excluded by default. Pass `--include-coding-patt
 ### Cost Fields
 
 ```json
-"cost": {
-  "adoptionCost": 500,
-  "licenseCost": 0,
-  "estimatedMonthlyRangeUsd": { "min": 10, "max": 100 },
-  "freeTierEligible": true,
-  "preferredProviders": ["aws"],
-  "costCeilingCompatibleUsd": 200,
-  "costNotes": "Free tier covers most small workloads.",
-  "provenance": {
-    "estimatedMonthlyRangeUsd": "Based on t3.small instance pricing.",
-    "adoptionCost": "2-4 hours of engineer time.",
-    "licenseCost": "MIT licensed, no fee.",
-    "source": "claude-sonnet-4-5 cost audit 2026-02-18"
-  }
-}
-```
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 2000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Serverless architectures have true pay-per-use pricing. Min=$0 represents development/staging environments with minimal traffic that stay within generous free tiers (AWS Lambda 1M free requests/month, API Gateway 1M calls/month first year, DynamoDB 25GB free). Max=$5000 represents a production workload with ~100M Lambda invocations/month ($20), API Gateway (~$350 for 100M requests), DynamoDB on-demand ($500-1000), S3 storage/transfer ($200-500), EventBridge ($100), Step Functions ($500), CloudWatch logs ($300), and data transfer costs ($1000-2000). High-traffic applications can exceed this, but $5000 covers most mid-scale serverless deployments processing millions of events monthly. Costs scale linearly with usage, making it cost-efficient for variable workloads but potentially expensive at very high scale compared to dedicated infrastructure.",
+      "adoptionCost": "High complexity adoption requiring significant architectural shift. Team needs to learn event-driven design patterns, function composition, cold start optimization, distributed tracing, and stateless architecture principles. Implementation involves: refactoring existing code into functions (40-80 hours), setting up event buses and message routing (20-40 hours), implementing observability/monitoring for distributed functions (20-30 hours), configuring IAM/security policies (15-25 hours), setting up CI/CD pipelines for function deployment (15-25 hours), and handling distributed debugging/testing (20-30 hours). Requires expertise in cloud provider's serverless ecosystem (Lambda/Functions, EventBridge/EventGrid, Step Functions/Logic Apps). Initial productivity drop as team adapts to function-based development. Includes potential for architectural mistakes (over-fragmentation, chatty functions) requiring rework. Estimated 130-230 engineering hours at $150/hour blended rate = $3500 average.",
+      "licenseCost": "Serverless services are consumption-based with no upfront licensing fees. AWS Lambda, Azure Functions, Google Cloud Functions, API Gateway, EventBridge, and similar managed services charge only for usage with no license costs. Open-source frameworks like Serverless Framework, AWS SAM, or Terraform for infrastructure-as-code are free. Optional commercial tools exist (Serverless.com Pro/Enterprise for teams, Datadog/New Relic for enhanced monitoring) but aren't required. The pattern itself uses cloud-native managed services that bundle licensing into per-request pricing. Organizations may choose commercial observability tools ($500-2000/month) but these are operational costs, not adoption licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  }```
 
 Required sub-fields: `adoptionCost`, `licenseCost`, `estimatedMonthlyRangeUsd`, `freeTierEligible`.
 

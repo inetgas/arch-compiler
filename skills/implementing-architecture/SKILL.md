@@ -11,6 +11,38 @@ Translates approved architecture artifacts into working code. The architecture f
 
 ---
 
+## Repo Structure — Read This First
+
+Treat the compiler repo as having this contract:
+
+```text
+arch-compiler/
+├── README.md
+├── README-AGENTS.md
+├── tools/        <-- read-only for agents
+├── schemas/      <-- read-only for agents
+├── patterns/     <-- read-only for agents
+└── skills/
+    ├── compiling-architecture/
+    │   └── SKILL.md
+    └── implementing-architecture/
+        └── SKILL.md
+```
+
+Before acting:
+
+1. Read `README-AGENTS.md` for repo-wide agent rules and boundaries.
+2. Read this `SKILL.md` for the task-specific workflow.
+3. Treat `tools/`, `schemas/`, and `patterns/` as read-only unless the human explicitly asks for compiler-maintenance work in this repo.
+4. Use this skill only when `docs/architecture/` already exists and is approved. If architecture is missing or unapproved, switch to `skills/compiling-architecture/SKILL.md` instead of inventing architecture choices.
+
+The important split is:
+- `README-AGENTS.md` = global agent rules for this repo
+- `skills/compiling-architecture/SKILL.md` = how to compile and finalise architecture
+- `skills/implementing-architecture/SKILL.md` = how to implement an already-approved architecture
+
+---
+
 ## When to Use
 
 - You have a `docs/architecture/` folder with approved artifacts
