@@ -261,11 +261,11 @@ This table follows the same progression as the demo video [[Architecture Compile
 
 ```
 .
-├── README-HUMAN.md             This file
+├── README.md                   This file
 ├── README-AGENTS.md            Repo guide for AI agents
 ├── LICENSE                     MIT License
 ├── CHANGELOG.md                Repo change log
-├── CODE_OFCONDUCT.md           Repo code of conduct
+├── CODE_OF_CONDUCT.md          Repo code of conduct
 ├── CONTRIBUTING.md             Repo guide for contributions
 ├── pyproject.toml              Project metadata, dependencies, and tool config
 ├── .github/                    GitHub configuration (CI/CD workflows)
@@ -397,7 +397,7 @@ This table follows the same progression as the demo video [[Architecture Compile
 │   ├── arch-platform-pattern-relationship.md   Platform ↔ pattern selection reference
 │   └── COMPILER-CONFLICT-RESOLUTION.md         Conflict resolution algorithm documentation
 │
-├── reports/                    Audit tool output (generated, not checked in)
+├── reports/                    Audit tool output (generated locally, gitignored)
 │   ├── asymmetric-conflicts-audit.json
 │   ├── asymmetric-conflicts-fixes.json
 │   └── nfr-constraint-logic-audit.json
