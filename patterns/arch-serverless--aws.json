@@ -1,0 +1,531 @@
+{
+  "id": "arch-serverless--aws",
+  "version": "1.0.0",
+  "title": "Serverless-First Architecture (AWS Lambda)",
+  "description": "Structure the system as stateless, event-driven function handlers backed by AWS managed services (Lambda, API Gateway, DynamoDB, S3, SQS). No persistent servers \u2014 each function activates on demand, executes, and terminates. The architectural commitment is to build around events and AWS-managed primitives rather than long-running processes.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws"
+    ],
+    "costCeilingCompatibleUsd": 2000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "AWS Lambda has a generous free tier (1M requests + 400,000 GB-seconds monthly). Min=$0 represents development/low-traffic scenarios staying within free tier. Max=$2000 represents medium production workload (~50M requests/month with 512MB/1s avg execution, API Gateway, DynamoDB, S3 storage, CloudWatch logs). High-traffic production could exceed this significantly. Costs vary by: compute duration, memory allocation, auxiliary services (API Gateway $3.50/M requests, DynamoDB read/write units, S3 storage/requests, data transfer). Scale-to-zero means true $0 cost during idle periods.",
+      "adoptionCost": "High-medium complexity adoption. Requires: (1) Architectural redesign for event-driven/stateless patterns (2-3 weeks learning curve), (2) Infrastructure-as-Code setup (CloudFormation/Terraform/SAM), (3) CI/CD pipeline adaptation for Lambda deployments, (4) Observability strategy (CloudWatch, X-Ray, distributed tracing), (5) Cold start optimization techniques, (6) IAM permissions modeling, (7) Testing strategies for serverless (local emulation, integration tests). Team needs to unlearn traditional server-centric patterns. With AI coding assistants, reduces from ~$5000 to ~$3500 as boilerplate generation and Lambda best practices are well-documented. Assumes 3-4 weeks for initial implementation by mid-level engineer.",
+      "licenseCost": "AWS Lambda is consumption-based pricing with no upfront license fees. Supporting tools are typically open source: AWS SAM CLI (Apache 2.0), Serverless Framework (MIT), Terraform (MPL 2.0). Optional enterprise tooling like Datadog/New Relic for enhanced monitoring would add costs, but core serverless architecture requires no licenses. AWS account and pay-as-you-go model only.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "low-ops",
+      "confidence": "strong",
+      "reasoning": "Serverless architectures minimize operational overhead by abstracting infrastructure management, patching, and scaling - this is a core value proposition of the pattern."
+    },
+    {
+      "capability": "elastic-scaling",
+      "confidence": "strong",
+      "reasoning": "AWS Lambda automatically scales from zero to thousands of concurrent executions based on demand, which is fundamental to serverless architecture."
+    },
+    {
+      "capability": "scale-to-zero",
+      "confidence": "high",
+      "reasoning": "Serverless functions scale down to zero when not in use, eliminating costs during idle periods - a distinguishing feature from traditional auto-scaling mentioned in the pattern description."
+    },
+    {
+      "capability": "event-driven-execution",
+      "confidence": "high",
+      "reasoning": "Serverless functions are triggered by events (HTTP requests, queue messages, database changes, etc.), inherently providing event-driven architecture capabilities as described in the pattern."
+    },
+    {
+      "capability": "pay-per-use-billing",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly mentions 'pay-per-use' as a key characteristic, providing a cost model where you only pay for actual execution time rather than provisioned capacity."
+    },
+    {
+      "capability": "function-as-a-service",
+      "confidence": "high",
+      "reasoning": "AWS Lambda is the FaaS platform underlying this serverless architecture pattern."
+    },
+    {
+      "capability": "managed-api-gateway",
+      "confidence": "high",
+      "reasoning": "AWS API Gateway is the managed gateway component of the AWS serverless stack."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "function-as-a-service",
+      "confidence": "high",
+      "reasoning": "The serverless pattern fundamentally depends on AWS Lambda or similar FaaS platforms to execute code without managing servers.",
+      "optional": false
+    },
+    {
+      "capability": "managed-backend-services",
+      "confidence": "high",
+      "reasoning": "Serverless architectures require managed services like API Gateway, DynamoDB, S3, and EventBridge for complete application functionality since there is no self-hosted infrastructure.",
+      "optional": true
+    },
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "Lambda functions need event sources to trigger execution (API Gateway, S3, SNS, SQS, EventBridge, etc.) - these integration points are essential for the pattern to function.",
+      "optional": false
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Serverless functions are ephemeral and stateless by nature, requiring application architecture to handle statelessness with external state management through databases or caches.",
+      "optional": false
+    },
+    {
+      "capability": "observability-tooling",
+      "confidence": "high",
+      "reasoning": "Serverless architectures are inherently distributed across many ephemeral functions, requiring specialized monitoring, logging, and distributed tracing tools to debug and understand system behavior.",
+      "optional": true
+    },
+    {
+      "capability": "cold-start-latency",
+      "confidence": "medium",
+      "reasoning": "Applications must be designed to handle Lambda cold start latency when functions are invoked after being idle, as this affects performance characteristics and user experience.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-microservices",
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "architecture",
+    "serverless",
+    "event-driven",
+    "aws"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Lambda with multi-AZ deployment and managed services achieves up to 99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Cold starts (100-1000ms) and event processing overhead establish minimum p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Cold starts and tail latencies in distributed event-driven systems establish minimum p99 latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Lambda's automatic multi-AZ failover and health checks enable recovery in 1-2 minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Lambda scales to 100K concurrent executions per region, handling up to 360M jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 60,
+      "reason": "At <60 jobs/hour (<1 per minute), serverless pay-per-invocation pricing and cold start overhead are inefficient compared to scheduled or always-on workers."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 200000,
+      "reason": "Serverless architecture with Lambda and DynamoDB supports up to 200K read QPS at scale."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Serverless write path with Lambda and managed databases supports up to 100K write QPS."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Lambda integrates with API Gateway, ALB, and Cognito supporting all common authentication methods."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudWatch Logs and CloudTrail provide comprehensive audit logging capabilities for serverless workloads."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Serverless architecture supports all tenant isolation models with DynamoDB, RDS, and function-level isolation."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports PII handling with KMS encryption, VPC isolation, and integration with AWS data protection services."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS Lambda and managed services support GDPR compliance with encryption, data residency controls, and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda is HIPAA eligible when configured with BAA, encryption at rest/transit, and appropriate access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless architecture supports CCPA compliance with data access controls, deletion workflows, and audit logging."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudTrail audit logs, IAM controls, and encryption support SOX compliance for financial data processing."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven architecture with DynamoDB and managed services can provide read-your-writes consistency when needed."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Integration with S3 (11 9s), DynamoDB, and managed databases provides strict durability guarantees."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "AWS Lambda serverless pattern is specific to AWS cloud infrastructure and services."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "ruby",
+        "php",
+        "kotlin"
+      ],
+      "reason": "AWS Lambda natively supports these runtime languages with managed execution environments."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-inference",
+        "web",
+        "mobile",
+        "agnostic"
+      ],
+      "reason": "Serverless architecture supports backend workloads including APIs, workers, batch jobs, and data pipelines."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern integrates with ElastiCache, DynamoDB DAX, or API Gateway caching for optional performance optimization."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless architecture naturally supports event-driven async messaging via SQS, SNS, and EventBridge."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda supports lightweight ML inference workloads with appropriate memory and timeout configurations."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless architecture supports multi-tenant patterns with proper isolation and resource partitioning strategies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda handles batch processing workloads with appropriate timeout, memory, and concurrency configurations."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports distributed transactions via Step Functions, saga patterns, or DynamoDB transactions."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda integrates with Kinesis Data Streams and DynamoDB Streams for real-time event processing."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern integrates with OpenSearch Serverless or third-party vector databases for embedding search workloads."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB and DocumentDB provide native document-oriented storage for serverless applications."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB provides native key-value store capabilities with single-digit millisecond latency."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can integrate with Neptune Serverless for graph database workloads."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda integrates with Timestream for time-series data ingestion and query workloads."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless architecture handles transactional workloads with RDS, Aurora Serverless, or DynamoDB."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports analytical workloads with Athena, Redshift Serverless, or EMR Serverless integration."
+    }
+  ],
+  "defaultConfig": {
+    "compute_service": "lambda",
+    "api_gateway": "api-gateway-http",
+    "database": "dynamodb",
+    "storage": "s3-standard",
+    "auth_service": "cognito",
+    "event_bus": "eventbridge"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "compute_service": {
+        "type": "string",
+        "enum": [
+          "lambda",
+          "fargate"
+        ],
+        "description": "Compute layer: Lambda for true serverless with sub-second billing and cold starts, or Fargate for containerized workloads with predictable performance and longer runtimes"
+      },
+      "api_gateway": {
+        "type": "string",
+        "enum": [
+          "api-gateway-http",
+          "api-gateway-rest",
+          "alb",
+          "function-url"
+        ],
+        "description": "API entry point: HTTP API (cheapest, modern), REST API (legacy features), ALB (VPC integration), or Function URL (simplest, direct invoke)"
+      },
+      "database": {
+        "type": "string",
+        "enum": [
+          "dynamodb",
+          "aurora-serverless",
+          "rds-proxy"
+        ],
+        "description": "Data layer: DynamoDB for key-value with true scale-to-zero, Aurora Serverless for SQL with auto-scaling, or RDS Proxy for connection pooling with traditional RDS"
+      },
+      "storage": {
+        "type": "string",
+        "enum": [
+          "s3-standard",
+          "s3-intelligent-tiering",
+          "efs"
+        ],
+        "description": "Object/file storage: S3 Standard for general use, Intelligent-Tiering for cost optimization, or EFS for shared file system access across functions"
+      },
+      "auth_service": {
+        "type": "string",
+        "enum": [
+          "cognito",
+          "lambda-authorizer",
+          "iam"
+        ],
+        "description": "Authentication: Cognito for user pools and OAuth, Lambda Authorizer for custom logic, or IAM for service-to-service"
+      },
+      "event_bus": {
+        "type": "string",
+        "enum": [
+          "eventbridge",
+          "sns-sqs",
+          "kinesis"
+        ],
+        "description": "Event routing: EventBridge for schema-based routing and integrations, SNS/SQS for simple pub-sub, or Kinesis for high-throughput streaming"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At very low QPS, serverless overhead (cold starts, event routing) outweighs benefits vs simpler hosting.",
+      "message": "arch-serverless--aws: peak read QPS is {actual} req/s (<1). Serverless overhead may not be justified at this scale; consider simpler hosting."
+    }
+  ]
+}

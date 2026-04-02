@@ -1,0 +1,218 @@
+{
+  "id": "code-di-pure",
+  "version": "1.0.0",
+  "title": "DI-First (No Global State)",
+  "description": "Coding discipline that prohibits global mutable state and ambient singletons; all collaborators flow through constructor or function parameters. Combines with a DI container or manual wiring at composition roots to produce fully testable, side-effect-free modules.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "DI-First is a software design pattern/architectural principle, not an infrastructure service. It involves structuring code to use dependency injection containers and explicit dependency graphs rather than global state or singletons. This is a code organization approach that doesn't incur any direct monthly infrastructure costs. The pattern is implemented through code practices and DI frameworks (most of which are open source), not through paid services.",
+      "adoptionCost": "Medium-high adoption cost. Implementing DI-First requires: (1) Refactoring existing code to eliminate global state and singletons (20-40 hours for medium codebase), (2) Setting up and configuring DI containers (framework-specific, 8-16 hours), (3) Training team on DI principles and best practices (16-24 hours), (4) Establishing conventions for dependency registration and lifecycle management (8-12 hours), (5) Writing tests that leverage the new DI architecture (12-20 hours). Total effort: 60-110 hours. At $50/hour blended rate with AI assistance reducing time by ~30%, this yields approximately $2,100-$3,850. The pattern requires moderate expertise in software architecture and the specific DI framework chosen. While AI coding assistants can help with boilerplate DI setup and registration patterns, the architectural decisions and refactoring of tightly coupled code require human judgment.",
+      "licenseCost": "Zero license cost. Popular DI frameworks are open source and free: Spring Framework (Java), Autofac/Microsoft.Extensions.DependencyInjection (.NET), Dagger (Android/Java), Guice (Java), inversify (TypeScript), and wire (Go) are all available under permissive licenses (Apache 2.0, MIT). No commercial licensing is required to implement DI-First patterns. Enterprise support contracts are optional and would be organizational choices unrelated to the core pattern adoption.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "explicit-dependencies",
+      "confidence": "high",
+      "reasoning": "This pattern directly provides explicit dependency declaration by requiring all dependencies to be injected rather than hidden as global state or singletons. This makes the dependency graph visible and traceable."
+    },
+    {
+      "capability": "testability",
+      "confidence": "high",
+      "reasoning": "By eliminating global state and singletons, this pattern enables easy mocking and substitution of dependencies in tests. The explicit dependency injection makes unit testing straightforward since test doubles can be injected."
+    },
+    {
+      "capability": "inversion-of-control",
+      "confidence": "high",
+      "reasoning": "DI-first patterns inherently provide IoC by inverting the dependency creation responsibility from the consuming code to the container or composition root, removing the burden of instantiation from business logic."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "dependency-injection",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "This pattern fundamentally requires a dependency injection mechanism (whether a framework/container or manual constructor injection) to wire up the dependency graph without relying on global state or singleton access."
+    },
+    {
+      "capability": "composition-root",
+      "confidence": "high",
+      "reasoning": "A single place where the dependency graph is constructed is required for implementing DI-first architecture properly, ensuring dependencies are wired without scattered initialization logic throughout the codebase.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "gof-singleton"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "code-quality",
+    "architecture"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DI-First is an architectural code pattern; GDPR compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DI-First is an architectural code pattern; CCPA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of CCPA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DI-First is an architectural code pattern; HIPAA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of HIPAA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DI-First is an architectural code pattern; SOX compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of SOX requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "DI pattern is cloud-agnostic; applies to application code regardless of deployment environment or infrastructure provider."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "DI-first architecture is a universal design principle applicable to all programming languages with constructor or method injection support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Dependency injection and avoiding global state is a fundamental architectural pattern applicable across all platform types."
+    }
+  ],
+  "defaultConfig": {
+    "di_container_approach": "framework",
+    "lifecycle_management": "scoped",
+    "interface_abstraction_level": "moderate",
+    "testing_strategy": "constructor_injection"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "di_container_approach": {
+        "type": "string",
+        "enum": [
+          "framework",
+          "manual",
+          "hybrid"
+        ],
+        "description": "Framework: Use established DI frameworks (Spring, Dagger, InversifyJS). Manual: Hand-wire dependencies in composition root. Hybrid: Framework for complex graphs, manual for simple cases. Trade-off: framework adds learning curve but scales better."
+      },
+      "lifecycle_management": {
+        "type": "string",
+        "enum": [
+          "singleton",
+          "scoped",
+          "transient"
+        ],
+        "description": "Singleton: One instance per container (use sparingly). Scoped: One instance per request/operation. Transient: New instance every injection. Trade-off: singleton risks hidden state, transient increases memory/CPU overhead."
+      },
+      "interface_abstraction_level": {
+        "type": "string",
+        "enum": [
+          "minimal",
+          "moderate",
+          "extensive"
+        ],
+        "description": "Minimal: Abstract only external dependencies (DB, APIs). Moderate: Abstract domain boundaries. Extensive: Interface for every dependency. Trade-off: more abstraction improves testability but adds complexity."
+      },
+      "testing_strategy": {
+        "type": "string",
+        "enum": [
+          "constructor_injection",
+          "property_injection",
+          "method_injection"
+        ],
+        "description": "Constructor: Dependencies required at creation (most explicit). Property: Set after construction (optional deps). Method: Pass per-call (contextual deps). Trade-off: constructor is most testable but less flexible."
+      }
+    }
+  },
+  "warn_nfr": []
+}

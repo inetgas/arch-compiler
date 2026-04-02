@@ -1,0 +1,35 @@
+# Integration test fixture: warn_nfr advisory warnings in success mode
+#
+# Purpose:
+#   - cache-aside is selected (caching: true) and warns because needsReadYourWrites=true
+#   - No violations (all requires_constraints pass)
+#   - QPS >= 10 to avoid low-throughput warnings
+#
+# Expected compiler behaviour:
+#   - rc=0 (success)
+#   - "⚠️  Pattern Advisory Warnings" section present in stdout
+#   - Advisory section appears AFTER "Cost Feasibility Analysis" in stdout
+#   - Advisory message mentions needsReadYourWrites
+
+project:
+  name: Read-Your-Writes Advisory Test
+  domain: test
+
+functional:
+  summary: Caching-enabled API requiring read-your-writes consistency
+
+constraints:
+  platform: api
+  cloud: agnostic
+  language: python
+  features:
+    caching: true
+    key_value_store: true
+
+nfr:
+  consistency:
+    needsReadYourWrites: true
+  throughput:
+    peak_query_per_second_read: 500
+  availability:
+    target: 0.99

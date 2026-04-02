@@ -1,0 +1,226 @@
+{
+  "id": "gov-adrs-mandatory",
+  "version": "1.0.0",
+  "title": "Mandatory ADRs",
+  "description": "Record architecture decisions and tradeoffs; improves continuity; keep lightweight.",
+  "types": [
+    "ops",
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "ADRs (Architecture Decision Records) are documentation artifacts stored as markdown files in version control (typically Git). No infrastructure or SaaS services are required beyond existing version control systems that teams already use. Optional ADR tooling like adr-tools, log4brains, or ADR Manager can be self-hosted at no additional cost or use free tiers of static site generators. This is a governance/process pattern, not an infrastructure pattern.",
+      "adoptionCost": "Medium-high adoption cost due to organizational change management. Initial setup is trivial (install adr-tools CLI, create templates), but requires: 1) Team training on ADR format and when to write them (4-8 hours per team member), 2) Establishing governance process and review workflows (8-16 hours), 3) Creating initial ADRs for existing decisions (20-40 hours depending on system complexity), 4) Cultural shift to make decision documentation mandatory (ongoing coaching). The 'mandatory' aspect adds compliance overhead. With 5-10 person team, estimate 40-80 total hours at $50-100/hour blended rate = $2,000-$8,000. Using $2,000 as base with AI assistance reducing template creation and initial drafting time by 30-40%.",
+      "licenseCost": "All common ADR tools are open source and free: adr-tools (MIT), log4brains (Apache 2.0), ADR Manager (MIT), madr (CC0). ADRs are plain markdown files requiring no proprietary software. Version control (Git) and static site hosting (GitHub Pages, GitLab Pages) have free tiers sufficient for documentation. Even commercial options like Confluence or Notion that could host ADRs are typically already licensed for other documentation purposes, adding no incremental cost.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "architecture-decision-records",
+      "confidence": "high",
+      "reasoning": "This pattern directly provides a structured way to document architecture decisions and tradeoffs using the standard ADR format, which is the core purpose of the pattern."
+    },
+    {
+      "capability": "decision-documentation",
+      "confidence": "high",
+      "reasoning": "This pattern fundamentally provides the capability to document decisions in a standardized way, which is valuable for governance and continuity across teams."
+    },
+    {
+      "capability": "knowledge-sharing",
+      "confidence": "high",
+      "reasoning": "ADRs facilitate team communication and knowledge transfer by creating a shared record of architectural decisions and their rationale, improving continuity when team members change."
+    },
+    {
+      "capability": "governance",
+      "confidence": "medium",
+      "reasoning": "By mandating decision documentation, this pattern provides a governance mechanism that enforces architectural accountability and transparency."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "ADRs need to be stored and versioned to provide the history and traceability that make them valuable for continuity and decision tracking over time.",
+      "optional": true
+    },
+    {
+      "capability": "documentation-storage",
+      "confidence": "high",
+      "reasoning": "ADRs require a place to be stored and accessed by team members, whether in a repository, wiki, or documentation platform.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "curated"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Mandatory ADRs are strongly recommended in GDPR-regulated environments; documenting compliance architecture decisions and data processing rationale is a best practice for GDPR accountability."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Mandatory ADRs are strongly recommended in CCPA-regulated environments; documenting consumer data handling architecture decisions is a best practice for demonstrating CCPA compliance intent."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Mandatory ADRs are strongly recommended in HIPAA-regulated environments; documenting PHI handling architecture decisions and security controls provides evidence for HIPAA audits."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Mandatory ADRs are strongly recommended in SOX-regulated environments; documenting IT architectural decisions supports SOX internal control documentation requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "ADRs are a process and documentation pattern independent of cloud provider."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "ADRs are documentation artifacts that record architectural decisions independent of programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Architecture Decision Records are platform-agnostic documentation that apply to all application types."
+    }
+  ],
+  "defaultConfig": {
+    "adr_format": "madr",
+    "storage_location": "docs/adrs",
+    "decision_threshold": "significant",
+    "review_requirement": "peer-review"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "adr_format": {
+        "type": "string",
+        "enum": [
+          "madr",
+          "nygard",
+          "y-statements",
+          "custom"
+        ],
+        "description": "ADR template format: MADR (Markdown Any Decision Records) is comprehensive, Nygard is minimal and widely adopted, Y-statements focus on context-decision-consequences, custom allows organization-specific templates"
+      },
+      "storage_location": {
+        "type": "string",
+        "enum": [
+          "docs/adrs",
+          "docs/architecture/decisions",
+          "adr",
+          "wiki"
+        ],
+        "description": "Where ADRs are stored: in-repo documentation folders provide version control and proximity to code, wiki allows broader team access but may become disconnected from codebase"
+      },
+      "decision_threshold": {
+        "type": "string",
+        "enum": [
+          "all",
+          "significant",
+          "strategic-only"
+        ],
+        "description": "What decisions require ADRs: all captures everything (high overhead), significant focuses on impactful technical choices (balanced), strategic-only documents major architectural shifts (lightweight but may miss important context)"
+      },
+      "review_requirement": {
+        "type": "string",
+        "enum": [
+          "peer-review",
+          "architect-approval",
+          "team-consensus",
+          "none"
+        ],
+        "description": "Approval process for ADRs: peer-review ensures quality without bottlenecks, architect-approval maintains consistency but can slow decisions, team-consensus builds buy-in but is time-intensive, none maximizes speed but risks inconsistency"
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,353 @@
+{
+  "id": "finops-cost-allocation-tags",
+  "version": "1.0.0",
+  "title": "Cost Allocation Tags",
+  "description": "Tagging/labeling strategy for per-tenant/product cost allocation and chargeback/showback.",
+  "types": [
+    "cost",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Cost allocation tagging itself adds no direct infrastructure cost - tags are free metadata in AWS, Azure, and GCP. However, organizations typically need cost management tools to aggregate, analyze, and report on tagged resources. Min=$0 represents using native cloud provider tools (AWS Cost Explorer, Azure Cost Management, GCP Cost Management - all free). Max=$500 represents cost management SaaS platforms like CloudHealth ($250-500/month for small-medium organizations), Cloudability, or Apptio Cloudability that provide advanced multi-cloud cost allocation, chargeback automation, and analytics beyond native tools. Large enterprises with complex multi-cloud environments might spend $1000-5000/month on these platforms, but the pattern itself is cloud-agnostic and can be implemented with free native tools.",
+      "adoptionCost": "Medium-high complexity implementation requiring: (1) Design of tagging taxonomy/strategy across organization (cost center, environment, product, tenant, etc.) - 20-40 hours of stakeholder workshops and documentation; (2) Implementation of tag governance policies and automation (IaC updates, tag enforcement policies, validation scripts) - 40-60 hours; (3) Integration with billing/chargeback processes and reporting dashboards - 20-40 hours; (4) Training and documentation for teams - 10-20 hours. Total 90-160 hours. With AI coding assistants reducing implementation time by ~30% (especially for IaC updates and automation scripts), estimate ~100 hours at $25/hour blended rate = $2,500. Complexity driven by organizational coordination, retroactive tagging of existing resources, and establishing governance processes rather than technical difficulty.",
+      "licenseCost": "Tags/labels are native cloud platform features with no licensing cost. Native cost reporting tools (AWS Cost Explorer, Azure Cost Management, GCP Billing Reports) are free. Organizations can implement complete cost allocation using only these free tools plus open-source visualization (Grafana) and automation (Terraform, CloudCustodian). Optional commercial cost management platforms (CloudHealth, Cloudability, Vantage) operate on subscription/SaaS models (covered in monthly costs) rather than perpetual licenses. Therefore, license cost is $0 - this is fundamentally a process/governance pattern leveraging free platform capabilities.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cost-allocation",
+      "confidence": "high",
+      "reasoning": "This pattern provides the capability to allocate and track costs across different dimensions (tenants, products, teams) through a structured tagging strategy, which is the primary purpose of the pattern."
+    },
+    {
+      "capability": "cost-visibility",
+      "confidence": "high",
+      "reasoning": "By implementing tagging strategies, this pattern enables visibility into where costs are occurring, which is essential for both chargeback and showback operations."
+    },
+    {
+      "capability": "resource-tagging",
+      "confidence": "high",
+      "reasoning": "This pattern fundamentally provides a resource tagging/labeling capability that can be used for cost tracking and other organizational purposes."
+    },
+    {
+      "capability": "chargeback",
+      "confidence": "medium",
+      "reasoning": "The pattern enables chargeback operations by providing the tag structure needed to attribute and bill actual costs back to specific business entities or cost centers."
+    },
+    {
+      "capability": "showback",
+      "confidence": "medium",
+      "reasoning": "The pattern supports showback reporting by enabling cost visibility and allocation without actual billing, allowing teams to see their resource consumption costs."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "cloud-resources",
+      "confidence": "high",
+      "reasoning": "Cost allocation tags need actual cloud resources (compute, storage, networking) to be applied to. Without resources consuming costs, there's nothing to allocate.",
+      "optional": true
+    },
+    {
+      "capability": "cost-visibility",
+      "confidence": "high",
+      "reasoning": "To make cost allocation meaningful, the pattern requires access to cost reporting APIs or services (like AWS Cost Explorer, Azure Cost Management) that can aggregate costs based on tag values.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "curated"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost Allocation Tags is a FinOps practice applicable in GDPR-regulated environments; accurate cost attribution via tags can support compliance cost segregation and audit reporting."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost Allocation Tags is a FinOps practice applicable in CCPA-regulated environments; accurate cost attribution via tags can support compliance cost segregation and audit reporting."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost Allocation Tags is a FinOps practice applicable in HIPAA-regulated environments; accurate cost attribution via tags can support compliance cost segregation and audit reporting."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost Allocation Tags is a FinOps practice applicable in SOX-regulated environments; accurate cost attribution via tags directly supports SOX cost segregation and auditability requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Cost allocation tags are supported by major cloud providers and can be implemented in on-premises environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Cost allocation tagging is a cloud infrastructure practice that applies regardless of application programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Cost allocation tags apply to all cloud resources across any platform type."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for caching resources when present."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for messaging resources when present."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for AI inference resources when present."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags are valuable for multi-tenant cost tracking but also work for single-tenant applications."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for batch processing resources when present."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for distributed transaction resources when present."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for streaming resources when present."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for vector search resources when present."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for document store resources when present."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for key-value store resources when present."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for graph database resources when present."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for time-series database resources when present."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for OLTP workload resources when present."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost allocation tags can track costs for OLAP workload resources when present."
+    }
+  ],
+  "defaultConfig": {
+    "tagging_strategy": "hierarchical",
+    "enforcement_level": "required",
+    "cost_allocation_model": "showback",
+    "tag_inheritance": true,
+    "automated_tagging": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "tagging_strategy": {
+        "type": "string",
+        "enum": [
+          "hierarchical",
+          "flat",
+          "hybrid"
+        ],
+        "description": "Hierarchical uses nested tags (org/dept/team/product), flat uses single-level tags, hybrid combines both. Hierarchical provides better drill-down analysis but requires more governance."
+      },
+      "enforcement_level": {
+        "type": "string",
+        "enum": [
+          "required",
+          "recommended",
+          "optional"
+        ],
+        "description": "Required blocks resource creation without proper tags, recommended warns but allows, optional is advisory only. Required ensures complete cost visibility but may slow deployment."
+      },
+      "cost_allocation_model": {
+        "type": "string",
+        "enum": [
+          "chargeback",
+          "showback",
+          "hybrid"
+        ],
+        "description": "Chargeback bills teams/products directly for their usage, showback provides visibility without billing, hybrid uses chargeback for some resources and showback for shared services."
+      },
+      "tag_inheritance": {
+        "type": "boolean",
+        "description": "Whether child resources automatically inherit tags from parent resources (e.g., EC2 instances inherit from VPC). Reduces manual tagging but may need override mechanisms."
+      },
+      "automated_tagging": {
+        "type": "boolean",
+        "description": "Enable automatic tag application via IaC, cloud provider policies, or CI/CD pipelines. Improves consistency and reduces human error but requires initial setup investment."
+      }
+    }
+  },
+  "warn_nfr": []
+}

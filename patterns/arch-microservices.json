@@ -1,0 +1,507 @@
+{
+  "id": "arch-microservices",
+  "version": "1.0.0",
+  "title": "Microservices Architecture",
+  "description": "Independently deployable services aligned to bounded contexts; decentralized data ownership.",
+  "types": [
+    "design",
+    "build",
+    "ops",
+    "deploy"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 8000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Microservices Architecture is an architectural pattern, not a specific infrastructure service. It has no direct monthly cost itself. The actual costs depend entirely on the specific services deployed (containers, databases, message queues, API gateways, etc.). A typical microservices deployment might cost $500-$10,000+ monthly depending on scale, but these costs should be attributed to the specific infrastructure components, not the pattern itself.",
+      "adoptionCost": "Very high adoption cost due to: (1) Significant architectural complexity requiring distributed systems expertise, (2) Need for new operational tooling (service mesh, distributed tracing, centralized logging), (3) Team training on distributed system patterns (circuit breakers, service discovery, eventual consistency), (4) Migration effort from monolithic systems typically taking 3-6 months for medium-sized teams, (5) Implementation of cross-cutting concerns (authentication, monitoring, deployment pipelines) across multiple services, (6) Organizational changes to support autonomous service teams. Even with AI coding assistants, the architectural decisions, distributed debugging, and operational complexity require significant senior engineering time.",
+      "licenseCost": "Microservices architecture itself requires no licensing. Core enabling technologies are typically open source (Kubernetes, Docker, Istio, Prometheus, Jaeger, etc.). While commercial platforms exist (AWS EKS, Azure AKS, Google GKE, Red Hat OpenShift), these are consumption-based service costs, not licenses. Organizations may optionally purchase commercial support or enterprise distributions, but the pattern itself can be implemented entirely with open-source tools.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Microservices with proper circuit breakers and service mesh can achieve up to four nines availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Microservices add 20-50ms network latency per service hop. If the spec requires p95 < 100ms, the architecture's inherent network overhead makes this target very difficult to achieve."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Network variability and tail latencies compound across service hops; p99 typically reaches 200ms or higher in microservices deployments."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Independent deployability enables fast recovery with container restart (30s), health checks (2m), and service mesh routing (2m) totaling ~5 minutes RTO."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "Microservices scale to ~10K req/sec per service with proper load balancing; typical deployments handle up to 36M jobs/hour across service mesh."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 500000,
+      "reason": "Microservices architecture with horizontal scaling and load balancing supports up to 500K read QPS across distributed services."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 50,
+      "reason": "Microservices architecture adds network overhead (20-50ms per hop), service mesh complexity, and operational burden. Below 50 req/s, a monolith or modular monolith is typically simpler and more cost-effective."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 200000,
+      "reason": "Microservices with per-service databases and eventual consistency support up to 200K write QPS distributed across services."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Microservices architecture supports all tenant isolation strategies; each service can independently choose its multi-tenancy model."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture handles both PII and non-PII data; per-service data ownership enables localized PII governance."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports GDPR compliance through per-service data ownership, API-based access, and distributed deletion workflows."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports HIPAA compliance through encryption, audit trails, and per-service security boundaries."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports CCPA compliance through data access APIs and distributed data deletion across service boundaries."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports SOX compliance through immutable audit logs and segregation of duties across service teams."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports both eventual consistency and read-your-writes semantics through service-level consistency guarantees."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports both strict durability (synchronous replication per service) and relaxed durability (async replication)."
+    }
+  ],
+  "provides": [
+    {
+      "capability": "independent-deployability",
+      "confidence": "strong",
+      "reasoning": "Core characteristic of microservices - each service can be deployed independently without affecting others, enabling faster release cycles and reduced deployment risk."
+    },
+    {
+      "capability": "team-autonomy",
+      "confidence": "medium",
+      "reasoning": "Microservices enable teams to own services end-to-end with independent technology choices, deployment schedules, and development practices aligned to bounded contexts."
+    },
+    {
+      "capability": "decentralized-data-management",
+      "confidence": "high",
+      "reasoning": "Each microservice owns its data store aligned to its bounded context, eliminating shared databases and enabling independent data model evolution."
+    },
+    {
+      "capability": "independent-scalability",
+      "confidence": "high",
+      "reasoning": "Services can be scaled independently based on their specific load patterns and resource requirements, optimizing resource utilization and cost."
+    },
+    {
+      "capability": "distributed-system",
+      "confidence": "high",
+      "reasoning": "Microservices architecture is by definition a distributed system — selecting this pattern establishes distributed system foundations."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "service-discovery",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Essential for microservices to locate and communicate with each other dynamically in distributed environments where service instances and locations change frequently."
+    },
+    {
+      "capability": "observability-baseline",
+      "confidence": "strong",
+      "optional": false,
+      "reasoning": "Critical requirement for microservices to monitor distributed system health, trace requests across services, and debug issues in complex service interactions."
+    },
+    {
+      "capability": "api-gateway",
+      "confidence": "high",
+      "reasoning": "Necessary to provide unified entry point for external clients, handle cross-cutting concerns like authentication, and route requests to appropriate microservices.",
+      "optional": false
+    },
+    {
+      "capability": "distributed-tracing",
+      "confidence": "high",
+      "reasoning": "Essential for tracking requests across multiple service boundaries, understanding latency bottlenecks, and debugging failures in distributed microservices workflows.",
+      "optional": false
+    },
+    {
+      "capability": "resilience-patterns",
+      "confidence": "high",
+      "reasoning": "Circuit breakers, retries, and timeouts are critical for handling failures gracefully in distributed systems and preventing cascading failures across services.",
+      "optional": true
+    },
+    {
+      "capability": "containerized-application",
+      "confidence": "medium",
+      "reasoning": "Required to package services with their dependencies for consistent deployment across environments and enable independent deployability at scale.",
+      "optional": true
+    },
+    {
+      "capability": "ci-cd-pipeline",
+      "confidence": "medium",
+      "reasoning": "Automated build and deployment pipelines are necessary to manage the complexity of deploying multiple independent services frequently and reliably.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "db-managed-postgres",
+      "db-managed-postgres--render",
+      "db-managed-postgres--supabase",
+      "db-managed-postgres--neon",
+      "db-managed-mysql--planetscale"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "architecture",
+    "microservices",
+    "distributed"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Microservices architecture is cloud-agnostic and can be deployed on any major cloud provider, on-premises, or hybrid environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Microservices architecture is language-agnostic; each service can be implemented in any language appropriate for its bounded context."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Microservices architecture is platform-agnostic and supports all deployment targets through API-based service contracts."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Microservices architecture requires asynchronous messaging for loosely-coupled service communication and event-driven workflows."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports both distributed transaction patterns (saga, 2PC) and transaction-free designs with eventual consistency."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports both single-tenant and multi-tenant deployments with per-service tenant isolation strategies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports batch processing through dedicated batch processing services alongside real-time request services."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports distributed caching (Redis, Memcached) at service boundaries for performance optimization."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports real-time streaming through event bus (Kafka, Kinesis) integration with stream processing services."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports AI inference through dedicated inference services with independent scaling and model versioning."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports document databases (MongoDB, DynamoDB) with per-service data store selection."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports key-value stores (Redis, DynamoDB) for caching and fast lookups at service level."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports vector search through dedicated vector database services (Pinecone, Weaviate) for AI/ML workloads."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports time-series databases (TimescaleDB, InfluxDB) through dedicated observability and analytics services."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture supports graph databases (Neo4j) for relationship-heavy services with independent graph data models."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture commonly supports OLTP workloads with transactional services using relational or NoSQL databases per bounded context."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Microservices architecture can support OLAP workloads through dedicated analytics services with optimized read models and data warehouses."
+    }
+  ],
+  "defaultConfig": {
+    "communication_style": "rest",
+    "service_discovery": "dns",
+    "api_gateway": true,
+    "data_pattern": "database-per-service",
+    "observability_strategy": "distributed-tracing"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "communication_style": {
+        "type": "string",
+        "enum": [
+          "rest",
+          "grpc",
+          "message-queue",
+          "event-driven"
+        ],
+        "description": "Inter-service communication pattern. REST: simple, HTTP-based. gRPC: high-performance, strongly-typed. Message-queue: async, decoupled. Event-driven: reactive, event sourcing."
+      },
+      "service_discovery": {
+        "type": "string",
+        "enum": [
+          "dns",
+          "service-mesh",
+          "client-side",
+          "server-side"
+        ],
+        "description": "How services locate each other. DNS: simple, standard. Service-mesh: advanced traffic control. Client-side: library-based (Eureka, Consul). Server-side: load-balancer based."
+      },
+      "api_gateway": {
+        "type": "boolean",
+        "description": "Whether to use an API gateway as single entry point. True: unified interface, auth, rate limiting. False: direct service access, simpler but less control."
+      },
+      "data_pattern": {
+        "type": "string",
+        "enum": [
+          "database-per-service",
+          "shared-database",
+          "event-sourcing",
+          "cqrs"
+        ],
+        "description": "Data management strategy. Database-per-service: full autonomy, complex queries. Shared-database: simpler, tight coupling. Event-sourcing: audit trail, complexity. CQRS: read/write separation."
+      },
+      "observability_strategy": {
+        "type": "string",
+        "enum": [
+          "distributed-tracing",
+          "centralized-logging",
+          "metrics-monitoring",
+          "full-stack"
+        ],
+        "description": "Monitoring approach. Distributed-tracing: request flows (Jaeger, Zipkin). Centralized-logging: log aggregation (ELK). Metrics-monitoring: health metrics (Prometheus). Full-stack: all combined."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "Microservices with decentralized data stores typically rely on eventual consistency across service boundaries. Implementing strong read-your-writes semantics across services adds significant complexity (distributed transactions, saga patterns).",
+      "message": "arch-microservices: spec requires needsReadYourWrites=true, but microservices use decentralized data stores with eventual consistency. Implementing cross-service read-your-writes adds significant complexity."
+    }
+  ]
+}

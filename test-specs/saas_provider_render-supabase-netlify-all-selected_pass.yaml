@@ -1,0 +1,53 @@
+# SaaS Provider - Render + Supabase + Netlify All Selected Together
+#
+# A mobile/web app using render for API compute, supabase for managed database,
+# and netlify for static frontend hosting. These serve three distinct roles
+# (compute, DB, frontend) and should all be selected simultaneously.
+# Previously broken: hosting-free-saas-tier--render and --supabase were
+# declared mutually incompatible even though they serve different roles.
+# After restructure: hosting-managed-paas--render, db-managed-postgres--supabase,
+# and hosting-static-frontend--netlify are in separate families, no incompatibility.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - db-managed-postgres--supabase IS selected (supabase in saas-providers, oltp_workload)
+#   - hosting-managed-paas IS selected (render in saas-providers; generic variant wins conflict resolution,
+#     configured with provider: render in defaultConfig)
+#   - hosting-static-frontend--netlify IS selected (netlify in saas-providers)
+
+project:
+  name: Three-Tier Free Stack
+  domain: saas
+functional:
+  summary: Web app using render for API, supabase for DB, netlify for frontend
+constraints:
+  cloud: agnostic
+  language: typescript
+  platform: web
+  saas-providers:
+    - render
+    - supabase
+    - netlify
+  features:
+    caching: false
+    async_messaging: false
+    ai_inference: false
+    multi_tenancy: false
+    batch_processing: false
+    distributed_transactions: false
+    real_time_streaming: false
+    vector_search: false
+    document_store: false
+    key_value_store: false
+    graph_database: false
+    time_series_db: false
+    oltp_workload: true
+    olap_workload: false
+nfr:
+  availability:
+    target: 0.99
+cost:
+  ceilings:
+    monthly_operational_usd: 0
+  preferences:
+    prefer_free_tier_if_possible: true

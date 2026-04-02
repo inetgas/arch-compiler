@@ -1,0 +1,402 @@
+{
+  "id": "batch-processing-required",
+  "version": "1.0.0",
+  "title": "Batch Processing: NFR Specification Required",
+  "description": "Meta-policy pattern that activates when batch_processing is enabled and enforces that batch-specific NFR fields are explicitly specified. Batch systems have fundamentally different performance characteristics from real-time systems: jobs are scheduled rather than on-demand, throughput is measured in jobs-per-hour rather than requests-per-second, and latency is measured in job start time (time from submission to first byte of execution) rather than response time. Without explicit peak_jobs_per_hour, jobStartP95Seconds, and jobStartP99Seconds, the compiler cannot correctly size batch infrastructure, select appropriate job orchestration patterns, or validate that the spec's availability and recovery requirements are achievable with batch scheduling. This pattern also enforces the availability ceiling (99.99% maximum without active-active batch topology) and the RTO/RPO floors imposed by batch job restart and reprocessing time.",
+  "types": [
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 0.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 99999,
+    "costNotes": "Meta-policy pattern with no direct cost. Batch infrastructure costs are in downstream implementation patterns (data-batch-processing, arch-spot-preemptible-batch).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero cost \u2014 meta-policy pattern only. Batch compute costs are in data-batch-processing and arch-spot-preemptible-batch patterns.",
+      "adoptionCost": "Zero adoption cost \u2014 this pattern auto-activates when batch_processing: true is set and enforces NFR specification as a hard compilation requirement.",
+      "licenseCost": "No license cost \u2014 policy enforcement pattern only.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "batch-nfr-enforcement",
+      "confidence": "high",
+      "reasoning": "Enforces that batch-specific NFR fields (peak_jobs_per_hour, jobStartP95Seconds, jobStartP99Seconds) are explicitly declared when batch_processing is enabled, preventing under-specified batch architectures."
+    }
+  ],
+  "requires": [],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "batch",
+    "processing",
+    "meta-policy",
+    "nfr-enforcement"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural enforcement pattern applicable to any batch processing system regardless of technology or cloud provider"
+  },
+  "defaultConfig": {},
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Batch processing is compatible with any authentication mechanism; job-level auth is handled by IAM roles and scheduler credentials."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch job execution logs serve as an audit trail; compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Batch processing supports tenant isolation through job queue namespacing, separate worker pools, or IAM-scoped job execution."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing is compatible with PII workloads when data at rest and in transit is encrypted and job access is IAM-controlled."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when batch jobs support configurable data retention and deletion workflows."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when batch jobs enforce encryption at rest and in transit with appropriate BAA coverage."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when batch jobs support consumer data deletion within required timeframes."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX when batch job execution logs provide an immutable audit trail of data processing operations."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing is inherently eventually consistent. If read-your-writes is required, compensating patterns (polling, outbox) must be added on top."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability depends on batch checkpointing strategy. With idempotent jobs and checkpointing, strict durability is achievable; without it, job failure may lose partial progress."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": true,
+      "reason": "Primary activation gate: this pattern only applies when batch_processing is explicitly enabled."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Batch processing is cloud-agnostic; managed batch services exist on all major clouds and on-premises (Airflow, Kubernetes Jobs, Slurm)."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Batch processing is language-agnostic; job orchestration SDKs exist for all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "api",
+        "web",
+        "mobile",
+        "desktop",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Gating pattern is platform-agnostic; any system enabling batch_processing must specify batch NFRs regardless of primary platform type."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing is independent of caching."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing can use async messaging for job queuing but does not require it."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing is commonly used for batch AI inference (embedding generation, bulk predictions) but is not limited to AI workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing supports both single-tenant and multi-tenant job architectures via queue namespacing."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing can coordinate distributed transactions within a job but does not require them."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing and real-time streaming are complementary; lambda architecture combines both."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing is used for offline vector index building and bulk embedding generation."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing is compatible with document stores as the source or sink for batch jobs."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing can use key-value stores for job state and deduplication."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing supports graph analytics and bulk graph mutation jobs."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing is commonly used for time-series aggregation and historical rollup jobs."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing can run bulk OLTP operations (mass updates, imports) during off-peak windows."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing naturally supports OLAP via scheduled analytical queries and aggregation jobs."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "!=",
+      "value": null,
+      "reason": "Batch systems must explicitly specify peak_jobs_per_hour. This drives infrastructure sizing (worker pool count, queue capacity, orchestrator scaling), SLA calculations, and selection of the appropriate batch execution pattern. Without this value the compiler cannot validate throughput feasibility or recommend cost-optimized batch infrastructure."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 1,
+      "reason": "Minimum batch throughput of 1 job/hour. Zero or negative jobs per hour is not a valid batch workload specification."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Managed batch orchestrators support up to 100K jobs/sec (360M/hr) with horizontal scaling. Higher throughput requires stream processing architecture."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": "!=",
+      "value": null,
+      "reason": "Batch systems must explicitly specify job start P95 latency (time from job submission to first byte of execution). This is the primary latency dimension for batch workloads and drives scheduler selection: sub-1s requires pre-warmed workers (AWS Lambda, Cloud Run Jobs), 1-60s is achievable with managed batch (AWS Batch, Azure Batch), and minutes-scale start time is acceptable for cluster-scheduled jobs (EMR, Dataproc). Without this value the correct scheduler cannot be selected."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Job P95 Latency (in seconds) cannot be less than 10 even with best Serverless / pre-warmed workers (Cloud Run Jobs, AWS Fargate, Lambda)"
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": "!=",
+      "value": null,
+      "reason": "Batch systems must explicitly specify job start P99 latency. P99 reveals tail latency behavior under queue depth and cold-start pressure, which determines whether pre-warmed worker pools are required and whether SLA commitments can be met during peak load."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 30,
+      "reason": "Job P99 Latency (in seconds) cannot be less than 30 even with best Serverless / pre-warmed workers (Cloud Run Jobs, AWS Fargate, Lambda)"
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Managed batch schedulers are bounded at 99.99% availability. Five-nine availability requires active-active multi-region batch topology beyond standard managed service offerings."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Minimum RTO of 15 minutes for batch systems. Batch job recovery requires detecting the failure, re-queuing the job, provisioning a worker (cold start), and reprocessing from the last checkpoint. Sub-15-minute RTO requires pre-warmed worker pools and fine-grained checkpointing."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Minimum RPO of 5 minutes for batch systems. Data arriving between batch windows is at risk until the next batch run. RPO is bounded by batch scheduling frequency; 5-minute micro-batching is achievable with most managed schedulers."
+    }
+  ],
+  "warn_nfr": []
+}

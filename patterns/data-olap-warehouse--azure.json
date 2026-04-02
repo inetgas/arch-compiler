@@ -1,0 +1,321 @@
+{
+  "id": "data-olap-warehouse--azure",
+  "version": "1.0.0",
+  "title": "OLAP Warehouse: Azure Synapse Analytics",
+  "description": "Columnar data warehouse on Azure Synapse Analytics (formerly Azure SQL Data Warehouse). Provides dedicated SQL pools (provisioned MPP clusters) and serverless SQL pools (on-demand query over data lake). Dedicated pools are best for high-concurrency production workloads; serverless pools are cost-effective for ad-hoc exploration over ADLS Gen2 data. Maximum 128 concurrent queries on a dedicated pool regardless of DWU scale. Strong integration with Power BI, Azure ML, and the broader Azure data platform (Azure Data Factory, Azure Databricks, Purview).",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 15000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "azure"
+    ],
+    "costCeilingCompatibleUsd": 12000,
+    "costNotes": "Serverless pool: $5/TB scanned, near-zero base cost. Dedicated pool: DW100c ~$1.20/hr (~$870/mo), DW1000c ~$12/hr (~$8,700/mo). Storage: $0.023/GB/mo on ADLS Gen2.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($0): serverless SQL pool with <1 TB/mo scanned fits in free exploration budget. Max ($15,000): DW2000c dedicated pool ($24/hr = ~$17,000/mo on-demand; ~$10,000/mo with 1-year reserved) + ADLS Gen2 storage + ADF pipeline runs. Most production dedicated pools land DW500c-DW1000c at $2,000-$8,000/mo reserved.",
+      "adoptionCost": "ADF pipeline setup, PolyBase or COPY INTO ingestion configuration, dbt-synapse or Synapse Notebooks for ELT, Power BI DirectQuery integration. Estimate 15-20 developer days at ~$160/day = $3,000.",
+      "licenseCost": "No software license. Azure pay-as-you-go. Reserved capacity provides 1-year and 3-year discounts.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "Synapse dedicated SQL pools deliver MPP columnar query execution for petabyte-scale structured data warehousing."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "Native Power BI DirectQuery integration with automatic dataset refresh. Also supports Tableau, Excel, and JDBC-compatible tools."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Azure Data Factory pipelines and Synapse Pipelines load data via PolyBase COPY INTO from ADLS Gen2. dbt-synapse supports in-warehouse ELT."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Synapse expects bulk loads via COPY INTO or PolyBase from ADLS Gen2. High-frequency row inserts are not supported on dedicated pools."
+    },
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "ADLS Gen2 is the primary staging layer for data before loading into Synapse dedicated pools or queried via serverless pools."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--snowflake",
+      "data-olap-warehouse--self-hosted"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "warehouse",
+    "synapse",
+    "azure",
+    "columnar"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable to any Azure OLAP workload"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "Synapse dedicated SQL pool p95 is 500ms-30s for analytical queries. Result set caching can serve repeated queries in under 100ms but cold queries have a 500ms+ floor."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Synapse dedicated pools offer 99.9% SLA. Geo-redundant backups available but active-active multi-region requires custom replication."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Synapse dedicated pool restore from geo-redundant backup takes 15-60 minutes. Pause/resume operations take 5-10 minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 8,
+      "reason": "Synapse automatic restore points are created every 8 hours with a 7-day retention. User-defined restore points can be created on demand."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 128,
+      "reason": "Synapse dedicated SQL pool hard limit is 128 concurrent queries regardless of DWU scale. Above this, queries are queued in workload management groups."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50,
+      "reason": "Synapse dedicated pools are optimised for bulk COPY INTO loads. Above ~50 write QPS, ingestion should be staged via ADLS Gen2 and bulk-loaded."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Synapse supports Azure AD authentication, SQL authentication, managed identity, and SAML federation via Azure AD."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Synapse audit logs export to Azure Monitor, Log Analytics, and Azure Storage. Full query-level audit trail available."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Synapse supports column-level security, dynamic data masking, and row-level security. Compatible with PII workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when data residency controls, column masking, and right-to-erasure pipeline procedures are in place."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when warehouse-level encryption and appropriate BAA coverage are configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when consumer data deletion triggers a pipeline reprocess that excludes deleted records."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX when query audit logs provide an immutable trail of data access and transformation operations."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability is handled by the underlying object storage layer (S3, GCS, ADLS). All major managed warehouses provide durable storage by default."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "azure",
+      "reason": "Azure Synapse Analytics is an Azure-native service."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Synapse provides JDBC/ODBC drivers and is agnostic to language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Synapse serves as analytical backend for any platform."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Synapse Analytics is selected specifically for OLAP analytical workloads."
+    }
+  ],
+  "defaultConfig": {
+    "pool_type": "dedicated",
+    "dw_units": "DW500c",
+    "distribution": "hash",
+    "ingestion_mode": "copy-into-adls",
+    "result_set_cache": true,
+    "workload_management": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "pool_type": {
+        "type": "string",
+        "enum": [
+          "dedicated",
+          "serverless"
+        ],
+        "description": "dedicated: provisioned MPP cluster, fixed cost, best for production workloads with predictable query patterns. serverless: on-demand queries over ADLS Gen2, pay-per-TB-scanned, best for ad-hoc exploration."
+      },
+      "dw_units": {
+        "type": "string",
+        "enum": [
+          "DW100c",
+          "DW200c",
+          "DW300c",
+          "DW500c",
+          "DW1000c",
+          "DW2000c",
+          "DW5000c",
+          "DW6000c"
+        ],
+        "description": "Data Warehouse Units control compute capacity. DW500c is a reasonable starting point for production. Scale up for faster query performance; pause when idle to reduce cost."
+      },
+      "distribution": {
+        "type": "string",
+        "enum": [
+          "hash",
+          "round-robin",
+          "replicated"
+        ],
+        "description": "hash: distribute rows by a join key column \u2014 best for fact tables with frequent joins. round-robin: even distribution \u2014 best for staging tables. replicated: copy to every node \u2014 best for small dimension tables."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "copy-into-adls",
+          "adf-pipeline",
+          "synapse-link",
+          "polybase"
+        ],
+        "description": "copy-into-adls: bulk load from ADLS Gen2 (recommended, highest throughput). adf-pipeline: Azure Data Factory connectors. synapse-link: near-real-time replication from Cosmos DB or Dataverse. polybase: legacy external table approach."
+      },
+      "result_set_cache": {
+        "type": "boolean",
+        "description": "Caches results of repeated identical queries in dedicated pool storage. Subsequent identical queries return in milliseconds at no additional cost."
+      },
+      "workload_management": {
+        "type": "boolean",
+        "description": "Enables workload groups to prioritise and resource-govern concurrent queries. Recommended for production environments with mixed priority workloads."
+      }
+    }
+  },
+  "warn_nfr": []
+}

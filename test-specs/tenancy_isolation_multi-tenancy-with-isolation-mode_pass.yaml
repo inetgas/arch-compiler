@@ -1,0 +1,23 @@
+# Tenancy - Multi-Tenancy with Isolation Mode
+#
+# A spec with multi_tenancy: true feature and per-tenant-db isolation mode set.
+# This tests that the compiler selects the appropriate tenant isolation pattern
+# (dedicated database per tenant) and multi-tenancy infrastructure patterns
+# when both the feature flag and isolation mode are correctly specified.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - multi-tenancy pattern with per-tenant-db isolation is selected
+#   - tenant isolation infrastructure patterns are activated
+
+constraints:
+  features:
+    multi_tenancy: true
+nfr:
+  security:
+    tenant_isolation: per-tenant-db
+project:
+  name: Multi-Tenancy + Tenant Isolation
+  domain: test
+functional:
+  summary: 'Test scenario: Multi-Tenancy + Tenant Isolation'

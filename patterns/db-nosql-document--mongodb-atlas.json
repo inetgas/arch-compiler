@@ -1,0 +1,491 @@
+{
+  "id": "db-nosql-document--mongodb-atlas",
+  "version": "1.0.0",
+  "title": "NoSQL Document Store (MongoDB Atlas)",
+  "description": "MongoDB Atlas is a fully-managed cloud document database. Offers automatic scaling, backups, global clusters, and built-in search. Best for: production applications requiring flexible schema, complex queries with aggregation pipeline, and global distribution. Provides managed infrastructure with minimal ops overhead.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-nosql-document--dynamodb"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "document-store",
+      "confidence": "high",
+      "reasoning": "MongoDB Atlas is a document-oriented NoSQL database that stores data in flexible, JSON-like BSON documents with dynamic schemas. This is the core capability of the platform."
+    },
+    {
+      "capability": "aggregation-pipeline",
+      "description": "Complex data transformations and aggregations",
+      "confidence": "medium",
+      "reasoning": "MongoDB's aggregation pipeline is a core feature that distinguishes it from simpler document stores, allowing complex data transformations and queries."
+    },
+    {
+      "capability": "full-text-search",
+      "description": "Built-in Atlas Search for text queries",
+      "confidence": "medium",
+      "reasoning": "MongoDB Atlas includes built-in search capabilities (Atlas Search), making this a legitimate provided capability that differentiates it from basic document stores."
+    },
+    {
+      "capability": "nosql-database",
+      "confidence": "high",
+      "reasoning": "As a NoSQL database, this pattern provides this broader categorization capability in addition to the more specific document-store capability."
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "high",
+      "reasoning": "MongoDB Atlas is explicitly a fully-managed service with automatic backups and minimal ops overhead, as stated in the description."
+    },
+    {
+      "capability": "global-distribution",
+      "confidence": "high",
+      "reasoning": "The description explicitly mentions global clusters as a key feature, enabling multi-region data distribution and low-latency access worldwide."
+    },
+    {
+      "capability": "automatic-scaling",
+      "confidence": "high",
+      "reasoning": "The description explicitly mentions automatic scaling as a key feature, allowing the database to scale compute and storage resources based on demand."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "cloud-infrastructure",
+      "confidence": "high",
+      "reasoning": "MongoDB Atlas is a cloud-based service that runs on cloud infrastructure (AWS, Azure, or GCP) and cannot function without an underlying cloud platform.",
+      "optional": true
+    },
+    {
+      "capability": "network-connectivity",
+      "confidence": "high",
+      "reasoning": "As a cloud service, Atlas requires network connectivity for applications to connect to the database clusters, which is fundamental for any cloud database service.",
+      "optional": true
+    }
+  ],
+  "preferredProviders": [
+    "mongodb-atlas"
+  ],
+  "defaultConfig": {
+    "provider": "mongodb-atlas",
+    "cluster_tier": "M10",
+    "replica_set_members": 3,
+    "backup_enabled": true,
+    "multi_region": false,
+    "auto_scaling": false,
+    "auth_mechanism": "SCRAM-SHA-256",
+    "tls": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "mongodb-atlas"
+        ],
+        "description": "Managed MongoDB provider (Atlas is the official MongoDB cloud service)"
+      },
+      "cluster_tier": {
+        "type": "string",
+        "enum": [
+          "M0",
+          "M2",
+          "M5",
+          "M10",
+          "M20",
+          "M30"
+        ],
+        "description": "Atlas cluster tier: M0/M2/M5 for dev/test (shared), M10+ for production (dedicated, required for backups/scaling)"
+      },
+      "replica_set_members": {
+        "type": "integer",
+        "enum": [
+          3,
+          5,
+          7
+        ],
+        "description": "Number of replica set members for high availability (always odd number, more replicas = higher availability but higher cost)"
+      },
+      "backup_enabled": {
+        "type": "boolean",
+        "description": "Enable continuous backups with point-in-time recovery (required for production, only available M10+)"
+      },
+      "multi_region": {
+        "type": "boolean",
+        "description": "Deploy across multiple cloud regions for global distribution and disaster recovery (increases latency and cost)"
+      },
+      "auto_scaling": {
+        "type": "boolean",
+        "description": "Enable automatic cluster scaling based on workload (adjusts compute/storage dynamically, M10+ only)"
+      },
+      "auth_mechanism": {
+        "type": "string",
+        "enum": [
+          "SCRAM-SHA-256",
+          "MONGODB-X509",
+          "MONGODB-OIDC"
+        ],
+        "description": "MongoDB Atlas connection authentication mechanism. SCRAM-SHA-256 is the default; X.509 certificates provide mTLS; OIDC for workload identity federation."
+      },
+      "tls": {
+        "type": "boolean",
+        "description": "Enforce TLS for MongoDB connections. Atlas enforces TLS by default and this should always be true."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "MongoDB Atlas offers a free M0 tier (512MB storage, shared resources) suitable for development and small projects (min=$0). For production workloads, costs vary significantly: M10 dedicated cluster starts at ~$57/month (2GB RAM, 10GB storage), M30 at ~$300/month (8GB RAM, 40GB storage), and M50 at ~$700/month (16GB RAM, 80GB storage). High-traffic production applications with replica sets, larger storage (100GB+), backups, and data transfer can reach $1500-2000/month. The max assumes a mid-tier production deployment with M40-M50 cluster, automated backups, and moderate data transfer, not including multi-region or enterprise features which can exceed $5000+/month.",
+      "adoptionCost": "Medium-high complexity adoption. MongoDB has an approachable learning curve for developers familiar with JSON and JavaScript, but proper production implementation requires understanding: document schema design patterns (embedding vs referencing), indexing strategies for performance, aggregation pipeline for complex queries, replica set configuration, sharding for horizontal scaling, and backup/disaster recovery setup. Atlas simplifies infrastructure but developers need 2-3 weeks to learn MongoDB-specific best practices, data modeling for NoSQL (different from relational), and Atlas management console. Migration from relational databases adds complexity. With AI coding assistants helping with query syntax and schema design, adoption time reduces but architectural decisions still require expertise.",
+      "licenseCost": "MongoDB Atlas operates on a consumption-based pricing model with no upfront license fees. The database engine (MongoDB Community Server) is open source under SSPL license. Atlas charges only for infrastructure resources consumed (compute, storage, data transfer). No separate license purchase required for standard features. Enterprise-specific features like advanced security, BI Connector, or dedicated support contracts are available but optional and priced separately as add-ons, not required licenses. Free tier available indefinitely for small workloads.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "nosql",
+    "document-store",
+    "flexible-schema"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "MongoDB Atlas document store with replica sets provides up to 99.9% availability"
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Document NoSQL databases have minimum p95 latency of ~10ms due to document parsing and network overhead"
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Document queries at p99 require at least 50ms accounting for complex aggregation and tail latency"
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Automated failover in Atlas replica sets typically completes within 2-5 minutes"
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000000,
+      "reason": "MongoDB Atlas document store handles up to ~100M operations per hour at peak capacity"
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 100000,
+      "reason": "MongoDB Atlas supports up to 100K read queries per second with proper indexing and cluster sizing"
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50000,
+      "reason": "MongoDB Atlas handles up to 50K write queries per second with replica set write concern"
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Atlas provides comprehensive audit logging capabilities but it is optional based on tier and configuration"
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "MongoDB supports document-level (row-level), collection-per-tenant (schema), and database-per-tenant isolation patterns"
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas supports PII handling with field-level encryption and client-side encryption but works without PII too"
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Atlas provides GDPR compliance features including data residency and right-to-delete but also supports non-GDPR use cases"
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas offers HIPAA-eligible configurations with BAA availability but also works for non-healthcare applications"
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA requirements can be met through data access controls and deletion capabilities but pattern works for non-CCPA cases"
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance supported through audit trails and access controls but applicable to non-financial applications as well"
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read-your-writes consistency is supported through read concern majority and causal consistency but not required for all use cases"
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas with majority write concern provides strict durability but also supports relaxed durability for performance"
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "MongoDB Atlas is a multi-cloud service running on AWS, Azure, and GCP but not on-premises or other clouds"
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "c",
+        "cpp",
+        "swift",
+        "dart"
+      ],
+      "reason": "MongoDB Atlas provides official drivers and SDKs for all major programming languages"
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "MongoDB Atlas is a database service accessible from any platform type through network connectivity"
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "==",
+      "value": true,
+      "reason": "This pattern specifically provides document store capability as its primary data model and is only applicable when document storage is needed"
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "mongodb-atlas"
+      ],
+      "reason": "Pattern specifically requires mongodb-atlas as the database service"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas can be used with or without a separate caching layer depending on performance requirements"
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas works with both synchronous request-reply and async messaging patterns"
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas can store AI model metadata and inference results but does not require AI inference capabilities"
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas supports multi-tenant architectures through various isolation patterns but also works for single-tenant applications"
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas supports batch processing workloads through aggregation pipelines but also handles real-time transactional workloads"
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas supports multi-document ACID transactions but they are optional for single-document operations"
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas change streams enable real-time streaming but pattern works without streaming requirements"
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas includes vector search capabilities for AI/ML embeddings but not required for all document store use cases"
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB can function as a key-value store using document IDs but is primarily a document database"
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB supports graph queries through aggregation pipeline lookup stages but is not a native graph database"
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas has native time-series collection support but works for non-time-series document workloads as well"
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB Atlas supports OLTP transactional workloads but also handles analytical and mixed workloads"
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MongoDB aggregation pipeline supports OLAP analytical queries but pattern works for transactional workloads too"
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "MongoDB Atlas has operational overhead (cluster management, replica sets). At <1 req/s, simpler embedded or serverless databases are more cost-effective.",
+      "message": "db-nosql-document--mongodb-atlas: peak read QPS is {actual} req/s (<1). Managed MongoDB Atlas may be over-engineered; consider simpler storage for low-traffic use cases."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 0.5,
+      "reason": "MongoDB Atlas replica sets with majority write concern add latency and cost overhead. At <0.5 write/s, simpler storage solutions are more appropriate.",
+      "message": "db-nosql-document--mongodb-atlas: peak write QPS is {actual} req/s (<0.5). Replica set overhead and managed service costs may not be justified for very low write volume."
+    }
+  ]
+}

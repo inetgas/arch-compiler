@@ -1,0 +1,36 @@
+# SaaS Provider - Mobile Dart App with Supabase Selected
+#
+# A Flutter mobile app spec (dart language, mobile platform, agnostic cloud)
+# with supabase, render, and netlify in saas-providers, a $0 budget, and
+# prefer_free_tier_if_possible: true. This tests that the supabase provider
+# variant and Flutter UI pattern are selected for a zero-cost mobile project.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - ui-cross-platform--flutter pattern is selected for dart + mobile
+#   - supabase provider variant is selected (supabase in saas-providers)
+#   - free-tier hosting patterns for render/netlify are eligible
+
+project:
+  name: Flutter Mobile App
+  domain: Cross-platform mobile app using Flutter
+functional:
+  summary: Cross-platform mobile app using Flutter
+constraints:
+  platform: mobile
+  cloud: agnostic
+  language: dart
+  saas-providers:
+    - supabase
+    - render
+    - netlify
+cost:
+  ceilings:
+    monthly_operational_usd: 0
+  preferences:
+    prefer_free_tier_if_possible: true
+nfr:
+  security:
+    auth: jwt
+  data:
+    pii: false

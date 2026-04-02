@@ -1,0 +1,404 @@
+{
+  "id": "deploy-canary",
+  "version": "1.0.0",
+  "title": "Canary Deployment",
+  "description": "Release to small traffic slice; monitor; gradually increase; needs good metrics and routing controls.",
+  "types": [
+    "deploy",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Canary deployment requires running both old and new versions simultaneously, plus infrastructure for traffic routing and monitoring. Min ($100): Small application with basic load balancer (AWS ALB ~$20/month), minimal additional compute capacity for canary instances (~$30-50 for small containers/VMs), basic monitoring tools (CloudWatch/Datadog free tier ~$0-30), and traffic management overhead. Max ($5000): Production-grade setup with advanced service mesh (Istio/Linkerd on managed K8s adds ~$500-1000 in cluster overhead), multiple canary environments across regions, sophisticated observability stack (Datadog/New Relic enterprise ~$500-1500), additional compute for parallel deployments (20-40% extra capacity = $1000-2000), and feature flagging services (LaunchDarkly/Split.io ~$500-1000). The overhead comes from maintaining dual infrastructure during rollout periods and specialized routing/monitoring tooling.",
+      "adoptionCost": "High complexity implementation requiring multiple integrated components. Engineering effort includes: (1) Setting up traffic routing infrastructure with percentage-based splitting (2-3 days, $1000), (2) Implementing comprehensive metrics collection and alerting for automated rollback decisions (2-3 days, $1000), (3) Integrating deployment pipeline with gradual rollout automation (1-2 days, $500), (4) Establishing rollback procedures and testing failure scenarios (1-2 days, $500), (5) Team training on monitoring dashboards and interpreting canary metrics (1 day, $500). Requires DevOps/SRE expertise in service mesh/load balancers, observability platforms, and CI/CD automation. Moderate to steep learning curve for teams new to progressive delivery patterns.",
+      "licenseCost": "Core canary deployment capabilities are available through open-source tools: Kubernetes native deployments, Istio/Linkerd service mesh, Argo Rollouts, Flagger, Spinnaker, and Jenkins/GitLab CI/CD. Cloud provider load balancers (ALB, Azure Application Gateway, GCP Load Balancer) include traffic splitting in their standard pricing without separate licensing. While commercial options exist (LaunchDarkly, Harness, Split.io), the pattern itself can be fully implemented with free/open-source tooling. Teams may choose commercial observability platforms (Datadog, New Relic) but these are operational costs, not pattern-specific licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "progressive-delivery",
+      "confidence": "high",
+      "reasoning": "Canary deployment is a core progressive delivery technique that enables gradual rollout of changes to production, making this capability directly provided by the pattern."
+    },
+    {
+      "capability": "risk-reduction",
+      "confidence": "high",
+      "reasoning": "By releasing to a small traffic slice first and monitoring before full rollout, this pattern inherently reduces deployment risk through early detection of issues."
+    },
+    {
+      "capability": "automated-rollback",
+      "confidence": "high",
+      "reasoning": "Canary deployments typically include automatic rollback capabilities when metrics indicate problems with the canary version, enabling rapid recovery from failed deployments."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "observability-baseline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Canary deployments require robust monitoring and metrics to compare canary performance against baseline and make rollout/rollback decisions based on data."
+    },
+    {
+      "capability": "traffic-management",
+      "confidence": "high",
+      "reasoning": "Canary deployments fundamentally require the ability to route specific percentages of traffic to different deployment versions to control the gradual rollout process.",
+      "optional": true
+    },
+    {
+      "capability": "health-check",
+      "confidence": "high",
+      "reasoning": "Pattern needs automated health checks to validate canary deployment health before increasing traffic allocation and to trigger rollback decisions when issues are detected.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "deploy-rolling",
+      "deploy-blue-green"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "deploy",
+    "release",
+    "observability"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.99,
+      "reason": "Canary deployment is only required when availability target is up to 99%."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Canary deployment achieves up to 99.99% availability with progressive rollout and automated rollback."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Canary deployment adds minimal latency overhead (10ms floor) from traffic routing and health checks."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Traffic routing and health check validation introduce at least 50ms p99 latency overhead."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 10,
+      "reason": "Canary deployment supports RTO of at least 10 minutes accounting for gradual rollout and monitoring phases."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Canary deployment handles up to 100k jobs/hour accounting for traffic splitting and monitoring overhead."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 10,
+      "reason": "Canary deployment adds traffic routing, monitoring, and gradual rollout overhead that is not justified at very low traffic volumes."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Canary deployment requires traffic routing capabilities available across all major cloud providers and on-prem."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Canary deployment operates at infrastructure layer and is language-agnostic."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Canary deployment works for platforms that serve continuous requests or process jobs with measurable metrics."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment is compatible with both cached and non-cached architectures."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment works with or without async messaging systems."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment supports both AI inference and non-AI workloads with request-based traffic routing."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment works with both single-tenant and multi-tenant applications."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Batch processing lacks continuous traffic flow required for effective canary monitoring and gradual rollout."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment is compatible with both distributed transaction and non-transactional architectures."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment supports both streaming and non-streaming workloads at deployment layer."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment is agnostic to vector search capabilities in the application."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment works independently of document store usage in the application."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment is compatible with applications using or not using key-value stores."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment operates at deployment layer and is agnostic to graph database usage."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment is compatible with both time-series and non-time-series workloads."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment supports OLTP workloads through gradual traffic shifting with monitoring."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Canary deployment is compatible with both OLAP and non-OLAP analytical workloads."
+    }
+  ],
+  "defaultConfig": {
+    "initial_traffic_percentage": 5,
+    "increment_percentage": 10,
+    "increment_interval_minutes": 15,
+    "monitoring_window_minutes": 10,
+    "rollback_on_error_threshold": 5,
+    "success_criteria": "error_rate_and_latency"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "initial_traffic_percentage": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 50,
+        "description": "Initial percentage of traffic routed to canary version. Lower values (1-5%) reduce blast radius but extend deployment time; higher values (20-50%) speed up rollout but increase risk."
+      },
+      "increment_percentage": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 50,
+        "description": "Traffic percentage increase per promotion step. Smaller increments (5-10%) provide more safety checkpoints; larger increments (25-50%) enable faster full rollout."
+      },
+      "increment_interval_minutes": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 120,
+        "description": "Wait time between traffic increases to observe canary behavior. Longer intervals (30-120 min) allow detection of gradual issues; shorter intervals (5-15 min) enable rapid deployment."
+      },
+      "monitoring_window_minutes": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 60,
+        "description": "Duration to monitor metrics before each promotion decision. Longer windows (30-60 min) catch intermittent issues; shorter windows (5-10 min) accelerate deployment cycles."
+      },
+      "rollback_on_error_threshold": {
+        "type": "number",
+        "minimum": 0.1,
+        "maximum": 10,
+        "description": "Error rate percentage that triggers automatic rollback. Lower thresholds (0.1-1%) maximize reliability; higher thresholds (5-10%) tolerate transient issues."
+      },
+      "success_criteria": {
+        "type": "string",
+        "enum": [
+          "error_rate_only",
+          "error_rate_and_latency",
+          "error_rate_and_latency_and_saturation",
+          "custom_metrics"
+        ],
+        "description": "Metrics evaluated for promotion decisions. error_rate_only: simplest, fastest validation. error_rate_and_latency: catches performance regressions. error_rate_and_latency_and_saturation: comprehensive health check including resource usage. custom_metrics: business-specific KPIs (conversion rate, etc)."
+      }
+    }
+  },
+  "warn_nfr": []
+}

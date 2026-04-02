@@ -1,0 +1,459 @@
+{
+  "id": "async-event-driven",
+  "version": "1.0.0",
+  "title": "Asynchronous Event-Driven Architecture",
+  "description": "Publish/subscribe eventing to decouple producers and consumers; embraces eventual consistency.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Event-driven architecture requires message broker infrastructure. Min ($50): Small workload using AWS SQS/SNS (~1M messages/month, $0.50) + EventBridge ($1) + minimal Lambda executions ($5) + small RDS/DynamoDB for state ($15-30) + monitoring ($10). Max ($5000): Production-grade setup with Amazon MSK/Kafka cluster ($300-800/month), multiple event buses, high-volume message processing (100M+ messages, $50-100), substantial compute for consumers (ECS/Lambda, $1000-2000), event store database ($500-1000), CloudWatch/observability ($200-300), data transfer/egress ($500), plus redundancy across AZs. Azure Event Hubs or GCP Pub/Sub have similar pricing tiers. Costs scale primarily with message volume, retention period, and consumer compute resources.",
+      "adoptionCost": "High complexity pattern requiring significant architectural shifts. Implementation involves: (1) Designing event schemas and contracts (20-40 hours, $1000-2000), (2) Setting up message broker infrastructure with proper topics/subscriptions and error handling (15-25 hours, $750-1250), (3) Refactoring synchronous code to async pub/sub model with idempotency and retry logic (30-50 hours, $1500-2500), (4) Implementing event sourcing/versioning strategies (10-20 hours, $500-1000), (5) Adding observability for distributed tracing and monitoring (15-25 hours, $750-1250). Team needs to learn eventual consistency patterns, message ordering guarantees, and debugging distributed systems. With AI coding assistants reducing boilerplate by 30-40%, estimate totals $3500 (vs $5000+ without AI). Assumes team has basic distributed systems knowledge.",
+      "licenseCost": "Open-source message brokers dominate this space: Apache Kafka, RabbitMQ, NATS are all free. Cloud-managed services (AWS SNS/SQS/EventBridge, Azure Event Hubs/Service Bus, GCP Pub/Sub) operate on pay-per-use with no license fees. Commercial options like Confluent Cloud or Red Hat AMQ have enterprise support contracts ($10k-50k+), but most organizations start with open-source or cloud-native managed services. Pattern itself is license-free; costs are purely infrastructure-based (covered in monthly estimates).",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "temporal-decoupling",
+      "confidence": "strong",
+      "reasoning": "Async event-driven architectures inherently decouple producers and consumers in time - producers don't wait for consumers to process events, and consumers can process events at their own pace. This is a core benefit of the pub/sub pattern."
+    },
+    {
+      "capability": "resilience-to-spikes",
+      "confidence": "medium",
+      "reasoning": "Event-driven systems naturally handle traffic spikes through message buffering in the broker. Consumers process events at sustainable rates while the queue absorbs bursts, preventing system overload."
+    },
+    {
+      "capability": "horizontal-scalability",
+      "confidence": "high",
+      "reasoning": "Event-driven architectures enable independent scaling of producers and consumers. Multiple consumer instances can process events in parallel, and producers can be scaled independently of consumer capacity."
+    },
+    {
+      "capability": "async-processing",
+      "confidence": "high",
+      "reasoning": "This pattern fundamentally enables non-blocking operations where producers emit events and continue without waiting for processing to complete. This is a core characteristic that enables responsiveness and throughput."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "high",
+      "reasoning": "Event-driven architectures embrace eventual consistency as events propagate asynchronously through the system. State changes are reflected across components over time rather than immediately, which is a fundamental characteristic of this pattern."
+    },
+    {
+      "capability": "message-queue",
+      "confidence": "high",
+      "reasoning": "The async event-driven pattern establishes a message broker topology (Kafka, SQS, EventBridge) as its core infrastructure for publisher-subscriber communication."
+    },
+    {
+      "capability": "distributed-system",
+      "confidence": "high",
+      "reasoning": "Event-driven architectures operate across distributed services connected by a message broker."
+    },
+    {
+      "capability": "streaming-platform",
+      "confidence": "high",
+      "reasoning": "This pattern establishes the async messaging/streaming infrastructure (Kafka, RabbitMQ, etc.)."
+    },
+    {
+      "capability": "service-communication",
+      "confidence": "high",
+      "reasoning": "Async event-driven messaging is the primary service-to-service communication mechanism."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "message-queue",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "A message broker (like Kafka, RabbitMQ, or AWS SNS/SQS) is fundamental infrastructure for implementing pub/sub event-driven architecture. It manages event distribution, persistence, and delivery guarantees between producers and consumers."
+    },
+    {
+      "capability": "idempotent-consumption",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Event-driven systems may deliver messages multiple times due to retries, network issues, or broker failures. Consumers must handle duplicate events gracefully through idempotent processing to maintain data consistency in this eventually consistent architecture."
+    },
+    {
+      "capability": "event-ordering",
+      "confidence": "medium",
+      "reasoning": "Implementations must address event ordering requirements and decide whether ordering guarantees are needed per partition, per key, or globally. This is a critical design consideration that affects broker configuration and consumer logic.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "async-event-driven--aws",
+      "async-event-driven--azure",
+      "async-event-driven--gcp"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "integration",
+    "events",
+    "messaging"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Event brokers and async processing introduce additional failure points, limiting achievable availability to four nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Event publishing, broker routing, and async consumption introduce minimum 100ms p95 latency overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Queue backpressure and consumer processing delays result in minimum 1000ms p99 latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Event broker failover and consumer rebalancing require at least 5 minutes for recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Event broker throughput and consumer processing capacity limit peak to 360M jobs per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 5,
+      "reason": "Event-driven architecture adds async overhead (100ms+ latency, message routing, consumer scaling). At very low throughput, simpler synchronous request-response patterns are more appropriate."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both audited and non-audited event flows depending on compliance requirements."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Event-driven systems can implement tenant isolation at any level through topic partitioning and consumer filtering."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven architecture can be configured for GDPR compliance through event retention policies and data deletion workflows."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports HIPAA compliance when using encrypted message brokers and audit trails for event processing."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA requirements can be met through event data governance and consumer access control mechanisms."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance is achievable with proper event audit trails and immutable event logs for financial data."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Async event-driven architecture inherently provides eventual consistency and cannot guarantee read-your-writes semantics."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both durable and non-durable messaging depending on broker configuration and acknowledgment settings."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Event-driven architecture is a universal pattern applicable across all cloud providers and on-premises environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Pattern is language-agnostic as all major languages support event producers and consumers via messaging libraries."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Asynchronous event-driven architecture applies to all platforms that can produce or consume events."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Event-driven architecture fundamentally requires asynchronous messaging infrastructure for event publishing and consumption."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports AI inference workloads as event consumers and is neutral to this feature."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven systems support both single-tenant and multi-tenant architectures through topic and partition isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers can process events individually or in batches depending on workload optimization needs."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both eventual consistency models and distributed transaction coordination via saga patterns."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both real-time event streaming and traditional message queue approaches depending on broker choice."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is neutral to vector search capabilities, which may be used by event consumers for AI workloads."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may use document stores for persistence, but pattern does not require it."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with key-value stores for consumer state management but does not mandate them."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may leverage graph databases for data relationships without constraining the pattern."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with time-series databases for event storage and analytics but does not require them."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven architecture supports both OLTP transactional workloads and non-transactional async processing."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports OLAP analytical workloads through event streaming to data warehouses and analytics engines."
+    }
+  ],
+  "defaultConfig": {
+    "messaging_pattern": "pub_sub",
+    "delivery_guarantee": "at_least_once",
+    "message_ordering": "unordered",
+    "consumer_model": "push",
+    "event_retention": "7_days"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "messaging_pattern": {
+        "type": "string",
+        "enum": [
+          "pub_sub",
+          "event_streaming",
+          "message_queue"
+        ],
+        "description": "Pub/sub for fan-out to multiple consumers, event streaming for ordered log-based processing (Kafka-style), message queue for point-to-point work distribution"
+      },
+      "delivery_guarantee": {
+        "type": "string",
+        "enum": [
+          "at_most_once",
+          "at_least_once",
+          "exactly_once"
+        ],
+        "description": "At-most-once is fastest but may lose messages, at-least-once requires idempotent consumers, exactly-once has highest overhead but guarantees no duplicates"
+      },
+      "message_ordering": {
+        "type": "string",
+        "enum": [
+          "unordered",
+          "partition_ordered",
+          "global_ordered"
+        ],
+        "description": "Unordered maximizes throughput and parallelism, partition-ordered maintains order within a key/partition, global-ordered serializes all messages (lowest throughput)"
+      },
+      "consumer_model": {
+        "type": "string",
+        "enum": [
+          "push",
+          "pull"
+        ],
+        "description": "Push model delivers messages to consumers automatically (simpler but less control), pull model lets consumers fetch at their own pace (better backpressure handling)"
+      },
+      "event_retention": {
+        "type": "string",
+        "enum": [
+          "1_day",
+          "7_days",
+          "30_days",
+          "indefinite"
+        ],
+        "description": "How long events are stored before deletion. Longer retention enables replay and late-joining consumers but increases storage costs"
+      }
+    }
+  },
+  "warn_nfr": []
+}

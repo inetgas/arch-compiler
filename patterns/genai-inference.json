@@ -1,0 +1,274 @@
+{
+  "id": "genai-inference",
+  "version": "1.0.0",
+  "title": "GenAI Inference API (Generic)",
+  "description": "Integrate with a third-party GenAI inference API (LLM, image/video generation, embeddings) rather than hosting models directly. Abstracts provider choice behind a common interface; select a provider variant for latency, cost, and capability trade-offs.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "fal",
+      "replicate",
+      "huggingface",
+      "openai"
+    ],
+    "costNotes": "Choose provider based on model availability, pricing, latency requirements, and free tier needs. Implement usage monitoring and caching to control costs.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents free tier usage (e.g., HuggingFace Inference API free tier, Replicate small quotas). Low usage scenarios ($10-100/mo) cover ~100-1000 API calls for text generation or ~50-500 image generations. Medium usage ($100-1000/mo) represents production applications with moderate traffic: ~10K-100K text API calls or ~1K-10K image generations. Max $5000 represents high-volume production usage: ~500K+ LLM API calls, ~50K+ image generations, or intensive fine-tuning workloads. Actual costs highly dependent on: model complexity (GPT-4 vs GPT-3.5), output length, image resolution, and provider pricing (OpenAI $0.01-0.12/1K tokens, Replicate $0.0002-0.02/second, Fal $0.001-0.10/generation).",
+      "adoptionCost": "Medium-low complexity integration. Most GenAI APIs provide REST endpoints with good SDKs (Python, Node.js, etc.), making basic integration straightforward (2-5 days). However, production-ready implementation requires: error handling and retry logic (1-2 days), rate limiting and queuing mechanisms (1-2 days), prompt engineering and optimization (2-3 days), cost monitoring and usage tracking (1-2 days), response caching strategies (1-2 days), and multi-provider fallback logic if needed (2-3 days). Total effort: 8-15 developer days at ~$100-150/hour = $6,400-18,000 internal cost, but with AI coding assistants and good documentation, effective implementation time reduces to 5-8 days ($800 represents accelerated adoption cost with modern tooling).",
+      "licenseCost": "No upfront license costs for GenAI inference APIs. All major providers (OpenAI, Anthropic, Replicate, Fal, HuggingFace) operate on pay-as-you-go consumption models without license fees. Free tiers available from HuggingFace (free inference API with rate limits), Replicate (free credits), and occasionally promotional credits from OpenAI/Anthropic. Enterprise agreements may require minimum commitments ($1K-10K/month) but these are consumption commitments, not license fees. Open-source self-hosted alternatives (vLLM, TGI) are also $0 license cost but shift costs to infrastructure.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "genai-inference",
+      "confidence": "strong",
+      "reasoning": "This is the core capability of the pattern - providing access to generative AI inference services. The term is specific and distinguishes from training or fine-tuning capabilities."
+    },
+    {
+      "capability": "image-generation",
+      "confidence": "medium",
+      "reasoning": "A specific type of generative AI capability that this pattern explicitly supports. Appropriate for patterns that handle text-to-image or image-to-image generation."
+    },
+    {
+      "capability": "text-generation",
+      "confidence": "medium",
+      "reasoning": "Another specific generative AI capability for LLM inference and text generation. This is a common use case for GenAI inference APIs and semantically appropriate for this pattern."
+    },
+    {
+      "capability": "audio-generation",
+      "confidence": "medium",
+      "reasoning": "Many GenAI providers offer audio generation capabilities (text-to-speech, music generation), making this a relevant modality for the generic inference pattern."
+    },
+    {
+      "capability": "multimodal-generation",
+      "confidence": "medium",
+      "reasoning": "Modern GenAI APIs increasingly support multimodal inputs and outputs (e.g., vision+language models), representing an important capability category for this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "http-client",
+      "confidence": "high",
+      "reasoning": "GenAI inference APIs are typically RESTful HTTP endpoints, so an HTTP client is needed to make requests to these services.",
+      "optional": true
+    },
+    {
+      "capability": "secrets-management",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Essential for securely storing and accessing API keys, authentication tokens, and credentials required to authenticate with GenAI provider APIs. This is a critical security requirement."
+    },
+    {
+      "capability": "rate-limiting",
+      "confidence": "high",
+      "reasoning": "GenAI APIs typically have strict rate limits and quota management requirements. Implementing rate limiting is essential to avoid service disruptions and manage costs effectively.",
+      "optional": true
+    },
+    {
+      "capability": "api-key-authentication",
+      "confidence": "high",
+      "reasoning": "Most GenAI providers use API key-based authentication as their primary auth mechanism. This capability is required to properly authenticate requests to these services.",
+      "optional": true
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "high",
+      "reasoning": "GenAI inference can have variable latency, occasional timeouts, and transient failures. Retry logic with exponential backoff is essential for building resilient integrations.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ai",
+    "genai",
+    "inference",
+    "saas",
+    "api"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Generic pattern for public SaaS providers."
+  },
+  "defaultConfig": {
+    "model_provider": "openai",
+    "model_type": "text-generation",
+    "temperature": 0.7,
+    "max_tokens": 2048,
+    "streaming": false,
+    "service_auth_method": "api_key"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "model_provider": {
+        "type": "string",
+        "enum": [
+          "openai",
+          "anthropic",
+          "huggingface",
+          "replicate",
+          "fal"
+        ],
+        "description": "AI model provider - OpenAI (GPT-4, DALL-E), Anthropic (Claude), HuggingFace (open models), Replicate (community models), Fal (fast inference)"
+      },
+      "model_type": {
+        "type": "string",
+        "enum": [
+          "text-generation",
+          "image-generation",
+          "text-to-image",
+          "embeddings",
+          "multimodal"
+        ],
+        "description": "Type of generative AI task - text-generation (LLMs), image-generation (DALL-E, Stable Diffusion), text-to-image, embeddings (vector representations), multimodal (vision+text)"
+      },
+      "temperature": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 2,
+        "description": "Sampling temperature controlling randomness - 0 for deterministic/factual outputs, 0.7 for balanced creativity, 1.5-2 for highly creative/diverse outputs"
+      },
+      "max_tokens": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100000,
+        "description": "Maximum tokens in model response - affects cost and response length. Typical: 512 (short), 2048 (medium), 8192+ (long-form content)"
+      },
+      "streaming": {
+        "type": "boolean",
+        "description": "Enable streaming responses for real-time token-by-token output (better UX for chat) vs waiting for complete response (simpler implementation)"
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "api_key"
+        ],
+        "description": "Service credential method used to authenticate to the LLM provider API. Always api_key \u2014 stored in environment variable, never in code."
+      }
+    }
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Generic LLM inference pattern cannot guarantee HIPAA compliance without a specific provider BAA; use a HIPAA-eligible provider explicitly."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "GenAI inference APIs are third-party SaaS services typically offering up to 99.9% availability SLAs."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "GenAI inference involves complex model computations requiring at least 500ms p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "P99 latencies for GenAI inference include model queue time and cold starts requiring at least 1000ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Multi-region GenAI API patterns with automatic failover achieve RTO of at least 1 minute. Although vendors like Fal Serverless platforms provide immediate automatic recovery through horizontal scaling and job redistribution."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000000,
+      "reason": "Enterprise GenAI API tiers typically support up to 10K requests/second (36M jobs/hour) with rate limiting. Although vendors like Fal Serverless GenAI can elastically scale to handle up to 100M jobs/hour."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically provides GenAI inference capabilities and requires this feature flag to be enabled."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "GenAI inference APIs are cloud-agnostic SaaS services accessible from any cloud provider or on-premises environment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "GenAI inference APIs are language-agnostic services accessed via HTTP REST APIs from any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "GenAI inference APIs are platform-agnostic cloud services callable from any platform type."
+    }
+  ],
+  "warn_nfr": []
+}

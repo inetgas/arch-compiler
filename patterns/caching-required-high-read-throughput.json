@@ -1,0 +1,392 @@
+{
+  "id": "caching-required-high-read-throughput",
+  "version": "1.0.0",
+  "title": "Caching Required: High Read Throughput",
+  "description": "Policy pattern that enforces caching when read QPS reaches 200+ req/s \u2014 the threshold at which a typical managed database instance begins saturating under direct query load.",
+  "types": [
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 0.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 99999,
+    "costNotes": "Meta-policy pattern with no direct cost. Actual caching infrastructure costs are accounted for in the cache strategy pattern selected downstream (cache-aside, write-through-cache).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero cost \u2014 meta-policy pattern only. Caching infrastructure costs are in cache-aside, write-through-cache, and write-back-cache patterns.",
+      "adoptionCost": "Zero adoption cost \u2014 this pattern auto-detects QPS requirements from the spec and enforces caching as a hard compilation requirement.",
+      "licenseCost": "No license cost \u2014 policy enforcement pattern only.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "caching-requirement-enforcement",
+      "confidence": "high",
+      "reasoning": "Detects when read throughput exceeds the threshold where caching is required to protect the backing database, and enforces /constraints/features/caching: true as a hard compilation gate."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "key-value-store",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "At 200+ read QPS, a cache layer is required to prevent database overload. The specific cache implementation is determined by the cache strategy pattern selected after caching is enabled."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cache",
+    "throughput",
+    "performance",
+    "meta-policy"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural enforcement pattern applicable to any high-read-throughput system"
+  },
+  "defaultConfig": {},
+  "supports_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 200,
+      "reason": "Pattern activates when read QPS reaches 200+ req/s \u2014 the threshold at which direct database queries typically begin saturating without a caching layer."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Pattern is compatible with any authentication mechanism; cache key design handles auth context."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Caching supports all tenant isolation strategies through tenant-scoped cache key namespacing."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both PII and non-PII workloads; PII requires cache encryption and appropriate TTL policies."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when cache invalidation covers right-to-be-forgotten requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when cache stores use encryption at rest and in transit."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when cache invalidation handles data deletion requests."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX; database remains the authoritative audit trail."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Consistency enforcement is delegated to the downstream cache strategy pattern (cache-aside requires needsReadYourWrites: false; write-through supports either)."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability enforcement is delegated to the downstream cache strategy pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Pattern is cloud-agnostic; caching infrastructure exists on all major clouds and on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Pattern is language-agnostic; cache client libraries exist for all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "High read QPS can occur on any platform type; caching enforcement is platform-agnostic."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching is independent of async messaging infrastructure."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching is beneficial for caching AI inference results but not limited to AI workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Caching supports both single-tenant and multi-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "High read QPS can occur in both real-time and batch-style read workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching is compatible with distributed transaction systems."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "High read QPS occurs in both streaming and non-streaming workloads."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching can cache vector search results; pattern is not limited to vector workloads."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching works with document stores as the backing database."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching works with key-value stores as the backing database."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching can cache graph query results."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching can cache time-series aggregations or recent data points."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "High read QPS occurs in both OLTP and non-OLTP workloads."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read caching can cache OLAP query results to reduce analytical query load."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/caching",
+      "op": "==",
+      "value": true,
+      "reason": "At 200+ read QPS, caching is mandatory to prevent database overload. Set constraints.features.caching: true"
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Caching improves availability by reducing DB load, but the combined cache+DB stack is bounded at four nines without multi-region active-active infrastructure."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Caching adds a network hop; p95 floor is ~1ms for in-memory cache hits."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Cache misses fall back to the database, adding tail latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Cache failures trigger immediate fallback to database; near-zero RTO is achievable."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Cache is ephemeral; database is the source of truth. RPO = 0 is achievable."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000000,
+      "reason": "Caching infrastructure supports up to 1M req/s (3.6B/hour) with a properly sized cache cluster."
+    }
+  ],
+  "warn_nfr": []
+}

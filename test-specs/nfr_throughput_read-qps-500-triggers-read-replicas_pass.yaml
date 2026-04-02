@@ -1,0 +1,35 @@
+# NFR Throughput - Read QPS 500 Triggers Read Replicas
+#
+# API with 500 peak read QPS (the activation threshold for db-read-replicas)
+# and oltp_workload enabled. At this scale a single primary database can no
+# longer absorb all read traffic, so read replicas are required.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - db-read-replicas IS selected (peak_query_per_second_read >= 500)
+#   - caching-required-high-read-throughput IS also selected (QPS >= 200)
+
+project:
+  name: High-Traffic Catalog API
+  domain: ecommerce
+functional:
+  summary: Product search API with 500 peak read QPS requiring read replicas
+constraints:
+  platform: api
+  cloud: aws
+  language: java
+  features:
+    caching: true
+    oltp_workload: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 50
+    p99Milliseconds: 150
+  throughput:
+    peak_query_per_second_read: 500
+    peak_query_per_second_write: 50
+cost:
+  ceilings:
+    monthly_operational_usd: 3000

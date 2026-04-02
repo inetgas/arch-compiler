@@ -1,0 +1,482 @@
+{
+  "id": "hosting-managed-paas--gcp",
+  "version": "1.0.0",
+  "title": "Managed Web/API Hosting on Google Cloud Run",
+  "description": "Deploy APIs and background workers on Google Cloud Run with automatic scaling from zero, container-based deployments, and pay-per-request billing. No persistent servers to manage; each request spins up a container instance and scales to zero when idle.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 50.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 2M requests/month, 360K GB-seconds, 180K vCPU-seconds. Cloud Run's pay-per-use model is cost-effective for variable workloads; scales to zero when idle.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($0): Workloads staying within free tier (2M requests/month, 360K GB-seconds, 180K vCPU-seconds) - typical for side projects, low-traffic APIs, or development environments. Max ($50): Small production API with ~5-10M requests/month, moderate response times (~500ms avg), and some background processing. Calculation: ~3M additional requests beyond free tier ($0.40/million) = $1.20, plus ~500K GB-seconds compute ($0.00002400/GB-sec) = ~$12, plus vCPU time and networking = $35-50 total. High-traffic production workloads could exceed this significantly, but would typically require architectural optimization (caching, CDN) before costs escalate.",
+      "adoptionCost": "Moderate complexity due to containerization requirement. Breakdown: (1) Docker/container learning curve for teams unfamiliar with containerization: 8-16 hours; (2) Adapting existing applications to stateless, container-ready architecture: 16-24 hours; (3) Setting up CI/CD pipelines with Cloud Build or GitHub Actions: 8-12 hours; (4) Configuring IAM, networking, and service accounts: 4-8 hours; (5) Testing, monitoring setup (Cloud Monitoring), and documentation: 8-12 hours. Total: 44-72 hours at $100-150/hour blended rate with AI assistance reducing time by ~30%. While Cloud Run itself is straightforward, the containerization paradigm shift represents the primary adoption barrier for traditional deployment teams.",
+      "licenseCost": "Google Cloud Run has no platform licensing fees or subscription costs. Pay-as-you-go pricing model charges only for actual compute resources consumed (CPU, memory, requests, networking). No upfront costs, no minimum fees, no seat licenses. Free tier is automatically applied to all GCP accounts. Additional services (Cloud Build for CI/CD, Artifact Registry for container storage, Cloud Monitoring) may have separate costs but have their own free tiers and are not mandatory for basic Cloud Run usage.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "Cloud Run is specifically designed to host containerized APIs and web services with managed infrastructure, making this capability semantically correct and appropriately specific."
+    },
+    {
+      "capability": "serverless-compute",
+      "confidence": "high",
+      "reasoning": "Cloud Run provides serverless compute capabilities with pay-per-use billing and automatic resource management, which is a fundamental characteristic of the platform."
+    },
+    {
+      "capability": "container-hosting",
+      "confidence": "high",
+      "reasoning": "Cloud Run hosts containerized applications, which is a distinct capability from generic API hosting that allows patterns requiring container-based deployments to discover this option."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "Cloud Run automatically scales instances based on incoming requests, which is a core platform feature that reduces operational overhead."
+    },
+    {
+      "capability": "scale-to-zero",
+      "confidence": "high",
+      "reasoning": "The ability to scale to zero instances reduces costs during idle periods and is a distinctive capability of Cloud Run that differentiates it from always-on hosting solutions."
+    },
+    {
+      "capability": "http-endpoint",
+      "confidence": "high",
+      "reasoning": "Cloud Run exposes services via HTTP/HTTPS endpoints, providing accessible web interfaces for deployed applications and APIs."
+    },
+    {
+      "capability": "background-job-processing",
+      "confidence": "high",
+      "reasoning": "Cloud Run supports background workers and async job processing as mentioned in the pattern description, not just synchronous API requests."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "container-registry",
+      "confidence": "high",
+      "reasoning": "Cloud Run requires container images to be stored in a registry (GCR or Artifact Registry), which is a prerequisite for deployment.",
+      "optional": false
+    },
+    {
+      "capability": "containerized-application",
+      "confidence": "high",
+      "reasoning": "The application must be packaged as a container image, which is a fundamental requirement that patterns using Cloud Run must satisfy.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "gcp",
+    "api-hosting",
+    "cloud-run",
+    "serverless"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Google Cloud Run is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9995,
+      "reason": "Cloud Run standard tier supports up to 99.95% availability with regional deployment and automatic health checks."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Managed PaaS platforms introduce network routing and container startup overhead that requires minimum 100ms p95 latency tolerance."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Tail latencies on shared infrastructure with potential cold starts require minimum 200ms p99 latency tolerance."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Cloud Run automatic health checks detect failures and restart containers within 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Free/low-cost tiers have CPU, memory, and concurrency limits that constrain throughput to approximately 10,000 jobs per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Managed free/low-cost PaaS tiers have request concurrency and CPU quotas limiting read query throughput to approximately 1000 QPS."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Write operations on managed PaaS typically consume more resources than reads, constraining write throughput to approximately 500 QPS on free/low-cost tiers."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Cloud Run supports all authentication mechanisms via application-level implementation or Cloud Run IAM integration."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR compliance is achievable through GCP data residency controls and application-level privacy implementations."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compliance is supported via GCP HIPAA-compliant infrastructure when BAA is signed and proper controls are implemented."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compliance is achievable through application-level data privacy controls and GCP infrastructure capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance is supported through GCP audit logging, access controls, and change management capabilities."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "gcp",
+      "reason": "Google Cloud Run is a GCP-specific managed service and cannot run on other cloud providers."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Cloud Run is container-based and supports any language that can be packaged in a Docker container."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Cloud Run hosts backend services including HTTP-based APIs, web applications, and background workers triggered by events."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run supports applications with or without caching via external services like Cloud Memorystore."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run can process async messages via Pub/Sub triggers or operate without messaging infrastructure."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run can host AI inference workloads or standard APIs without AI capabilities."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run supports both single-tenant and multi-tenant applications with appropriate isolation implemented at the application layer."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Free/low-cost PaaS tiers have runtime limits and auto-scaling that make long-running batch jobs incompatible with this pattern."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Distributed transactions require stable, always-available infrastructure incompatible with auto-scaling and cold starts."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Real-time streaming requires always-on infrastructure incompatible with auto-sleep and cold start behavior of free/low-cost tiers."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run can integrate with external vector databases like Vertex AI Matching Engine or operate without vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run can connect to document stores like Firestore or operate without document database requirements."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run can integrate with key-value stores like Cloud Memorystore or function without key-value storage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run can connect to external graph databases or operate without graph query capabilities."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run can integrate with time-series databases like Cloud Bigtable or function without time-series data requirements."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run supports OLTP workloads via Cloud SQL connections or operates without transactional database requirements."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run can serve OLAP query APIs connecting to BigQuery or function without analytical workload requirements."
+    }
+  ],
+  "defaultConfig": {
+    "cpu_allocation": "request-only",
+    "min_instances": 0,
+    "max_instances": 100,
+    "memory": "512Mi",
+    "cpu": "1",
+    "concurrency": 80,
+    "timeout": 300,
+    "ingress": "all",
+    "execution_environment": "gen2"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "cpu_allocation": {
+        "type": "string",
+        "enum": [
+          "request-only",
+          "always-on"
+        ],
+        "description": "CPU allocation mode. 'request-only' (default) allocates CPU only during request processing for cost savings. 'always-on' keeps CPU allocated even when idle, needed for background processing but costs more."
+      },
+      "min_instances": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Minimum number of instances to keep warm. 0 scales to zero for maximum cost savings but adds cold start latency. Higher values reduce latency but increase baseline costs."
+      },
+      "max_instances": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000,
+        "description": "Maximum number of instances for autoscaling. Limits concurrent scale-out to control costs and prevent runaway scaling."
+      },
+      "memory": {
+        "type": "string",
+        "enum": [
+          "128Mi",
+          "256Mi",
+          "512Mi",
+          "1Gi",
+          "2Gi",
+          "4Gi",
+          "8Gi"
+        ],
+        "description": "Memory allocation per instance. Higher memory increases cost but improves performance for memory-intensive workloads. Pricing scales with memory allocation."
+      },
+      "cpu": {
+        "type": "string",
+        "enum": [
+          "1",
+          "2",
+          "4",
+          "8"
+        ],
+        "description": "Number of vCPUs per instance. More CPUs improve compute performance but increase costs proportionally."
+      },
+      "concurrency": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000,
+        "description": "Maximum concurrent requests per instance. Higher values reduce instance count and costs but may impact response time. Lower values improve isolation and predictability."
+      },
+      "timeout": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3600,
+        "description": "Request timeout in seconds. Maximum 3600s (1 hour). Longer timeouts support long-running operations but tie up resources."
+      },
+      "ingress": {
+        "type": "string",
+        "enum": [
+          "all",
+          "internal",
+          "internal-and-cloud-load-balancing"
+        ],
+        "description": "Ingress control. 'all' allows public internet access. 'internal' restricts to VPC only. 'internal-and-cloud-load-balancing' allows VPC and Google Cloud Load Balancer for advanced routing."
+      },
+      "execution_environment": {
+        "type": "string",
+        "enum": [
+          "gen1",
+          "gen2"
+        ],
+        "description": "Execution environment generation. Gen2 (recommended) offers better performance, full Linux compatibility, and network file system support. Gen1 is legacy."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 500,
+      "reason": "Free/low-cost Cloud Run tiers are cost-optimized for moderate traffic; sustained high QPS (>500) may trigger significant costs.",
+      "message": "hosting-managed-paas--gcp: peak read QPS is {actual} req/s (>500). Free/low-cost tiers may incur substantial costs at sustained high throughput."
+    }
+  ]
+}

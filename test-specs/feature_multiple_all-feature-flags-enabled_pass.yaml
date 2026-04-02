@@ -1,0 +1,33 @@
+# Feature - All Feature Flags Enabled
+#
+# An API spec with every known feature flag set to true: caching, async_messaging,
+# ai_inference, multi_tenancy, distributed_transactions, real_time_streaming,
+# messaging_delivery_guarantee (at-least-once), and key_value_store. Ten tenants
+# with schema-per-tenant isolation. Tests that the compiler handles maximum
+# feature combinatorics without errors or unexpected conflicts.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns for all enabled features are selected
+#   - no unexpected conflicts between simultaneously enabled features
+
+constraints:
+  platform: api
+  tenantCount: 10
+  features:
+    caching: true
+    async_messaging: true
+    ai_inference: true
+    multi_tenancy: true
+    distributed_transactions: true
+    real_time_streaming: true
+    messaging_delivery_guarantee: at-least-once
+    key_value_store: true
+project:
+  name: All Features Enabled
+  domain: test
+functional:
+  summary: 'Test scenario: All Features Enabled'
+nfr:
+  security:
+    tenant_isolation: schema-per-tenant

@@ -1,0 +1,27 @@
+# Tenancy - Conflicting Isolation Modes Set Together
+#
+# A spec with multi_tenancy: true, per-tenant-db isolation, an extreme 99.99%
+# availability target, and RPO of 0 minutes. The tenancy patterns for per-tenant-db
+# reject specifications with 99.99% availability and zero RPO because they cannot
+# satisfy these requirements simultaneously, causing compilation to fail.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - tenancy pattern rejects: 99.99% availability and rpo_minutes: 0 are incompatible
+#     with per-tenant-db isolation mode
+#   - compiler reports the conflicting requirement as the rejection reason
+
+constraints:
+  features:
+    multi_tenancy: true
+nfr:
+  availability:
+    target: 0.9999 # tenancy-* pattern will reject
+  rpo_minutes: 0 # tenancy-* pattern will reject
+  security:
+    tenant_isolation: per-tenant-db
+project:
+  name: Multi-Tenancy + Tenant Isolation + High Requirement that tenancy-* patterns will reject
+  domain: test
+functional:
+  summary: 'Test scenario: Multi-Tenancy + Tenant Isolation'

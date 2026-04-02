@@ -1,0 +1,372 @@
+{
+  "id": "sync-request-reply-grpc",
+  "version": "1.0.0",
+  "title": "Synchronous Request/Reply (gRPC)",
+  "description": "Binary RPC with strong contracts; efficient; good for internal service calls.",
+  "types": [
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "gRPC is a communication protocol/framework pattern, not infrastructure. The actual monthly costs depend on the underlying compute resources (containers, VMs, serverless) where gRPC services run, not the protocol itself. gRPC binary serialization may slightly reduce bandwidth costs compared to JSON REST APIs (5-10% savings), but this is negligible and captured in the compute layer costs. Network egress costs apply equally whether using gRPC or REST.",
+      "adoptionCost": "Medium-high complexity adoption: (1) Learning curve - developers need to understand Protocol Buffers, .proto schema definition, code generation tooling, and gRPC-specific concepts (streaming, interceptors, deadlines); (2) Tooling setup - configuring protoc compiler, language-specific plugins, CI/CD integration for proto compilation; (3) Migration effort - if replacing REST APIs, requires rewriting service contracts, client SDKs, and potentially load balancer configuration (gRPC uses HTTP/2); (4) Testing infrastructure - tools like grpcurl, BloomRPC for testing; (5) Monitoring/observability - integrating gRPC-specific metrics and tracing. Estimate 2-3 weeks for team of 3-4 developers with AI coding assistance reducing manual proto writing and boilerplate by 30-40%.",
+      "licenseCost": "gRPC is fully open source (Apache 2.0 license) with no commercial licensing requirements. Protocol Buffers (protobuf) is also open source (BSD license). All tooling including protoc compiler, language bindings (Go, Java, Python, C++, Node.js, etc.), and ecosystem tools are free. No vendor lock-in or enterprise licensing tiers exist. Organizations may optionally purchase commercial support contracts from third parties, but core technology is perpetually free.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "grpc-api",
+      "confidence": "high",
+      "reasoning": "This pattern specifically implements gRPC-based request/reply communication with Protocol Buffers, providing strongly-typed service contracts that distinguish it from other RPC mechanisms."
+    },
+    {
+      "capability": "efficient-serialization",
+      "confidence": "strong",
+      "reasoning": "gRPC uses Protocol Buffers for binary serialization, which is inherently efficient compared to text-based formats and is a core feature of the pattern."
+    },
+    {
+      "capability": "strong-typing",
+      "confidence": "high",
+      "reasoning": "gRPC with Protocol Buffers enforces strong contracts and type safety through .proto definitions, ensuring compile-time and runtime type checking across service boundaries."
+    },
+    {
+      "capability": "http2-transport",
+      "confidence": "high",
+      "reasoning": "gRPC is built on HTTP/2, which provides multiplexing, streaming, and connection efficiency benefits that are fundamental to the pattern's performance characteristics."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "proto-schema-management",
+      "confidence": "high",
+      "reasoning": "The pattern requires governance of .proto files to maintain backward compatibility, coordinate schema evolution, and prevent breaking changes across service boundaries in distributed systems.",
+      "optional": true
+    },
+    {
+      "capability": "service-discovery",
+      "confidence": "high",
+      "reasoning": "For internal service-to-service gRPC calls, clients need to discover and locate service endpoints, which is a critical requirement for the pattern to function in distributed environments.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "integration",
+    "grpc",
+    "protobuf"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "gRPC introduces network serialization and HTTP/2 overhead with typical p95 latency floor of 50ms for service-to-service calls."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Tail latency in synchronous RPC includes network variance and connection pooling effects with p99 floor of 200ms."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Synchronous coupling limits maximum availability to four nines due to direct service dependency chains."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 1,
+      "reason": "gRPC introduces operational overhead (proto schema management, HTTP/2 infrastructure, code generation) that is not justified for very low throughput scenarios."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "gRPC supports all authentication mechanisms via metadata headers and interceptor patterns."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "Synchronous request-reply inherently provides read-your-writes consistency for direct database operations."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "gRPC is cloud-agnostic and runs on any infrastructure supporting HTTP/2 connectivity."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "cpp",
+        "dart",
+        "swift",
+        "objective-c",
+        "c"
+      ],
+      "reason": "gRPC has official implementations in most major languages with protobuf code generation support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "api",
+        "web",
+        "mobile",
+        "desktop",
+        "worker",
+        "ml-inference",
+        "iot"
+      ],
+      "reason": "gRPC supports service-to-service communication across all platforms with HTTP/2 capability."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": false,
+      "reason": "Synchronous request-reply pattern is not designed for asynchronous messaging workflows."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC is commonly used for ML inference APIs due to efficient binary serialization and low latency."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Synchronous RPC is not optimized for batch processing which requires asynchronous patterns."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC can coordinate distributed transactions via synchronous calls across services with proper orchestration."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC natively supports bidirectional streaming RPCs for real-time data flows and server push."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC can serve as API layer for vector search services with efficient binary payload transmission."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC is transport-agnostic to backend storage type including document databases."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC can provide API layer over key-value stores with low-latency binary protocol."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC is compatible as API transport for graph database queries and traversals."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC can serve time-series data APIs with efficient streaming for continuous query results."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Synchronous gRPC is well-suited for OLTP workloads requiring low-latency transactional operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "gRPC can handle OLAP queries though analytical workloads typically prefer batch processing patterns."
+    }
+  ],
+  "defaultConfig": {
+    "serialization_format": "protobuf",
+    "communication_pattern": "unary",
+    "load_balancing": "client-side",
+    "tls_enabled": true,
+    "deadline_timeout_ms": 5000,
+    "retry_policy": "exponential-backoff"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "serialization_format": {
+        "type": "string",
+        "enum": [
+          "protobuf",
+          "json"
+        ],
+        "description": "Serialization format for gRPC messages. Protobuf (default) provides compact binary encoding and strong typing. JSON is human-readable but less efficient, useful for debugging or compatibility."
+      },
+      "communication_pattern": {
+        "type": "string",
+        "enum": [
+          "unary",
+          "server-streaming",
+          "client-streaming",
+          "bidirectional-streaming"
+        ],
+        "description": "RPC communication pattern. Unary: single request/response. Server-streaming: single request, stream of responses. Client-streaming: stream of requests, single response. Bidirectional: both stream."
+      },
+      "load_balancing": {
+        "type": "string",
+        "enum": [
+          "client-side",
+          "proxy-based",
+          "lookaside"
+        ],
+        "description": "Load balancing strategy. Client-side: client maintains connections to multiple servers. Proxy-based: external load balancer (L4/L7). Lookaside: separate load balancer service provides server addresses."
+      },
+      "tls_enabled": {
+        "type": "boolean",
+        "description": "Enable TLS encryption for secure communication. Recommended for production, especially for external or cross-network calls. May add latency overhead."
+      },
+      "deadline_timeout_ms": {
+        "type": "integer",
+        "minimum": 100,
+        "maximum": 300000,
+        "description": "Request deadline timeout in milliseconds. Prevents indefinite waiting. Lower values fail fast but may timeout legitimate slow operations. Higher values are more tolerant but can cause resource exhaustion."
+      },
+      "retry_policy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "exponential-backoff",
+          "fixed-interval"
+        ],
+        "description": "Retry strategy for failed requests. None: no retries. Exponential-backoff: increasing delays between retries, prevents overwhelming failing services. Fixed-interval: consistent retry timing."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,20 @@
+# Platform - Multi-Platform API and Web Combined
+#
+# A spec with platform set to agnostic, representing a project that spans
+# multiple platform types (API backend + web frontend). This tests that the
+# compiler handles the agnostic platform value and selects patterns
+# appropriate for multi-platform or full-stack deployments.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns compatible with agnostic platform are selected
+#   - no platform-specific filtering reduces the selection inappropriately
+
+constraints:
+  platform: agnostic
+project:
+  name: Multi-Platform (API + Web)
+  domain: test
+functional:
+  summary: 'Test scenario: Multi-Platform (API + Web)'
+nfr: {}

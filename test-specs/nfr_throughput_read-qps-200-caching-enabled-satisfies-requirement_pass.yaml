@@ -1,0 +1,35 @@
+# NFR Throughput - Read QPS 200 With Caching Enabled Satisfies Requirement
+#
+# API with peak read QPS of exactly 200 (the activation threshold for
+# caching-required-high-read-throughput) and caching explicitly enabled.
+# This tests the boundary condition: at >= 200 read QPS the pattern activates,
+# and because caching=true the requires rule is satisfied.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - caching-required-high-read-throughput IS selected (QPS >= 200 threshold met)
+#   - requires rule passes because constraints.features.caching == true
+
+project:
+  name: High Read API
+  domain: ecommerce
+functional:
+  summary: Product catalog API with 200 peak read QPS requiring cache layer
+constraints:
+  platform: api
+  cloud: aws
+  language: typescript
+  features:
+    caching: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 100
+    p99Milliseconds: 250
+  throughput:
+    peak_query_per_second_read: 200
+    peak_query_per_second_write: 20
+cost:
+  ceilings:
+    monthly_operational_usd: 1000

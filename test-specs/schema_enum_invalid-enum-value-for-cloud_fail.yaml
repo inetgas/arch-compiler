@@ -1,0 +1,20 @@
+# Schema Validation - Invalid Enum Value for Cloud/Platform
+#
+# A spec with constraints.platform set to "mobile-app" which is not a valid
+# enum value (the valid values include "mobile" but not "mobile-app"). This
+# tests that the schema validator rejects invalid enum values before the
+# compiler attempts pattern selection.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: "mobile-app" is not a valid platform enum value
+#   - compiler rejects at schema validation stage
+
+constraints:
+  platform: mobile-app
+project:
+  name: Invalid Enum Value
+  domain: test
+functional:
+  summary: 'Test scenario: Invalid Enum Value'
+nfr: {}

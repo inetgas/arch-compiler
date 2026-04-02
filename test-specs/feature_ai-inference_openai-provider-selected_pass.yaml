@@ -1,0 +1,36 @@
+# Feature - AI Inference with OpenAI Provider Selected
+#
+# An AI-powered AWS Python API with ai_inference: true and openai in
+# saas-providers. The use case is a content generation service using OpenAI's
+# GPT models via API. This tests that the genai-inference--openai provider
+# variant is selected when openai is in saas-providers with ai_inference enabled.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - genai-inference--openai IS selected (openai in saas-providers + ai_inference: true)
+#   - generic genai-inference pattern is NOT selected (vendor variant takes precedence)
+#   - cost and rate limiting patterns for LLM APIs are included
+
+project:
+  name: AI Content Generation API
+  domain: ai
+functional:
+  summary: Content generation API backed by OpenAI GPT models
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+  saas-providers:
+    - openai
+  features:
+    ai_inference: true
+nfr:
+  data:
+    pii: false
+  availability:
+    target: 0.99
+  latency:
+    p95Milliseconds: 2000
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

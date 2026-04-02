@@ -1,0 +1,23 @@
+# Security - mTLS Internal CA Selection
+#
+# A spec with nfr.security.auth: mtls. Tests that pki-internal-ca is selected
+# when mTLS is the authentication mechanism. IdP patterns (idp-oidc--*,
+# idp-saml--*) are excluded because they gate on oauth2_oidc or saml.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - pki-internal-ca is selected
+#   - idp-oidc--* and idp-saml--* patterns are NOT selected (wrong auth type)
+
+project:
+  name: mTLS Internal CA
+  domain: test
+functional:
+  summary: 'Test scenario: mTLS with internal certificate authority'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic
+nfr:
+  security:
+    auth: mtls

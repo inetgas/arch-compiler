@@ -1,0 +1,391 @@
+{
+  "id": "sync-request-reply-rest",
+  "version": "1.0.0",
+  "title": "Synchronous Request/Reply (REST)",
+  "description": "Synchronous HTTP APIs; simple integration; needs timeouts/retries/backpressure.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Synchronous Request/Reply (REST) is an architectural communication pattern, not an infrastructure component. It defines how services communicate via HTTP/REST APIs. The actual infrastructure costs (API Gateway, load balancers, compute instances) depend on implementation choices and are accounted for separately in those specific components. The pattern itself has no direct monthly service cost - it's a design approach that can be implemented using free HTTP libraries and frameworks.",
+      "adoptionCost": "Low adoption cost due to widespread familiarity and tooling maturity. Most developers already understand REST principles and HTTP semantics. Implementation involves: (1) Defining API contracts using OpenAPI/Swagger (2-4 hours), (2) Implementing endpoints with standard frameworks like Express.js, Spring Boot, FastAPI, or ASP.NET (4-8 hours), (3) Adding basic timeout/retry logic and error handling (2-4 hours), (4) Setting up basic integration tests (2-4 hours). Total effort: 10-20 hours at $50-100/hour with modern tooling and AI assistance. With code generation tools and AI coding assistants, boilerplate REST API setup is largely automated. The pattern is straightforward with minimal learning curve for teams already doing web development.",
+      "licenseCost": "REST is an architectural style with no licensing cost. All major frameworks and libraries for implementing REST APIs are open source and free: Spring Boot (Apache 2.0), Express.js (MIT), Flask/FastAPI (MIT/BSD), ASP.NET Core (MIT). HTTP client libraries (axios, fetch, requests, HttpClient) are also free. OpenAPI specification and tooling (Swagger) are open source. No proprietary licenses required for standard REST implementations. Commercial API management tools exist (Apigee, MuleSoft) but are not required for the basic pattern and would be separate infrastructure decisions.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "rest-api",
+      "confidence": "high",
+      "reasoning": "This pattern specifically implements synchronous HTTP REST APIs, providing a concrete integration interface with defined endpoints, HTTP methods, and request/response schemas."
+    },
+    {
+      "capability": "api-contracts",
+      "confidence": "medium",
+      "reasoning": "REST APIs inherently provide defined contracts (endpoints, HTTP methods, request/response schemas), making this a valid capability for API consumers to depend on."
+    },
+    {
+      "capability": "synchronous-communication",
+      "confidence": "high",
+      "reasoning": "The synchronous nature is a key characteristic where clients block and wait for responses, distinguishing this from asynchronous messaging patterns."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "timeout-handling",
+      "confidence": "high",
+      "reasoning": "Synchronous REST calls must handle timeouts to prevent indefinite blocking and resource exhaustion when servers are unresponsive.",
+      "optional": false
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "medium",
+      "reasoning": "Network failures and transient errors require retry mechanisms to handle temporary failures gracefully and improve reliability in distributed HTTP communication.",
+      "optional": false
+    },
+    {
+      "capability": "backpressure-handling",
+      "confidence": "medium",
+      "reasoning": "This pattern needs backpressure handling to prevent overwhelming downstream services and manage load effectively, as mentioned in the pattern description.",
+      "optional": false
+    },
+    {
+      "capability": "http-client",
+      "confidence": "high",
+      "reasoning": "REST APIs require HTTP client infrastructure to make requests. This is a fundamental dependency for the pattern to function.",
+      "optional": true
+    },
+    {
+      "capability": "circuit-breaker",
+      "confidence": "medium",
+      "reasoning": "Production resilience requires circuit breakers to prevent cascading failures and allow failing services to recover without being overwhelmed by continuous requests.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "integration",
+    "rest",
+    "api"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Synchronous REST APIs can achieve up to four nines availability with proper load balancing and retry logic."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Synchronous REST has minimum p95 latency of 50ms due to HTTP overhead and TCP handshake."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Synchronous REST has minimum p99 latency of 200ms accounting for network variance and tail latencies."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Very high QPS (>50K) benefits from async patterns to reduce blocking and improve resource efficiency."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Very high QPS (>50K) benefits from async patterns to reduce blocking and improve resource efficiency."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "REST APIs support all standard authentication mechanisms including OAuth2, JWT, API keys, mTLS, SAML, and basic auth."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Synchronous REST APIs are cloud-agnostic and can be deployed on any cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "REST API pattern is language-agnostic as any language with HTTP client/server libraries can implement REST."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "agnostic",
+        "n/a"
+      ],
+      "reason": "REST APIs can be consumed by any platform capable of making HTTP requests including web, mobile, desktop, IoT, and CLI."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": false,
+      "reason": "Synchronous request-reply pattern is not designed for asynchronous messaging workflows."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can expose AI inference endpoints or serve traditional business logic without AI components."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can trigger batch jobs synchronously or asynchronously, or operate without batch processing."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can coordinate distributed transactions via saga patterns or operate with simple single-resource transactions."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can coexist with real-time streaming (WebSockets/SSE) in the same application or operate independently."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can expose vector search endpoints for AI/ML similarity queries or operate without vector capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs work with document-oriented NoSQL databases or any other data store including relational databases."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can use key-value stores for fast lookups or operate with other database types."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can expose graph database queries for relationship-heavy data or use traditional data stores."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can serve time-series data queries and ingestion or operate without time-series requirements."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "REST APIs commonly serve OLTP workloads with transactional consistency but can also serve read-heavy analytical queries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can expose OLAP analytical queries or focus purely on transactional OLTP operations."
+    }
+  ],
+  "defaultConfig": {
+    "timeout_seconds": 30,
+    "retry_strategy": "exponential_backoff",
+    "max_retries": 3,
+    "circuit_breaker_enabled": true,
+    "rate_limiting_strategy": "token_bucket",
+    "idempotency_required": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 300,
+        "description": "Maximum time to wait for a response before timing out. Lower values fail faster but may timeout valid slow requests; higher values are more resilient but hold resources longer."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "fixed_delay",
+          "exponential_backoff",
+          "exponential_backoff_jitter"
+        ],
+        "description": "How to retry failed requests. None = fail immediately, fixed_delay = constant wait between retries, exponential_backoff = increasing delays, exponential_backoff_jitter = exponential with randomization to prevent thundering herd."
+      },
+      "max_retries": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10,
+        "description": "Maximum number of retry attempts for failed requests. Higher values increase resilience but may delay failure detection and increase load on failing services."
+      },
+      "circuit_breaker_enabled": {
+        "type": "boolean",
+        "description": "Enable circuit breaker pattern to prevent cascading failures. When enabled, stops sending requests to failing services temporarily. Recommended for production systems."
+      },
+      "rate_limiting_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "token_bucket",
+          "leaky_bucket",
+          "fixed_window",
+          "sliding_window"
+        ],
+        "description": "Backpressure mechanism to control request rate. Token_bucket allows bursts, leaky_bucket smooths traffic, fixed/sliding_window enforces strict limits per time period."
+      },
+      "idempotency_required": {
+        "type": "boolean",
+        "description": "Whether requests must be idempotent (safe to retry). If true, implement idempotency keys to prevent duplicate operations on retries. Critical for non-idempotent operations like payments."
+      }
+    }
+  },
+  "warn_nfr": []
+}

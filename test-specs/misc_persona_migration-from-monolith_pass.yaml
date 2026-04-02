@@ -1,0 +1,24 @@
+# Misc Persona - Migration from Monolith to Microservices
+#
+# A finance domain spec for migrating a legacy monolith to microservices on
+# Azure using C#. 99.9% availability is required. This tests that the compiler
+# selects patterns appropriate for a brownfield migration scenario including
+# strangler fig, API gateway, and service decomposition patterns.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - Azure-compatible C# patterns are selected
+#   - migration/decomposition patterns are available for the finance domain
+
+project:
+  name: Legacy Migration
+  domain: finance
+functional:
+  summary: Migrating monolith to microservices
+constraints:
+  platform: api
+  cloud: azure
+  language: csharp
+nfr:
+  availability:
+    target: 0.999

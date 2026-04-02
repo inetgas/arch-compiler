@@ -1,0 +1,441 @@
+{
+  "id": "async-fire-and-forget",
+  "version": "1.0.0",
+  "title": "Async Fire-and-Forget Consumer",
+  "description": "At-most-once message delivery with no retries, no deduplication, and no delivery confirmation. Optimized for high-throughput, low-latency scenarios where occasional message loss is acceptable (telemetry, metrics, real-time price feeds, IoT sensor data).",
+  "types": [
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 10.0,
+      "max": 1000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 1000,
+    "costNotes": "Lowest-cost messaging pattern: no deduplication store, no retry state, no DLQ required.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($10): Low-volume telemetry or metrics pipeline using cloud-managed queue (SNS/SQS, Pub/Sub free tier) with serverless consumers (Lambda free tier). Max ($1,000): High-throughput IoT or real-time feed processing with dedicated consumer instances and high-volume cloud queue usage. No deduplication storage cost since at-most-once accepts duplicates/loss without tracking.",
+      "adoptionCost": "Very low complexity: (1) Set up queue/topic with no durability/retention requirements (2-4 hours), (2) Implement simple consumer with no retry or dedup logic (4-8 hours), (3) Basic monitoring for throughput and drop rate (2-4 hours). Total 8-16 hours at $50/hour = $400-800. Simplest of the three delivery guarantee patterns.",
+      "licenseCost": "Open-source message brokers (NATS, UDP-based, Redis Pub/Sub) or cloud-managed queues with standard pricing. No deduplication storage required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "at-most-once-delivery",
+      "confidence": "high",
+      "reasoning": "Core guarantee of this pattern: messages are sent without confirmation or retry, providing at-most-once delivery semantics."
+    },
+    {
+      "capability": "high-throughput-messaging",
+      "confidence": "high",
+      "reasoning": "Absence of deduplication lookups, retry state, and acknowledgement overhead allows much higher throughput than at-least-once or exactly-once patterns."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "message-queue",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Requires a message broker or queue, though lightweight or lossy transports (UDP, Redis Pub/Sub, SNS without SQS) are acceptable."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "queue-consumer-idempotency",
+      "exactly-once-transactional-consumer"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "messaging",
+    "fire-and-forget",
+    "telemetry",
+    "high-throughput"
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/messaging_delivery_guarantee",
+      "op": "==",
+      "value": "at-most-once",
+      "reason": "Pattern is exclusively for at-most-once delivery; using it with at-least-once or exactly-once would silently drop the reliability guarantees those modes require."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Fire-and-forget pattern is cloud-agnostic; works with any queue or pub/sub infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Pattern can be implemented in any language; no library-specific requirements."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-inference",
+        "iot",
+        "cli"
+      ],
+      "reason": "Fire-and-forget is most commonly used in telemetry pipelines, IoT data ingestion, and background workers where loss tolerance exists."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "At-most-once delivery requires async messaging infrastructure. Setting messaging_delivery_guarantee without enabling async_messaging is a logical contradiction."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is independent of caching; no dedup cache required."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both multi-tenant and single-tenant deployments."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Fire-and-forget is compatible with both real-time and batch consumption."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern does not require distributed transactions; compatible with transactional systems that emit fire-and-forget side-channel events."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Fire-and-forget is well-suited to real-time streaming workloads (metrics, telemetry) that tolerate loss."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is agnostic to vector search usage."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is agnostic to document store usage."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "No key-value store required for deduplication; pattern is compatible regardless."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is agnostic to graph database usage."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Fire-and-forget is a natural fit for feeding time-series databases where occasional gaps are tolerable."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with OLTP workloads that emit low-priority async events alongside transactional operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is agnostic to OLAP workload usage."
+    }
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Pattern is compatible with any authentication mechanism supported by the underlying queue infrastructure."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Audit logging is optional; fire-and-forget is commonly used for non-sensitive telemetry where logging every message would be prohibitive."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Pattern is compatible with all tenant isolation models; topic/queue-level isolation satisfies multi-tenancy requirements."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both PII and non-PII data; PII workloads require appropriate queue encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when queue retention and data-subject rights are handled at the infrastructure level."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when queue encryption and access controls are in place, though message loss may be problematic for audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA for non-sensitive async side-channel events."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX workloads should use at-least-once or exactly-once for financial event streams; at-most-once is compatible for non-financial side-channel events only."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern does not provide read-your-writes consistency for message data; compatible with systems that do not require it for async events."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "At-most-once delivery accepts message loss, so the system availability ceiling is lower than retry-based patterns."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Fire-and-forget has minimal latency floor: no dedup lookup, no acknowledgement round-trip. Async enqueue is typically sub-millisecond but network/broker overhead adds ~1ms p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Occasional broker backpressure or network jitter adds ~5ms at p99 even without retry overhead."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Consumer restart recovers quickly since no state (dedup store, retry queues) needs to be rebuilt."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 60,
+      "reason": "At-most-once explicitly accepts in-flight message loss on failure. RPO for message data is unbounded; 60 minutes is a practical minimum acknowledgement of this tradeoff."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000000,
+      "reason": "No deduplication or retry overhead allows throughput ceiling of ~1M messages/second (3.6B/hour) per consumer cluster."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": false,
+      "reason": "Fire-and-forget explicitly accepts in-flight message loss on failure. A spec requiring strict durability is incompatible with at-most-once delivery; use at-least-once or exactly-once instead."
+    }
+  ],
+  "defaultConfig": {
+    "acknowledgement_mode": "none",
+    "retry_attempts": 0,
+    "queue_type": "standard",
+    "producer_timeout_ms": 500,
+    "batch_size": 100
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "acknowledgement_mode": {
+        "type": "string",
+        "enum": [
+          "none",
+          "broker-ack-only"
+        ],
+        "description": "Whether to wait for broker acknowledgement. none: pure fire-and-forget, fastest but highest loss risk. broker-ack-only: waits for broker write confirmation but not consumer processing confirmation; reduces broker-side loss without adding consumer retry logic."
+      },
+      "retry_attempts": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 0,
+        "description": "Must be 0 for at-most-once semantics. Included for clarity; any value above 0 changes the guarantee to at-least-once."
+      },
+      "queue_type": {
+        "type": "string",
+        "enum": [
+          "standard",
+          "lossy-udp",
+          "in-memory"
+        ],
+        "description": "Transport type. standard: cloud queue or broker with at-most-once config (e.g., SNS, Redis Pub/Sub). lossy-udp: UDP-based transport for ultra-low latency telemetry (StatsD, syslog). in-memory: in-process channel for same-process async handoff (highest performance, lost on crash)."
+      },
+      "producer_timeout_ms": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 5000,
+        "description": "How long the producer waits before abandoning a send. 0 = non-blocking (true fire-and-forget). Higher values reduce loss under momentary backpressure at cost of producer latency."
+      },
+      "batch_size": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10000,
+        "description": "Number of messages to batch before sending. Higher values improve throughput but increase loss window on producer crash."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 3600,
+      "reason": "Fire-and-forget adds async infrastructure overhead. At <1 msg/s (3600/hour), simpler synchronous patterns may be more appropriate.",
+      "message": "async-fire-and-forget: peak_jobs_per_hour is {actual} (<3600/hour = <1 msg/s). Async messaging overhead may outweigh benefit for low-volume workloads."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.9999,
+      "reason": "At-most-once delivery accepts message loss; achieving four-nines availability for message delivery is contradictory to the pattern's loss-tolerance model.",
+      "message": "async-fire-and-forget: spec requires availability target of {actual} (\u226599.99%), but at-most-once delivery explicitly accepts message loss. Consider at-least-once or exactly-once patterns for high-availability workloads."
+    }
+  ]
+}

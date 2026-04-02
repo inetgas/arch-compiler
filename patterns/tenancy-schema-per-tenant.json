@@ -1,0 +1,502 @@
+{
+  "id": "tenancy-schema-per-tenant",
+  "version": "1.0.0",
+  "title": "Multi-Tenancy: Shared DB, Schema per Tenant",
+  "description": "Per-tenant schema within shared DB; better isolation than row-level; manageable for moderate tenant counts.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Schema-per-tenant requires a shared database instance with enough capacity to handle multiple schemas. Min ($100): Single RDS/Cloud SQL instance (db.t3.small/db-g1-small) supporting 10-50 tenant schemas with low-moderate traffic (~5-10GB storage, 2vCPU, 4GB RAM). Max ($5000): Production-grade HA database cluster (db.m5.2xlarge or equivalent) with read replicas, automated backups, point-in-time recovery, supporting 200-500+ tenant schemas with high traffic, 500GB+ storage, connection pooling infrastructure, and monitoring tools. Costs scale with: number of schemas (connection overhead), storage per tenant, query complexity, backup retention, and need for schema migration tooling across multiple schemas.",
+      "adoptionCost": "High-medium complexity implementation. Requires: (1) Schema provisioning automation (create/drop schemas per tenant), (2) Tenant-aware connection routing/middleware to direct queries to correct schema, (3) Migration framework that can run across all tenant schemas atomically, (4) Backup/restore strategy per schema, (5) Monitoring for per-tenant metrics and schema-level performance, (6) Testing isolation guarantees, (7) Data residency/compliance considerations per tenant. Development time: 3-5 weeks for experienced team (schema management layer, migration tooling, tenant onboarding/offboarding automation). Learning curve moderate - requires understanding of database schema management, connection pooling, and multi-tenant routing patterns. More complex than shared-table (row-level) approach but simpler than database-per-tenant.",
+      "licenseCost": "Pattern uses standard database features (schemas/namespaces) available in open-source databases (PostgreSQL, MySQL). No proprietary licensing required - schema isolation is native RDBMS functionality. Commercial database editions (Oracle, SQL Server Enterprise) could cost $15,000-$50,000+ but open-source alternatives provide equivalent capability. Any schema migration tools (Flyway, Liquibase) or tenant management frameworks are typically open-source or have free tiers sufficient for this pattern.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "multi-tenancy",
+      "confidence": "high",
+      "reasoning": "This pattern's core purpose is to enable multi-tenancy through schema-level isolation in a shared database, making this capability essential and appropriate."
+    },
+    {
+      "capability": "tenant-data-isolation",
+      "confidence": "high",
+      "reasoning": "Each tenant has its own dedicated database schema, providing schema-level isolation which is stronger than row-level but weaker than database-per-tenant. This separation limits the blast radius of issues and provides clearer security boundaries between tenants."
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "Schema-per-tenant isolation requires identifying the tenant at connection time to route queries to the correct schema \u2014 tenant identification is a core operational requirement."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "non-blocking-schema-migrations",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Essential requirement since each tenant has its own schema, and managing schema migrations across potentially hundreds of tenant schemas manually would be impractical and error-prone."
+    },
+    {
+      "capability": "infrastructure-provisioning",
+      "confidence": "high",
+      "reasoning": "This pattern requires the ability to provision new schemas when tenants are onboarded, including creating the schema structure and necessary database objects.",
+      "optional": true
+    },
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "This pattern specifically requires a relational database that supports schema namespacing (PostgreSQL schemas, MySQL databases, etc.).",
+      "optional": false
+    },
+    {
+      "capability": "connection-pooling",
+      "confidence": "medium",
+      "reasoning": "Managing connections across multiple schemas in a shared database requires careful connection management to ensure efficient resource utilization and prevent connection exhaustion.",
+      "optional": false
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "The system must determine which schema to use for each request by identifying the tenant context, ensuring queries are routed to the correct tenant's schema.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "tenancy-shared-db-row-level",
+      "tenancy-database-per-tenant"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "tenancy",
+    "database",
+    "isolation"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "schema-per-tenant"
+      ],
+      "reason": "Pattern explicitly provides schema-per-tenant isolation model with database-enforced boundaries between tenant schemas."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Shared database infrastructure with schema-per-tenant can achieve up to 99.99% availability with proper redundancy."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Relational database with schema-level isolation introduces minimum 5ms p95 latency for tenant context resolution and query routing."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Schema-based tenant context resolution and connection pooling introduce minimum 20ms p99 latency tail for cross-schema operations."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Schema-level granularity enables selective tenant restoration from backups within 5 minutes minimum recovery time."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Schema-per-tenant supports per-schema continuous backup strategies with 1-minute minimum recovery point objective."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000000,
+      "reason": "Shared database with schema isolation can handle up to 3.6B operations per hour before connection pool and schema routing become bottlenecks."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Schema-per-tenant shares database connection pool and resources; at >50K req/s, database-per-tenant or sharding provides better scalability."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Schema-per-tenant write throughput is bounded by shared database write capacity and schema-level locking to approximately 50K QPS."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant enables per-tenant audit logging with schema-scoped triggers and audit tables, but does not mandate it."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant provides adequate isolation for PII with database-enforced schema boundaries regardless of data content."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema isolation supports GDPR right-to-erasure and data portability requirements through per-tenant schema operations."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant provides HIPAA-compliant isolation with separate schemas for PHI and database-level access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema boundaries enable CCPA compliance with isolated tenant data for deletion and export without cross-tenant leakage."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant supports SOX compliance with schema-level audit trails and data segregation for financial records."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema isolation within same database provides read-your-writes consistency through connection affinity and transaction guarantees."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Shared database provides strict durability guarantees through ACID transactions and WAL regardless of schema isolation model."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Schema-per-tenant pattern is database-agnostic and works on any cloud provider or on-premises infrastructure with relational database support."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "This is a database architecture pattern that can be implemented in any language with database connectivity capabilities."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "This is a backend database architecture pattern that can be used by any platform type requiring multi-tenant data isolation."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant database pattern works with both synchronous and asynchronous messaging architectures for tenant operations."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant pattern can store data for AI inference workloads or traditional applications with equivalent tenant isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant supports both real-time transactional and batch processing workloads with per-tenant schema scoping."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant can participate in distributed transactions or operate with local transactions within single database instance."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant pattern works with or without real-time streaming data ingestion into tenant-scoped schemas."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant can store vector embeddings in tenant schemas if database supports vector extensions like pgvector."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant pattern can use JSON columns or document-oriented features within relational schemas for semi-structured data."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant relational pattern can implement key-value semantics using simple two-column tables within tenant schemas."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant can model graph relationships using foreign keys or work with graph extensions in tenant-scoped schemas."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant can store time-series data in tenant schemas using timestamp-indexed tables or time-series extensions."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Schema-per-tenant pattern is designed for transactional workloads where tenants require isolated schemas for OLTP operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Schema-per-tenant primarily serves OLTP but can support analytical queries with appropriate indexing and query optimization per schema."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern explicitly requires multi-tenancy support as it is designed specifically for multi-tenant database isolation."
+    }
+  ],
+  "defaultConfig": {
+    "schema_naming_strategy": "tenant_id",
+    "migration_strategy": "apply_to_all",
+    "tenant_provisioning": "on_demand",
+    "max_tenants": 100,
+    "connection_pooling": "per_schema"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "schema_naming_strategy": {
+        "type": "string",
+        "enum": [
+          "tenant_id",
+          "tenant_name",
+          "custom_prefix"
+        ],
+        "description": "How to name tenant schemas. tenant_id uses numeric IDs (schema_123), tenant_name uses slugified names (schema_acme_corp), custom_prefix allows domain-specific naming."
+      },
+      "migration_strategy": {
+        "type": "string",
+        "enum": [
+          "apply_to_all",
+          "lazy_migration",
+          "versioned_schemas"
+        ],
+        "description": "How to handle schema migrations. apply_to_all runs migrations on all tenant schemas immediately, lazy_migration updates schemas on first tenant access, versioned_schemas allows different tenants to run different schema versions."
+      },
+      "tenant_provisioning": {
+        "type": "string",
+        "enum": [
+          "on_demand",
+          "pre_provisioned",
+          "template_clone"
+        ],
+        "description": "When to create tenant schemas. on_demand creates schemas during tenant signup, pre_provisioned creates a pool of ready schemas, template_clone duplicates a template schema for faster provisioning."
+      },
+      "max_tenants": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 1000,
+        "description": "Maximum number of tenant schemas to support. This pattern works best with 10-500 tenants; beyond that, consider shard-per-tenant or pooled schemas."
+      },
+      "connection_pooling": {
+        "type": "string",
+        "enum": [
+          "per_schema",
+          "shared_pool",
+          "dynamic"
+        ],
+        "description": "Connection pool strategy. per_schema maintains separate pools per tenant for isolation, shared_pool uses one pool with schema switching for efficiency, dynamic adjusts pool sizes based on tenant activity."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "Schema-per-tenant adds schema routing and connection management overhead; at <10 req/s, simpler row-level isolation may be more appropriate.",
+      "message": "tenancy-schema-per-tenant: peak read QPS is {actual} req/s (<10). Schema-level isolation overhead may outweigh benefits at this low throughput; consider row-level multi-tenancy instead."
+    }
+  ]
+}

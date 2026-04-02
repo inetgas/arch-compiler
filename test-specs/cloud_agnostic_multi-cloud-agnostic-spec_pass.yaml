@@ -1,0 +1,20 @@
+# Cloud - Multi-Cloud Agnostic Spec
+#
+# An API spec with cloud: agnostic and no specific language. This tests that
+# the compiler selects only cloud-agnostic patterns (not AWS/GCP/Azure-specific)
+# when no cloud vendor is specified, supporting multi-cloud or portable deployments.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - cloud-agnostic patterns are selected
+#   - cloud-specific patterns (aws-*, gcp-*, azure-*) are not selected
+
+constraints:
+  platform: api
+  cloud: agnostic
+project:
+  name: Multi-Cloud
+  domain: test
+functional:
+  summary: 'Test scenario: Multi-Cloud'
+nfr: {}

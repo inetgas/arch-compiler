@@ -1,0 +1,371 @@
+{
+  "id": "ui-cross-platform--react-native",
+  "version": "1.0.0",
+  "title": "React Native: Cross-Platform UI Framework",
+  "description": "Build iOS and Android apps using React Native with JavaScript/TypeScript; leverage React patterns and npm ecosystem; fast iteration with hot reload.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 100.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "react-native"
+    ],
+    "costCeilingCompatibleUsd": 100,
+    "costNotes": "Primary costs are development labor. App store fees unavoidable for mobile distribution.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "React Native apps run entirely on user devices with no mandatory infrastructure costs. Min=$0 represents development/testing with no paid services. Max=$100 covers optional services: Apple Developer Program ($99/year \u2248 $8/month) + Google Play ($25 one-time \u2248 $2/month amortized) + optional CI/CD services (GitHub Actions free tier, or CodeMagic/Bitrise at $50-90/month). Does not include backend APIs, analytics, or crash reporting services which are application-specific.",
+      "adoptionCost": "Medium-high complexity due to: (1) React/JavaScript knowledge required - 20-40 hours learning if new to React ($1000-2000); (2) Native mobile concepts (navigation, gestures, permissions, platform-specific APIs) - 20-30 hours ($1000-1500); (3) Build toolchain setup (Xcode, Android Studio, or Expo) - 10-15 hours ($500-750); (4) Platform-specific debugging and testing across iOS/Android - 10-20 hours ($500-1000). Total: 60-105 hours at $50-100/dev hour blended rate. With AI coding assistants reducing implementation time by 30-40%, estimate $3500 for team with basic React knowledge, up to $6000 for team new to mobile development.",
+      "licenseCost": "React Native is MIT licensed (fully open source, no restrictions). All core tooling is free: Metro bundler, React Native CLI, Expo (open source). Only distribution costs: Apple Developer Program ($99/year) and Google Play Console ($25 one-time) are operational costs, not licenses. No runtime royalties, usage fees, or enterprise licensing required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cross-platform-mobile-ui",
+      "confidence": "high",
+      "reasoning": "React Native's core value proposition is enabling a single codebase to generate native UI for both iOS and Android platforms, eliminating the need for separate platform-specific codebases."
+    },
+    {
+      "capability": "mobile-ui-components",
+      "confidence": "high",
+      "reasoning": "React Native provides a comprehensive library of mobile UI components that map to native platform widgets, offering access to platform-specific UI elements and mobile interaction patterns."
+    },
+    {
+      "capability": "hot-reload",
+      "confidence": "strong",
+      "reasoning": "Fast Refresh/hot reload is a distinctive feature of React Native that enables rapid development iteration without full recompilation, significantly accelerating the development workflow."
+    },
+    {
+      "capability": "npm-ecosystem-access",
+      "confidence": "high",
+      "reasoning": "React Native apps can leverage the vast npm package ecosystem for JavaScript/TypeScript libraries, providing access to thousands of packages for both general functionality and React Native-specific modules."
+    },
+    {
+      "capability": "native-module-bridge",
+      "confidence": "high",
+      "reasoning": "React Native provides a bridge mechanism that allows JavaScript code to integrate with native platform code, enabling access to platform-specific APIs and custom native modules when cross-platform abstractions are insufficient."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "react-expertise",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "React Native is built on React principles including components, hooks, and state management, making React knowledge essential for effective development."
+    },
+    {
+      "capability": "javascript-typescript",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "React Native applications are written in JavaScript or TypeScript, making proficiency in these languages fundamental to using the pattern."
+    },
+    {
+      "capability": "mobile-platform-toolchains",
+      "confidence": "high",
+      "reasoning": "React Native requires native toolchains including Xcode for iOS and Android Studio/Gradle for Android to compile, build, and package the final native applications.",
+      "optional": true
+    },
+    {
+      "capability": "mobile-deployment-targets",
+      "confidence": "high",
+      "reasoning": "Developers must understand iOS and Android deployment processes, including app store submission requirements, code signing, provisioning profiles, and platform-specific release configurations.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "ui-cross-platform",
+      "ui-cross-platform--flutter",
+      "ui-cross-platform--xamarin"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ui",
+    "frontend",
+    "mobile",
+    "cross-platform",
+    "react-native",
+    "javascript",
+    "typescript",
+    "react"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "React Native is open source; documentation freely available."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Client-side framework availability limited by device issues, OS fragmentation, and crash handling."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native applications can be built to comply with GDPR through proper data handling."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can support HIPAA-compliant applications with appropriate security controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native applications can implement CCPA compliance requirements through proper controls."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can support SOX compliance through audit trails and data integrity measures."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "React Native builds native mobile apps that run on device; cloud-agnostic client-side framework."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "javascript",
+        "typescript"
+      ],
+      "reason": "React Native exclusively uses JavaScript or TypeScript for application development."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "mobile"
+      ],
+      "reason": "React Native specifically targets mobile platforms (iOS and Android) for native app development."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native supports caching through libraries and AsyncStorage but does not require it."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can integrate with async messaging systems but is not dependent on them."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can incorporate AI inference through native modules or cloud APIs as needed."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native applications can support multi-tenancy through backend integration but do not require it."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can trigger or display batch processing results but does not perform batch processing."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Client-side framework delegates distributed transaction coordination to backend services."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native supports real-time streaming through WebSockets and native modules but does not require it."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can consume vector search APIs but does not provide native vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can integrate with document store backends but does not require them."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native provides AsyncStorage for local key-value storage and can integrate with external stores."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can consume graph database APIs through backend integration but does not require them."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "React Native can display time-series data from backend services but does not provide time-series storage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Client-side UI framework is neutral to backend OLTP workload characteristics."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Client-side UI framework can visualize OLAP results but does not perform analytical processing."
+    }
+  ],
+  "defaultConfig": {
+    "navigation_library": "react-navigation",
+    "state_management": "react-hooks",
+    "native_modules": "expo-managed",
+    "styling_approach": "stylesheet",
+    "platform_specific_code": "minimal"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "navigation_library": {
+        "type": "string",
+        "enum": [
+          "react-navigation",
+          "react-native-navigation",
+          "expo-router"
+        ],
+        "description": "Navigation solution: react-navigation (JS-based, most popular), react-native-navigation (native performance), or expo-router (file-based routing)"
+      },
+      "state_management": {
+        "type": "string",
+        "enum": [
+          "react-hooks",
+          "redux",
+          "mobx",
+          "zustand",
+          "recoil"
+        ],
+        "description": "State management approach: react-hooks (built-in, simple), redux (predictable, verbose), mobx (reactive, less boilerplate), zustand (lightweight), recoil (atomic state)"
+      },
+      "native_modules": {
+        "type": "string",
+        "enum": [
+          "expo-managed",
+          "expo-bare",
+          "pure-react-native"
+        ],
+        "description": "Native module strategy: expo-managed (easiest, limited native access), expo-bare (expo tools + custom native code), pure-react-native (full control, more setup)"
+      },
+      "styling_approach": {
+        "type": "string",
+        "enum": [
+          "stylesheet",
+          "styled-components",
+          "tailwind-rn",
+          "native-base"
+        ],
+        "description": "Styling solution: stylesheet (built-in, performant), styled-components (CSS-in-JS), tailwind-rn (utility-first), native-base (component library)"
+      },
+      "platform_specific_code": {
+        "type": "string",
+        "enum": [
+          "minimal",
+          "moderate",
+          "extensive"
+        ],
+        "description": "Degree of platform-specific customization: minimal (maximize code sharing), moderate (platform-specific UI/UX), extensive (separate implementations per platform)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

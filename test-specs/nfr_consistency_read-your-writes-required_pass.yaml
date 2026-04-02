@@ -1,0 +1,36 @@
+# NFR Consistency - Read-Your-Writes Required
+#
+# User-facing API where after a write the same user must immediately read their
+# own update (e.g. profile page after save). needsReadYourWrites=true activates
+# the consistency-read-your-writes pattern which routes reads to the primary
+# or uses session tokens to enforce monotonic read guarantees.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - consistency-read-your-writes IS selected (needsReadYourWrites == true)
+
+project:
+  name: User Profile API
+  domain: saas
+functional:
+  summary: Profile management API where users must see their own writes immediately
+constraints:
+  platform: api
+  cloud: aws
+  language: typescript
+  features:
+    oltp_workload: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 100
+    p99Milliseconds: 250
+  throughput:
+    peak_query_per_second_read: 150
+    peak_query_per_second_write: 100
+  consistency:
+    needsReadYourWrites: true
+cost:
+  ceilings:
+    monthly_operational_usd: 1500

@@ -1,0 +1,21 @@
+# Cloud - On-Premise Deployment Requires Audit Logging
+#
+# An API spec with cloud: on-prem and no additional nfr or security settings.
+# On-premise deployments require audit logging to be explicitly enabled in the
+# spec (a compliance/governance requirement for on-prem patterns), and since
+# audit_logging is not set, compilation fails.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - on-prem cloud requires audit_logging to be enabled
+#   - compiler rejects due to missing mandatory audit logging for on-prem
+
+constraints:
+  platform: api
+  cloud: on-prem
+project:
+  name: On-Premise
+  domain: test
+functional:
+  summary: 'Test scenario: On-Premise'
+nfr: {}

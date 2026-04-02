@@ -1,0 +1,455 @@
+{
+  "id": "platform-vm-first",
+  "version": "1.0.0",
+  "title": "VM-First Platform",
+  "description": "Deploy services to VMs/ASG/VMSS; simpler; less orchestration; good for legacy constraints.",
+  "types": [
+    "deploy",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "VM-First Platform requires actual compute infrastructure. Minimum represents a single small VM (t3.small/B2s ~$15) plus load balancer (~$20) and minimal monitoring/backup (~$15) for development/small workloads. Maximum represents production deployment with 3-5 VMs in auto-scaling groups across availability zones (~$300-500), managed load balancers (~$50-100), storage/backups (~$200-500), monitoring/logging (~$100-300), and data transfer costs (~$200-1000). Mid-range (~$500-1500) typical for small-to-medium production workloads with 2-3 VMs. VMs generally more expensive than containers at scale due to lower density and resource utilization (typically 30-40% vs 70-80% for containers), but simpler to manage.",
+      "adoptionCost": "Medium-high complexity adoption. Requires: (1) Infrastructure as Code setup (Terraform/CloudFormation for VM provisioning, ASG/VMSS configuration, networking) - 40-60 hours; (2) CI/CD pipeline configuration for VM deployments (AMI/image building, deployment scripts, health checks) - 30-40 hours; (3) Monitoring and logging setup (CloudWatch/Azure Monitor, log aggregation) - 20-30 hours; (4) Security hardening (SSH keys, security groups, patching strategy) - 20-30 hours; (5) Backup and disaster recovery procedures - 15-20 hours. Total ~125-180 hours. With AI assistance reducing implementation time by 30-40%, estimate ~90-120 hours at $20-30/hour blended rate (junior to mid-level DevOps). Lower than Kubernetes ($5000+) but higher than serverless ($500-1000) due to more infrastructure management overhead and legacy deployment patterns requiring custom scripting.",
+      "licenseCost": "VM-First Platform uses standard cloud provider services (EC2, Azure VMs, GCE) with no additional licensing beyond infrastructure costs (already captured in monthly operational costs). Deployment tooling is typically open-source: Terraform, Ansible, Packer for image building, native cloud CLIs. No orchestration platform licenses required (unlike enterprise Kubernetes distributions). OS licenses (if Windows) are typically included in VM hourly rates. May incur costs for commercial monitoring tools (Datadog ~$15-31/host/month, New Relic ~$25/host/month) but these are operational costs not one-time licenses. Pattern itself requires no proprietary software purchases.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "vm-runtime-platform",
+      "confidence": "high",
+      "reasoning": "This pattern provides a VM-based runtime platform for deploying services using VMs, Auto Scaling Groups, and VM Scale Sets, distinguishing it from container or serverless runtime platforms."
+    },
+    {
+      "capability": "autoscaling-infrastructure",
+      "confidence": "high",
+      "reasoning": "VM-First platforms using ASG (Auto Scaling Groups) or VMSS (Virtual Machine Scale Sets) inherently provide autoscaling capabilities as a core feature of these infrastructure components."
+    },
+    {
+      "capability": "ssh-access",
+      "confidence": "high",
+      "reasoning": "VM-based platforms provide direct SSH/remote access to instances, which is a common advantage over containerized or serverless platforms, especially valuable for debugging and legacy application support."
+    },
+    {
+      "capability": "persistent-compute",
+      "confidence": "high",
+      "reasoning": "VMs provide long-running, persistent compute resources that maintain state and uptime, distinguishing this pattern from ephemeral serverless execution models."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "vm-image-management",
+      "confidence": "high",
+      "reasoning": "This pattern requires VM image management (AMIs, VM images, golden images) to build, version, store, and deploy machine images containing applications and dependencies to VMs, ASGs, or VMSS.",
+      "optional": true
+    },
+    {
+      "capability": "infrastructure-provisioning",
+      "confidence": "high",
+      "reasoning": "VM-First platforms require the ability to provision VMs, networking, security groups, and related infrastructure resources as a foundational dependency for creating ASG/VMSS environments.",
+      "optional": false
+    },
+    {
+      "capability": "configuration-management",
+      "confidence": "medium",
+      "reasoning": "VMs typically need configuration management tools (Ansible, Chef, Puppet, or cloud-init) to bootstrap and configure software, especially important for the legacy constraints mentioned in this pattern's use case.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "platform",
+    "compute"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.995,
+      "reason": "VM-based infrastructure without complex orchestration limits maximum availability to approximately 99.5%."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "VM networking overhead and lack of service mesh optimization establishes minimum p95 latency of 50ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "VM-based deployments experience higher tail latencies due to OS scheduling and guest virtualization overhead."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 3,
+      "reason": "ASG/VMSS health checks detect failures and launch replacement VMs in approximately 3+ minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "VM-based snapshots and backup mechanisms typically run on 5+ minute intervals for persistent storage."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000,
+      "reason": "VM-based scaling without container orchestration limits peak throughput to approximately 50k jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "VM-first platform can handle up to 50k read queries per second with autoscaling infrastructure."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 20000,
+      "reason": "VM-based write throughput is limited to approximately 20k queries per second due to coordination overhead."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Audit logging can be implemented within VM-based applications or omitted based on requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compliance can be implemented via VM hardening, encryption, and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance controls can be implemented in VM-based systems with proper audit trails."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "VM-first pattern works on major clouds with VM/compute instances and on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Infrastructure/deployment pattern that provisions VMs supporting any programming language runtime."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "VM-based deployments support backend workloads including web, API, batch, and data processing pipelines."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Caching layers can be deployed on VMs or omitted based on application architecture needs."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging systems can run on VMs or be excluded depending on workload patterns."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AI inference workloads can be deployed on VMs with appropriate GPU/CPU resources or omitted."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is an application-level concern that VM infrastructure supports or excludes independently."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing workloads are well-suited to VM-based autoscaling infrastructure."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Distributed transaction coordination can be implemented in applications running on VM clusters."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming applications can be deployed on VMs with appropriate resource provisioning."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search databases and services can be hosted on VM infrastructure or omitted."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document-oriented NoSQL databases run effectively on VM-based platforms."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value stores are commonly deployed on VMs with persistent or ephemeral storage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases can be deployed on VMs with sufficient memory and compute resources."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases are compatible with VM-based deployment infrastructure."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads run well on VMs with appropriate database and application configuration."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP analytical workloads can be hosted on VMs with sufficient compute and memory resources."
+    }
+  ],
+  "defaultConfig": {
+    "vm_size": "medium",
+    "auto_scaling": "enabled",
+    "min_instances": 2,
+    "max_instances": 10,
+    "health_check_type": "http",
+    "deployment_strategy": "rolling",
+    "os_type": "linux"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "vm_size": {
+        "type": "string",
+        "enum": [
+          "small",
+          "medium",
+          "large",
+          "xlarge"
+        ],
+        "description": "VM instance size. Small for dev/test, medium for standard production, large/xlarge for high-performance workloads. Affects cost and performance."
+      },
+      "auto_scaling": {
+        "type": "string",
+        "enum": [
+          "enabled",
+          "disabled"
+        ],
+        "description": "Enable auto-scaling group to automatically adjust capacity based on demand. Disabled means fixed instance count (simpler but less elastic)."
+      },
+      "min_instances": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "description": "Minimum number of VM instances to maintain. Higher values improve availability but increase baseline cost."
+      },
+      "max_instances": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000,
+        "description": "Maximum number of VM instances for auto-scaling. Caps scaling to control costs while allowing burst capacity."
+      },
+      "health_check_type": {
+        "type": "string",
+        "enum": [
+          "http",
+          "tcp",
+          "process"
+        ],
+        "description": "Health check mechanism. HTTP for web/API services, TCP for network services, process for background workers."
+      },
+      "deployment_strategy": {
+        "type": "string",
+        "enum": [
+          "rolling",
+          "blue-green",
+          "canary"
+        ],
+        "description": "Deployment approach. Rolling is simple and cost-effective, blue-green enables instant rollback, canary allows gradual traffic shifting for risk mitigation."
+      },
+      "os_type": {
+        "type": "string",
+        "enum": [
+          "linux",
+          "windows"
+        ],
+        "description": "Operating system for VMs. Linux is more common and cost-effective, Windows required for .NET Framework or Windows-specific dependencies."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 30000,
+      "reason": "VM-first platform approaching its 50k QPS read limit; container orchestration may offer better scalability.",
+      "message": "platform-vm-first: peak read QPS is {actual} req/s (>30k). Approaching VM-first limits; consider container orchestration for higher scale."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 15000,
+      "reason": "VM-first write throughput approaching 20k limit; containerized platforms may provide better coordination and throughput.",
+      "message": "platform-vm-first: peak write QPS is {actual} req/s (>15k). Approaching VM-first coordination limits; containerized platforms may scale better."
+    }
+  ]
+}

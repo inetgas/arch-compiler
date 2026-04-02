@@ -1,0 +1,486 @@
+{
+  "id": "arch-serverless--azure",
+  "version": "1.0.0",
+  "title": "Serverless-First Architecture (Azure Functions)",
+  "description": "Structure the system as stateless, event-driven function handlers backed by Azure managed services (Functions, API Management, Cosmos DB, Blob Storage, Service Bus). No persistent servers \u2014 each function activates on demand, executes, and terminates. The architectural commitment is to build around events and Azure-managed primitives rather than long-running processes.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "azure"
+    ],
+    "costCeilingCompatibleUsd": 2000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Azure Functions offers a generous free tier (1M executions/month, 400K GB-s compute). Min=$0 represents low-traffic applications staying within free tier (e.g., webhooks, scheduled jobs, dev/test workloads). Max=$2500 represents production workloads with: ~50M executions/month on Consumption plan ($0.20 per million executions = $10), moderate compute time (10M GB-s at $0.000016/GB-s = $160), associated Azure services (Storage accounts $50-100, Application Insights $100-200, Event Grid/Service Bus $200-500), API Management for production APIs ($500-1000), and data egress ($200-500). Higher costs possible with Premium plan (dedicated instances at $170-680/month per instance) or heavy integration with Cosmos DB, SQL Database, or extensive egress.",
+      "adoptionCost": "Medium-high complexity adoption. Requires: (1) Architectural redesign from traditional apps to event-driven functions (20-30 hours, $1500-2000), (2) Learning Azure Functions runtime, bindings, Durable Functions, and Function orchestration patterns (15-20 hours, $800-1200), (3) Setting up CI/CD with Azure DevOps/GitHub Actions, infrastructure-as-code (Bicep/Terraform) for function apps, storage, and dependencies (10-15 hours, $600-800), (4) Implementing monitoring, distributed tracing, Application Insights, and cold-start mitigation strategies (8-12 hours, $400-600), (5) Security configuration (Managed Identity, Key Vault integration, VNET integration) (5-8 hours, $300-400). Total ~60-85 hours. Lower than full microservices/K8s due to managed nature, but higher than simple patterns due to paradigm shift and Azure-specific knowledge requirements.",
+      "licenseCost": "Azure Functions runtime is fully managed with no separate licensing cost - pay-per-use model only. Development tools are free (VS Code, Azure Functions Core Tools, Azure CLI). Optional Application Insights has consumption-based pricing (included in monthly estimate). No enterprise licenses required unless using third-party monitoring/APM tools (Datadog, New Relic) which would add $100-500/month but are optional. Standard Azure subscription is sufficient.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "low-ops",
+      "confidence": "strong",
+      "reasoning": "Serverless Azure Functions eliminate infrastructure management, patching, and scaling operations since the platform handles these concerns automatically. The pattern's reliance on managed services further reduces operational overhead by offloading database, messaging, and other service operations to Azure."
+    },
+    {
+      "capability": "elastic-scaling",
+      "confidence": "strong",
+      "reasoning": "Azure Functions automatically scale out based on incoming event load and scale to zero when idle, providing dynamic resource allocation without manual intervention. This event-driven architecture inherently supports elastic scaling from zero to thousands of concurrent executions based on demand."
+    },
+    {
+      "capability": "event-driven-execution",
+      "confidence": "high",
+      "reasoning": "Serverless functions are fundamentally event-driven, responding to triggers like HTTP requests, queue messages, storage events, timers, and other Azure service events. This is a core characteristic explicitly mentioned in the pattern description."
+    },
+    {
+      "capability": "pay-per-use-billing",
+      "confidence": "high",
+      "reasoning": "Consumption-based pricing is a defining feature of serverless architectures where you only pay for actual execution time and resources consumed. This pattern explicitly mentions pay-per-use as a key benefit."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "managed-services-availability",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "The pattern fundamentally depends on Azure's managed services (Functions, Event Grid, Storage, etc.) being available and operational to function. Without reliable access to these platform services, the serverless architecture cannot execute functions or process events."
+    },
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "Serverless functions require event sources such as HTTP endpoints, message queues, storage events, or timers to trigger execution. Without event sources, functions cannot be invoked in this event-driven architecture.",
+      "optional": false
+    },
+    {
+      "capability": "observability-baseline",
+      "confidence": "high",
+      "reasoning": "Serverless architectures require robust monitoring, logging, and tracing capabilities (like Application Insights) to understand distributed function executions and diagnose issues. This is critical for managing the inherently distributed nature of serverless applications.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-microservices",
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--gcp",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "architecture",
+    "serverless",
+    "event-driven",
+    "azure"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Azure Functions on Premium plan with zone redundancy achieves up to 99.99% availability SLA."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Cold start latency on Consumption plan adds minimum 50-200ms overhead for simple functions."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "P99 includes cold start scenarios which add 100-500ms on Consumption plan depending on runtime."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Deployment slots enable near-instant rollback in 1-2 minutes with platform-managed infrastructure."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "Azure Functions Premium plan supports ~200 instances with 5000 concurrent executions each for 36M jobs/hour ceiling."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 60,
+      "reason": "At <60 jobs/hour (<1 per minute), serverless pay-per-invocation pricing and cold start overhead are inefficient compared to scheduled or always-on workers."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 200000,
+      "reason": "Serverless architecture handles up to 200K read QPS with auto-scaling but faces cold start overhead beyond this."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Azure Functions supports up to 100K write QPS ceiling with concurrent execution limits and downstream service constraints."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Azure Functions natively supports OAuth2/OIDC via Azure AD, API keys, JWT validation, mTLS, and SAML federation."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports comprehensive audit logging via Application Insights and Azure Monitor but works without it."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Serverless functions support all tenant isolation models through downstream data services and function-level isolation."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern handles PII through Azure Key Vault integration, managed identities, and encryption at rest/transit."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions supports GDPR through data residency controls, encryption, and Azure Policy governance."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions is HIPAA-eligible with BAA coverage, encryption, and audit logging via Application Insights."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports CCPA requirements through Azure Policy, data deletion capabilities, and consumer rights management."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions supports SOX compliance with immutable audit logs, change tracking, and access controls."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports read-your-writes through strongly consistent reads in Cosmos DB and Azure SQL integrations."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Achieves strict durability through managed services like Cosmos DB, Azure Storage, and Azure SQL with replication."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "azure",
+      "reason": "Azure Functions is Azure-specific serverless compute service and cannot run on other cloud providers."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "csharp",
+        "javascript",
+        "typescript",
+        "python",
+        "java",
+        "go",
+        "rust",
+        "php",
+        "kotlin",
+        "scala"
+      ],
+      "reason": "Azure Functions officially supports C#, JavaScript, TypeScript, Python, Java, and PowerShell with custom handler support for Go, Rust."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-inference",
+        "iot"
+      ],
+      "reason": "Serverless functions support HTTP APIs, background workers, batch jobs, event processing, ML inference, and IoT workloads."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern integrates with Azure Cache for Redis when caching is needed but works without dedicated caching layer."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions integrates natively with Service Bus, Event Hubs, and Storage Queues but also supports synchronous HTTP."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can serve ML inference workloads with scale-to-zero benefits and Cognitive Services integration."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless architecture supports multi-tenant patterns with proper isolation via function apps and downstream services."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports batch processing via timer triggers, queue-based processing, and Durable Functions orchestration."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Distributed transactions are challenging in serverless due to stateless, short-lived execution and lack of 2PC coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports real-time streaming via Event Hubs and IoT Hub triggers but works for request-reply workloads too."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Can integrate with Azure Cognitive Search or Cosmos DB for vector/embedding search but not required."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cosmos DB provides native document-oriented storage with native bindings for Azure Functions but not mandatory."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Cache for Redis and Cosmos DB provide key-value store patterns with native bindings but optional."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Can integrate with Cosmos DB Gremlin API for graph workloads but pattern works without graph database."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Can integrate with Azure Data Explorer or third-party time-series databases when needed but not required."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless architecture handles transactional workloads with Azure SQL or Cosmos DB but also supports non-OLTP patterns."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP queries can trigger serverless functions for data transformation though cold start overhead may impact performance."
+    }
+  ],
+  "defaultConfig": {
+    "compute_tier": "consumption",
+    "storage_backend": "azure-storage",
+    "api_gateway": "function-proxies",
+    "auth_provider": "easy-auth",
+    "monitoring": "application-insights"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "compute_tier": {
+        "type": "string",
+        "enum": [
+          "consumption",
+          "premium",
+          "dedicated"
+        ],
+        "description": "Hosting plan: consumption (pay-per-execution, cold starts), premium (pre-warmed instances, VNet integration), or dedicated (App Service Plan, predictable costs)"
+      },
+      "storage_backend": {
+        "type": "string",
+        "enum": [
+          "azure-storage",
+          "cosmos-db",
+          "sql-database"
+        ],
+        "description": "Primary data store: azure-storage (blob/table/queue, serverless-native), cosmos-db (NoSQL, global distribution), sql-database (relational, ACID)"
+      },
+      "api_gateway": {
+        "type": "string",
+        "enum": [
+          "function-proxies",
+          "api-management",
+          "none"
+        ],
+        "description": "API routing layer: function-proxies (built-in, simple), api-management (enterprise features, throttling, policies), none (direct function URLs)"
+      },
+      "auth_provider": {
+        "type": "string",
+        "enum": [
+          "easy-auth",
+          "azure-ad-b2c",
+          "custom"
+        ],
+        "description": "Authentication: easy-auth (built-in OAuth providers), azure-ad-b2c (customer identity management), custom (bring your own auth logic)"
+      },
+      "monitoring": {
+        "type": "string",
+        "enum": [
+          "application-insights",
+          "log-analytics",
+          "both"
+        ],
+        "description": "Observability: application-insights (APM, distributed tracing), log-analytics (log aggregation, KQL queries), both (comprehensive monitoring)"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At <1 req/s, serverless cold start overhead and pay-per-invocation costs are inefficient compared to always-on compute.",
+      "message": "arch-serverless--azure: peak read QPS is {actual} req/s (<1). Cold start overhead and invocation costs may outweigh benefits; consider simpler always-on hosting."
+    }
+  ]
+}

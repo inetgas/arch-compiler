@@ -1,0 +1,233 @@
+{
+  "id": "gof-factory-method",
+  "version": "1.0.0",
+  "title": "Factory Method",
+  "description": "Encapsulate object creation; swap implementations without changing callers.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 250.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Factory Method is a Gang of Four design pattern that provides a code-level abstraction for object creation. It has no infrastructure requirements and does not involve any cloud services, SaaS subscriptions, or runtime resources. The pattern is purely a software design approach implemented in application code, therefore incurring zero monthly operational costs.",
+      "adoptionCost": "Factory Method is one of the simpler GoF patterns with low adoption complexity. Implementation typically requires: (1) defining an abstract factory interface/base class (1-2 hours), (2) implementing concrete factory classes (2-4 hours), (3) refactoring existing instantiation code to use factories (2-4 hours), (4) writing unit tests (2-3 hours). Total effort: 7-13 hours. With AI coding assistants like GitHub Copilot or ChatGPT, developers can generate boilerplate factory code and tests rapidly, reducing manual effort by 40-50%. At a blended developer rate of $75/hour and assuming 8 hours of actual work with AI assistance, the adoption cost is approximately $600. However, for teams already familiar with design patterns, this drops to 3-4 hours (~$250). The pattern has minimal learning curve, excellent documentation, and is widely understood in the industry.",
+      "licenseCost": "Factory Method is a design pattern from the public domain 'Gang of Four' book (Design Patterns: Elements of Reusable Object-Oriented Software, 1994). It requires no proprietary tools, frameworks, or licenses. Implementation uses standard language features available in any modern programming language (Java, C#, Python, TypeScript, etc.). All necessary development tools (IDEs, compilers, testing frameworks) are available as open source or with free tiers sufficient for implementing this pattern. No commercial licenses are required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "polymorphic-construction",
+      "confidence": "high",
+      "reasoning": "Factory Method enables polymorphic object creation where subclasses determine which concrete class to instantiate, using inheritance and runtime polymorphism for object creation."
+    },
+    {
+      "capability": "decoupled-instantiation",
+      "confidence": "high",
+      "reasoning": "The pattern decouples client code from concrete class instantiation, allowing clients to work with interfaces/abstract classes rather than specific implementations."
+    },
+    {
+      "capability": "open-closed-principle",
+      "confidence": "high",
+      "reasoning": "Factory Method exemplifies the open-closed principle by being open for extension through new product types via subclassing while keeping existing client code closed for modification."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "inheritance",
+      "confidence": "high",
+      "reasoning": "Factory Method fundamentally requires inheritance support as the pattern works by having subclasses override the factory method to return different product implementations.",
+      "optional": true
+    },
+    {
+      "capability": "polymorphism",
+      "confidence": "high",
+      "reasoning": "The pattern requires polymorphism to allow the factory method to return different concrete types through a common interface, essential for letting subclasses decide which class to instantiate.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "gof",
+    "code-pattern",
+    "dotnet",
+    "go",
+    "java",
+    "node",
+    "python"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Factory Method organises code behavior by encapsulating object creation, not data content; it applies regardless of whether PII is present in the system."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Factory Method is a structural code pattern; GDPR compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Factory Method is a structural code pattern; CCPA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of CCPA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Factory Method is a structural code pattern; HIPAA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of HIPAA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Factory Method is a structural code pattern; SOX compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of SOX requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Factory Method operates below the persistence layer, managing object instantiation; read-your-writes consistency is enforced at the data store, not by this pattern."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Factory Method does not implement persistence; strict durability guarantees are provided at the infrastructure layer and are orthogonal to this object-creation pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Factory Method is a pure software design pattern independent of cloud infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Factory Method is a fundamental GoF pattern implementable in any object-oriented or procedural language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Factory Method is a code-level pattern applicable across all platform types."
+    }
+  ],
+  "defaultConfig": {
+    "factory_type": "abstract",
+    "product_hierarchy": "single",
+    "registration_strategy": "static",
+    "lazy_initialization": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "factory_type": {
+        "type": "string",
+        "enum": [
+          "abstract",
+          "concrete",
+          "parameterized"
+        ],
+        "description": "Abstract: Subclasses decide which class to instantiate (classic GoF). Concrete: Single factory with conditional logic. Parameterized: Factory method takes parameter to determine product type."
+      },
+      "product_hierarchy": {
+        "type": "string",
+        "enum": [
+          "single",
+          "family"
+        ],
+        "description": "Single: Factory creates variations of one product type. Family: Factory creates related product families (approaches Abstract Factory pattern)."
+      },
+      "registration_strategy": {
+        "type": "string",
+        "enum": [
+          "static",
+          "dynamic",
+          "plugin"
+        ],
+        "description": "Static: Product types known at compile time. Dynamic: Products registered at runtime via registry. Plugin: External modules can register new product types for extensibility."
+      },
+      "lazy_initialization": {
+        "type": "boolean",
+        "description": "Whether products should be created on-demand (lazy) or eagerly initialized. Lazy reduces startup time but adds runtime overhead; eager fails fast on configuration errors."
+      }
+    }
+  },
+  "warn_nfr": []
+}

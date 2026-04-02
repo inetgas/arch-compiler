@@ -1,0 +1,24 @@
+# Input Shape - Cost Section Only
+#
+# An e-commerce API spec that provides a cost ceiling ($1000/month) but no
+# nfr values beyond an empty nfr section. This tests that the compiler
+# handles a spec driven purely by cost constraints without any nfr requirements.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns are selected based on aws + javascript + api compatibility
+#   - cost ceiling is noted but does not block selection at compile time
+
+project:
+  name: My API
+  domain: ecommerce
+functional:
+  summary: Product API
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+cost:
+  ceilings:
+    monthly_operational_usd: 1000
+nfr: {}

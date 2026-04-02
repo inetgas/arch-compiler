@@ -1,0 +1,42 @@
+# Misc Persona - Enterprise Production System (Full Requirements)
+#
+# A mission-critical e-commerce order management system on AWS with Java, 5000
+# tenants, caching and multi-tenancy features enabled, 99.99% availability, PII
+# data, 100ms p95 latency, schema-per-tenant isolation, and a $50k/month budget
+# with 5-person on-call ops team. This exercises the full enterprise requirements
+# scenario with all major pattern categories active simultaneously.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - enterprise HA, multi-tenancy, PII, and caching patterns are all selected
+#   - patterns incompatible with the strict requirements are filtered out
+
+project:
+  name: Order Management System
+  domain: ecommerce
+functional:
+  summary: Mission-critical order processing
+constraints:
+  platform: api
+  cloud: aws
+  language: java
+  tenantCount: 5000
+  features:
+    caching: true
+    multi_tenancy: true
+nfr:
+  availability:
+    target: 0.9999
+  data:
+    pii: true
+  latency:
+    p95Milliseconds: 100
+  security:
+    tenant_isolation: schema-per-tenant
+cost:
+  ceilings:
+    monthly_operational_usd: 50000
+operating_model:
+  on_call: true
+  deploy_freq: daily
+  ops_team_size: 5

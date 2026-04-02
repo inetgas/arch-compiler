@@ -1,0 +1,507 @@
+{
+  "id": "tenancy-database-per-tenant",
+  "version": "1.0.0",
+  "title": "Multi-Tenancy: Database per Tenant",
+  "description": "Highest isolation; per-tenant DB; operational overhead grows with tenant count; best for regulated tenants.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 150.0,
+      "max": 50000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 2000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Database-per-tenant architecture scales linearly with tenant count. Minimum assumes 3 small tenants with managed databases (e.g., AWS RDS t3.micro PostgreSQL at ~$15-50/month each = $45-150 base cost, plus backup storage ~$10/month, monitoring ~$20/month). Maximum represents 50+ enterprise tenants with production-grade databases (e.g., db.r5.xlarge at $300-500/month each, multi-AZ deployments, automated backups, enhanced monitoring). Cost grows significantly with tenant count: 10 tenants might cost $1,500-3,000/month, 25 tenants $5,000-12,000/month. Includes database compute, storage (100GB-1TB per tenant), backup retention, IOPS, and cross-region replication for regulated tenants. Does not include application server costs (separate concern).",
+      "adoptionCost": "Very high complexity implementation requiring: (1) Multi-tenant orchestration system to provision/deprovision databases dynamically ($2,000-3,000 in development effort), (2) Tenant routing and connection pooling infrastructure to direct requests to correct database instances ($1,500-2,000), (3) Database migration and schema management tooling that works across N databases simultaneously ($1,500-2,000), (4) Monitoring, alerting, and cost tracking per tenant database ($1,000-1,500), (5) Backup/restore automation and disaster recovery procedures for multiple isolated databases ($1,000-1,500). Requires senior DevOps/platform engineering expertise. Operational complexity increases significantly with tenant count, requiring investment in automation. Initial implementation: 3-5 weeks for experienced team.",
+      "licenseCost": "Pattern itself is open-source architectural approach. Typically implemented with open-source databases (PostgreSQL, MySQL, MongoDB) which are free. Cloud-managed database services (RDS, Azure Database, Cloud SQL) charge only for infrastructure usage (covered in monthly costs), not separate licenses. Some organizations may choose commercial databases (Oracle, SQL Server) which would add $150-1,000+ per tenant per month, but this is not typical. Database management tools (Liquibase, Flyway) have free tiers sufficient for most use cases. Enterprise database monitoring tools (Datadog, New Relic) would be operational costs, not one-time licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "strong-tenant-isolation",
+      "confidence": "high",
+      "reasoning": "Database-per-tenant pattern inherently provides the strongest form of tenant isolation by physically separating each tenant's data into separate database instances, preventing any data leakage between tenants and enabling tenant-specific database configurations."
+    },
+    {
+      "capability": "tenant-level-backup-restore",
+      "confidence": "high",
+      "reasoning": "This pattern enables independent backup and restore operations per tenant, which is a significant operational capability for regulated environments where tenant-specific recovery point objectives and data sovereignty requirements must be met."
+    },
+    {
+      "capability": "tenant-specific-configuration",
+      "confidence": "high",
+      "reasoning": "This pattern uniquely enables per-tenant database tuning, performance settings, and compliance configurations since each tenant has their own dedicated database instance that can be independently configured."
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "Database-per-tenant isolation requires identifying the tenant at connection time to select the correct database \u2014 tenant identification is a core operational requirement."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "infrastructure-provisioning",
+      "confidence": "high",
+      "reasoning": "This pattern requires automated database provisioning since manually creating and managing separate databases for each new tenant would be operationally unsustainable. Automation is essential to handle tenant onboarding, scaling, and lifecycle management efficiently.",
+      "optional": true
+    },
+    {
+      "capability": "job-orchestration",
+      "confidence": "high",
+      "reasoning": "Managing schema changes across potentially hundreds or thousands of tenant databases requires sophisticated migration coordination capabilities to ensure consistent updates while minimizing downtime and risk.",
+      "optional": true
+    },
+    {
+      "capability": "multi-database-monitoring",
+      "confidence": "high",
+      "reasoning": "Operational overhead necessitates monitoring and alerting capabilities that can handle multiple database instances at scale, providing visibility into performance, health, and resource utilization across all tenant databases.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-multi-tenant-consolidation",
+      "tenancy-schema-per-tenant",
+      "tenancy-shared-db-row-level"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "tenancy",
+    "database",
+    "isolation"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "==",
+      "value": "per-tenant-db",
+      "reason": "Pattern explicitly provides strongest tenant isolation model with complete database separation per tenant."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Database-per-tenant can achieve up to four nines availability through per-tenant isolation and independent failure domains."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Pattern adds minimal overhead beyond base relational database latency of 5ms for tenant routing."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Per-tenant database routing and connection pooling complexity introduce minor tail latency overhead."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Tenant isolation enables fast selective recovery of individual tenant databases in approximately 5 minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Per-tenant backup strategies enable fine-grained recovery points with independent backup schedules."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "Pattern supports high throughput through horizontal scaling of independent tenant databases up to 36M jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Pattern supports extremely high read QPS through horizontal scaling of per-tenant databases without shared resource contention."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Pattern supports extremely high write QPS through complete write path isolation per tenant database."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern strongly supports audit logging through per-tenant database isolation enabling independent audit trails."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern provides strongest protection for PII through complete database isolation enabling tenant-specific encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern excellently supports GDPR compliance through complete tenant data isolation enabling easy data portability and deletion."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern excellently supports HIPAA compliance through database-level isolation providing audit trails and access control per tenant."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern excellently supports CCPA compliance through database-level isolation simplifying data subject requests and deletion."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern excellently supports SOX compliance through per-tenant databases enabling independent audit trails and financial data segregation."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports read-your-writes consistency through single-tenant database connections eliminating cross-tenant replication lag."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports strict durability through per-tenant databases enabling independent durability configurations and backup policies."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Database-per-tenant pattern can be implemented on any cloud provider, on-premises, or cloud-agnostic infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "This is an infrastructure-level database tenancy pattern independent of application programming language choice."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Database-per-tenant is a data architecture pattern applicable to any platform type requiring multi-tenant data isolation."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without async messaging as tenant isolation is at database layer independent of messaging architecture."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports AI inference workloads with per-tenant model storage and inference result isolation in separate databases."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports batch processing with ability to run tenant-specific batch jobs against isolated databases."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support distributed transactions though cross-tenant transactions become more complex with database isolation."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports real-time streaming with per-tenant database change data capture enabling isolated event streams."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports vector search with per-tenant vector databases enabling isolated embedding storage and similarity search."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to document-oriented databases with each tenant receiving dedicated document store instance."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to key-value stores with each tenant receiving dedicated key-value database for maximum isolation."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to graph databases with each tenant receiving dedicated graph database for isolated relationship modeling."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to time-series databases with each tenant receiving dedicated time-series database for metric isolation."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is optimized for transactional workloads where each tenant has independent OLTP database with ACID guarantees."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports analytical workloads with per-tenant analytical databases though operational complexity increases with tenant count."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern explicitly requires multi-tenancy support as it is designed specifically for multi-tenant database isolation."
+    }
+  ],
+  "defaultConfig": {
+    "database_provisioning": "on-demand",
+    "schema_management": "automated-migrations",
+    "connection_pooling": "per-tenant",
+    "backup_strategy": "individual",
+    "database_sizing": "uniform"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "database_provisioning": {
+        "type": "string",
+        "enum": [
+          "pre-provisioned",
+          "on-demand",
+          "lazy-initialization"
+        ],
+        "description": "When to create tenant databases: pre-provisioned (upfront during onboarding), on-demand (immediately at signup), or lazy-initialization (on first access). Pre-provisioned ensures predictable onboarding, on-demand balances speed and cost, lazy reduces unused resources."
+      },
+      "schema_management": {
+        "type": "string",
+        "enum": [
+          "automated-migrations",
+          "manual-per-tenant",
+          "versioned-schemas"
+        ],
+        "description": "How to handle schema updates across tenant databases: automated-migrations (apply to all tenants automatically), manual-per-tenant (controlled rollout per tenant), or versioned-schemas (support multiple schema versions simultaneously). Automated is operationally efficient but risky, manual allows gradual rollout, versioned supports tenant-specific upgrade schedules."
+      },
+      "connection_pooling": {
+        "type": "string",
+        "enum": [
+          "per-tenant",
+          "shared-dynamic",
+          "hybrid"
+        ],
+        "description": "Connection pool strategy: per-tenant (dedicated pool per tenant for isolation), shared-dynamic (single pool switching connections between tenant DBs), or hybrid (dedicated pools for premium tenants, shared for others). Per-tenant provides best performance but higher resource usage, shared-dynamic is resource-efficient but adds latency, hybrid balances cost and performance."
+      },
+      "backup_strategy": {
+        "type": "string",
+        "enum": [
+          "individual",
+          "consolidated",
+          "tiered"
+        ],
+        "description": "Backup approach: individual (separate backups per tenant DB for easy restoration), consolidated (backup all tenant DBs together for efficiency), or tiered (different backup frequencies/retention by tenant tier). Individual enables granular recovery, consolidated reduces storage costs, tiered optimizes by business value."
+      },
+      "database_sizing": {
+        "type": "string",
+        "enum": [
+          "uniform",
+          "tiered",
+          "dynamic"
+        ],
+        "description": "Database resource allocation: uniform (same size for all tenants), tiered (different sizes by subscription tier), or dynamic (auto-scale per tenant usage). Uniform simplifies operations, tiered aligns cost with revenue, dynamic optimizes resource utilization but adds complexity."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 100,
+      "reason": "Database-per-tenant adds significant operational overhead (provisioning, monitoring, migrations). At low QPS, simpler tenancy models (schema-per-tenant, shared database) are more cost-effective.",
+      "message": "tenancy-database-per-tenant: peak read QPS is {actual} req/s (<100). Operational overhead of per-tenant databases may not be justified; consider schema-per-tenant or shared database patterns."
+    },
+    {
+      "path": "/constraints/tenantCount",
+      "op": ">",
+      "value": 1000,
+      "reason": "Managing schema migrations, monitoring, backups, and provisioning across thousands of databases creates exponential operational complexity. Consider pooled tenancy models for high tenant counts.",
+      "message": "tenancy-database-per-tenant: tenant count is {actual} (>1000). Operational complexity grows linearly with tenant count; consider database-per-tenant-group or pooled multi-tenancy for large-scale deployments."
+    }
+  ]
+}

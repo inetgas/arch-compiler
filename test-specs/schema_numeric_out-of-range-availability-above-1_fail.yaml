@@ -1,0 +1,23 @@
+# Schema Validation - Out-of-Range Availability Above 1
+#
+# A spec with nfr.availability.target set to 1.5, which exceeds the maximum
+# valid value of 1.0 (100% availability). The schema enforces that availability
+# must be in the range (0, 1], so 1.5 is an out-of-range violation.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: availability target 1.5 exceeds maximum value of 1.0
+#   - compiler rejects at schema validation stage
+
+nfr:
+  availability:
+    target: 1.5
+project:
+  name: Out-of-Range Values
+  domain: test
+functional:
+  summary: 'Test scenario: Out-of-Range Values'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

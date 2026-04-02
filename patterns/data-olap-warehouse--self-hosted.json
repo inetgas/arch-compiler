@@ -1,0 +1,320 @@
+{
+  "id": "data-olap-warehouse--self-hosted",
+  "version": "1.0.0",
+  "title": "OLAP Warehouse: ClickHouse / DuckDB (Self-Hosted)",
+  "description": "High-performance self-hosted columnar OLAP engine. ClickHouse is a distributed columnar database optimised for real-time analytical queries at high concurrency \u2014 it can serve thousands of simultaneous analytical queries with sub-100ms p95 on warm data, making it the choice when managed warehouses cannot meet latency or concurrency requirements. DuckDB is an in-process columnar engine for single-node embedded analytics and local data transformation, particularly popular for data engineering scripts and notebook-based analytics. Both are fully open-source (Apache 2.0). ClickHouse Cloud and ClickHouse Altinity provide managed options; DuckDB MotherDuck provides a serverless cloud option.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 5000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 10000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp",
+      "on-prem"
+    ],
+    "costCeilingCompatibleUsd": 8000,
+    "costNotes": "DuckDB: free (open-source), runs on any hardware. ClickHouse self-hosted: cost of compute/storage only. ClickHouse Cloud: $0.36/hr for 30 GiB RAM development tier; production clusters $500-$8,000/mo depending on compute.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($50): DuckDB on a $50/mo VM or ClickHouse single-node on a small cloud instance. Max ($10,000): ClickHouse distributed cluster with 6+ nodes (c5.4xlarge ~$600/mo each = $3,600 compute) + EBS storage (~$500/mo) + data transfer + ops tooling. ClickHouse Cloud production cluster with 96 GiB RAM ~$3,000-$8,000/mo depending on concurrency.",
+      "adoptionCost": "ClickHouse requires more operational expertise than managed warehouses: cluster provisioning, schema design (choosing MergeTree engine variants, partition keys, ORDER BY), replication topology, and monitoring setup. Estimate 25-30 developer days at ~$160/day = $5,000. DuckDB is significantly simpler for single-node use.",
+      "licenseCost": "ClickHouse and DuckDB are Apache 2.0. ClickHouse Cloud and MotherDuck are commercial managed services with no per-seat licensing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "ClickHouse delivers sub-second analytical queries at high concurrency through vectorised execution and aggressive data compression. DuckDB provides embedded columnar analytics."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "ClickHouse integrates with Grafana, Metabase, Superset, and any tool with a ClickHouse driver. DuckDB integrates directly with Python/R analytics stacks and Jupyter notebooks."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "medium",
+      "reasoning": "ClickHouse supports high-throughput INSERT batches and Kafka table engine for streaming ingestion. DuckDB can query and transform Parquet, CSV, and JSON files directly."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "ClickHouse stores data on local disk or S3-compatible object storage (ClickHouse hybrid storage). DuckDB uses local files or DuckDB database files. Both require durable storage."
+    },
+    {
+      "capability": "monitoring",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Self-hosted ClickHouse requires monitoring for merge queue depth, replication lag, and query latency. Prometheus + Grafana is the standard stack."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--snowflake"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "warehouse",
+    "clickhouse",
+    "duckdb",
+    "self-hosted",
+    "columnar",
+    "open-source"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Open-source pattern deployable on any cloud or on-premises infrastructure"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "ClickHouse achieves sub-100ms p95 for analytical queries on warm data with proper schema design (ORDER BY, materialised views). DuckDB achieves sub-10ms for in-process queries. 50ms is the practical floor for network-accessible ClickHouse with non-trivial aggregations."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "ClickHouse with ReplicatedMergeTree and ZooKeeper/Keeper achieves 99.9-99.99% availability. Active-active multi-shard with replication can approach five-nines but requires careful topology design."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "ClickHouse replica failover with proper replication is 2-5 minutes. Single-node ClickHouse or DuckDB restart from crash is under 1 minute."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "ClickHouse replication provides near-zero RPO when replicas are in sync. Backup-based recovery RPO is bounded by backup frequency."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 10000,
+      "reason": "ClickHouse distributed clusters handle up to ~10,000 concurrent analytical queries before network and coordination overhead dominates. DuckDB is single-process with no concurrency limit from the engine itself."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "ClickHouse ingestion via batched INSERTs supports up to ~500 batch write operations per second. Real-time streaming via Kafka table engine handles millions of rows/second as large batches internally."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "ClickHouse supports username/password, certificate-based mTLS, and LDAP/SAML integration. DuckDB has minimal auth (file-level access control only)."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "ClickHouse system tables (query_log, query_thread_log) provide detailed audit trails. Compatible with enterprise audit requirements when log export is configured."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "ClickHouse supports column-level encryption, row-level access policies, and data masking. PII workloads are supported with appropriate schema and access control design."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when data residency controls, column masking, and right-to-erasure pipeline procedures are in place."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when warehouse-level encryption and appropriate BAA coverage are configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when consumer data deletion triggers a pipeline reprocess that excludes deleted records."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX when query audit logs provide an immutable trail of data access and transformation operations."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability is handled by the underlying object storage layer (S3, GCS, ADLS). All major managed warehouses provide durable storage by default."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "ClickHouse and DuckDB are cloud-agnostic and deployable on any infrastructure including on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "ClickHouse and DuckDB provide JDBC/ODBC drivers and is agnostic to language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "ClickHouse/DuckDB serves as analytical backend for any platform."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Self-hosted OLAP engines are selected specifically for analytical workloads requiring either high concurrency, low latency, or cost-efficiency beyond managed warehouses."
+    }
+  ],
+  "defaultConfig": {
+    "engine": "clickhouse",
+    "table_engine": "ReplicatedMergeTree",
+    "replication": true,
+    "ingestion_mode": "kafka-table-engine",
+    "materialized_views": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "engine": {
+        "type": "string",
+        "enum": [
+          "clickhouse",
+          "duckdb"
+        ],
+        "description": "clickhouse: distributed columnar OLAP for production high-concurrency workloads. duckdb: in-process embedded analytics for single-node workloads, data engineering scripts, and notebook environments."
+      },
+      "table_engine": {
+        "type": "string",
+        "enum": [
+          "MergeTree",
+          "ReplicatedMergeTree",
+          "SummingMergeTree",
+          "AggregatingMergeTree",
+          "ReplacingMergeTree"
+        ],
+        "description": "MergeTree: base engine for non-replicated single-node. ReplicatedMergeTree: HA with ZooKeeper/Keeper replication (recommended for production). SummingMergeTree: auto-aggregate numeric columns. AggregatingMergeTree: materialise aggregates incrementally. ReplacingMergeTree: deduplication by primary key."
+      },
+      "replication": {
+        "type": "boolean",
+        "description": "Enable ReplicatedMergeTree with ZooKeeper/ClickHouse Keeper for HA. Requires minimum 2 ClickHouse nodes and 3 Keeper nodes. Disable for single-node dev/test."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "batch-insert",
+          "kafka-table-engine",
+          "clickhouse-client-insert",
+          "http-insert"
+        ],
+        "description": "batch-insert: high-throughput bulk INSERT batches (recommended). kafka-table-engine: native Kafka consumer for streaming ingestion. clickhouse-client-insert: CLI-based bulk loading. http-insert: HTTP interface for language-agnostic clients."
+      },
+      "materialized_views": {
+        "type": "boolean",
+        "description": "Pre-aggregate data at insert time using ClickHouse Materialized Views. Critical for sub-100ms query latency on complex aggregations. Requires upfront schema design to define aggregation targets."
+      }
+    }
+  },
+  "warn_nfr": []
+}

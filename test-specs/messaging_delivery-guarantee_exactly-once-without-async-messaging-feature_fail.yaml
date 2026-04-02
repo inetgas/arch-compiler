@@ -1,0 +1,23 @@
+# Messaging - Delivery Guarantee Set Without Async Messaging Feature
+#
+# An API spec with messaging_delivery_guarantee set to at-least-once but
+# async_messaging explicitly set to false. The messaging_delivery_guarantee
+# feature requires async_messaging to be enabled; setting a delivery guarantee
+# without enabling async messaging is a contradiction that fails compilation.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - messaging_delivery_guarantee requires async_messaging: true
+#   - compiler rejects because delivery guarantee is set without the messaging feature
+
+constraints:
+  platform: api
+  features:
+    messaging_delivery_guarantee: at-least-once
+    async_messaging: false
+project:
+  name: messaging_delivery_guarantee set without async_messaging set to true
+  domain: test
+functional:
+  summary: 'Test scenario: messaging_delivery_guarantee set without async_messaging set to true'
+nfr: {}

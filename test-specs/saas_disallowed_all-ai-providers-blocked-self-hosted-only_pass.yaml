@@ -1,0 +1,39 @@
+# SaaS Disallowed - All AI Providers Blocked, Self-Hosted Only
+#
+# An enterprise AWS Python API spec with ai_inference: true but all external AI
+# SaaS providers (openai, anthropic, huggingface, fal, replicate) in the
+# disallowed list. An empty saas-providers list ensures no SaaS variants are
+# requested. The generic self-hosted genai-inference pattern should be selected.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - genai-inference (generic self-hosted) IS selected
+#   - genai-inference--openai, --anthropic, --huggingface, --fal, --replicate are NOT selected
+#   - all disallowed AI providers are blocked from selection
+
+project:
+  name: Internal AI Platform
+  domain: enterprise
+functional:
+  summary: Internal document analysis tool with self-hosted LLM inference
+constraints:
+  cloud: aws
+  language: python
+  platform: api
+  saas-providers: []
+  disallowed-saas-providers:
+    - openai
+    - anthropic
+    - huggingface
+    - fal
+    - replicate
+  features:
+    ai_inference: true
+nfr:
+  data:
+    pii: true
+  security:
+    audit_logging: true
+cost:
+  ceilings:
+    monthly_operational_usd: 10000

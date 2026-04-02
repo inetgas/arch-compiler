@@ -1,0 +1,257 @@
+{
+  "id": "data-olap-warehouse",
+  "version": "1.0.0",
+  "title": "OLAP Columnar Warehouse: NFR Specification Required",
+  "description": "Meta-policy pattern that activates when olap_workload is enabled and enforces that OLAP-specific NFR fields are explicitly specified. OLAP engines differ fundamentally from OLTP databases: columnar storage optimises aggregations over wide scans, query latency is seconds rather than milliseconds, write throughput is ingestion-batch rather than high-frequency point writes, and concurrency limits are orders of magnitude lower. Without explicit peak_query_per_second_read and p95Milliseconds, the compiler cannot select the correct warehouse implementation: a 50ms p95 target implies ClickHouse or an acceleration layer, while a 2-second p95 is fine for BigQuery or Redshift. This pattern also enforces that read-your-writes consistency is not expected, since warehouse data lags the OLTP source by at least one pipeline cycle.",
+  "types": [
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 0.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 99999,
+    "costNotes": "Meta-policy pattern with no direct cost. Warehouse infrastructure costs are in the variant patterns (data-olap-warehouse--aws, --gcp, --azure, --cloud-agnostic, --self-hosted).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero cost \u2014 meta-policy pattern only. Compute and storage costs are in downstream variant patterns.",
+      "adoptionCost": "Zero adoption cost \u2014 this pattern auto-activates when olap_workload: true is set and enforces NFR specification as a hard compilation requirement.",
+      "licenseCost": "No license cost \u2014 policy enforcement pattern only.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-nfr-enforcement",
+      "confidence": "high",
+      "reasoning": "Enforces that OLAP-specific NFR fields (peak_query_per_second_read, p95Milliseconds) are explicitly declared when olap_workload is enabled, preventing under-specified analytical architectures."
+    }
+  ],
+  "requires": [],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "warehouse",
+    "meta-policy",
+    "nfr-enforcement"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural enforcement pattern applicable to any OLAP workload regardless of technology or cloud provider"
+  },
+  "defaultConfig": {},
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "OLAP warehouses are compatible with any auth mechanism; warehouse access is controlled via IAM roles, service accounts, or SQL-level user permissions."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "All major managed warehouses provide query audit logs (CloudTrail for Redshift, BigQuery audit logs, Snowflake ACCOUNT_USAGE). Compatible with audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "OLAP warehouses support tenant isolation through schema-per-tenant, row-level security, or dedicated warehouse clusters per tenant."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP warehouses support PII workloads with column-level encryption, dynamic data masking (Snowflake, BigQuery), and row-level security policies."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Primary activation gate: this pattern only applies when olap_workload is explicitly enabled."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "OLAP warehouse gating pattern is cloud-agnostic; variant selection handles cloud-specific implementation."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Warehouse interaction is primarily via SQL. All major languages have client libraries or JDBC/ODBC drivers."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "web",
+        "ml-training",
+        "ml-inference",
+        "mobile",
+        "desktop",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "OLAP gating pattern is platform-agnostic; any system enabling olap_workload must specify OLAP NFRs regardless of primary platform type."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Mixed OLTP/OLAP architectures are common; the warehouse is the read-side complement to an OLTP store."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP warehouses are commonly loaded via batch ETL but also support streaming ingestion."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Streaming ingestion into a warehouse (Firehose, Datastream, Snowpipe) is supported but adds pipeline complexity."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "Minimum of 1 analytical query per second. Below this, a general-purpose RDBMS or even DuckDB on a single machine is sufficient without dedicated warehouse infrastructure.",
+      "message": "data-olap-warehouse: peak read QPS is {actual} (<1/s). At this query rate a dedicated OLAP warehouse adds cost and operational overhead without benefit \u2014 consider a general-purpose RDBMS with appropriate indexes, or DuckDB for local/embedded analytics."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "OLAP warehouses reflect source data after pipeline completion. Read-your-writes consistency is not guaranteed \u2014 queries may not see data written in the last pipeline cycle.",
+      "message": "data-olap-warehouse: spec requires needsReadYourWrites but OLAP warehouses cannot satisfy this. Data lags the OLTP source by at least one pipeline cycle (typically minutes to hours). Serve read-your-writes queries from the OLTP source database; use the warehouse for analytical queries only."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": "<",
+      "value": 50,
+      "reason": "No columnar warehouse engine can reliably serve complex analytical queries at sub-50ms p95. Below this threshold, a pre-aggregated cache, materialized view layer, or purpose-built in-memory OLAP engine is required instead.",
+      "message": "data-olap-warehouse: p95 latency target is {actual}ms (<50ms). No general-purpose OLAP warehouse achieves sub-50ms p95 for ad-hoc analytical queries. Options: (1) ClickHouse with materialised views pre-computing the exact aggregation; (2) a caching layer (Redis, Druid) in front of the warehouse; (3) pre-aggregated summary tables served by a low-latency store."
+    }
+  ]
+}

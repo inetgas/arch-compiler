@@ -1,0 +1,327 @@
+{
+  "id": "onprem-airgapped-artifact-registry",
+  "version": "1.0.1",
+  "title": "Internal artifact and container registry for air-gapped environments",
+  "description": "Deploys an internal OCI-compatible container registry and language artifact repository (Maven, PyPI, npm mirror) with promotion workflows that enforce provenance and signing. Enables reproducible, verifiable builds in environments with no outbound internet access.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 15000.0,
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 8000.0
+    },
+    "preferredProviders": [
+      "n/a"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Usually incompatible with $0 opex unless the registry is a shared enterprise service.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($200): Small-scale setup with 1-2 VMs (2 vCPU, 8GB RAM @ $80-100/month), 500GB storage ($50-60/month), basic backup ($30-40/month), minimal bandwidth costs ($20-30/month). Suitable for small teams with limited artifacts. Max ($8000): Enterprise-grade HA cluster with 6+ VMs for registry nodes and load balancers ($3000-4000/month), 10-20TB storage with replication ($2000-3000/month), enterprise backup solution with retention ($1000-1500/month), network infrastructure and bandwidth for air-gapped replication ($800-1200/month), monitoring/logging infrastructure ($200-300/month). The range accounts for hardware procurement/leasing in on-prem environments, storage growth, and disaster recovery requirements.",
+      "adoptionCost": "High complexity implementation requiring: (1) Registry platform selection and deployment (Harbor, Nexus, or JFrog Artifactory) - 40-60 hours of evaluation and setup; (2) Air-gap promotion workflow design with vulnerability scanning, signing, and approval gates - 60-80 hours; (3) Integration with existing CI/CD pipelines for multiple language ecosystems - 40-60 hours; (4) Security hardening, access controls, and compliance documentation for isolated environments - 40-50 hours; (5) Backup/restore procedures and disaster recovery testing - 30-40 hours; (6) Team training on promotion workflows and operations - 20-30 hours. Total: 230-320 hours. At blended rate of $30-35/hour with AI assistance (senior eng + AI reducing traditional timeline by 40-50%), this yields $7000-9000. Complexity drivers include multi-format artifact support (OCI, npm, Maven, PyPI, etc.), air-gap constraints requiring manual replication processes, and governance requirements typical of secure environments.",
+      "licenseCost": "Commercial enterprise registry licenses for air-gapped environments typically required for support and security features. Harbor (open source) = $0, but lacks enterprise support. JFrog Artifactory Pro (self-hosted) = $8,000-15,000/year for small teams. Sonatype Nexus Repository Pro = $10,000-20,000/year. JFrog Enterprise+ for air-gap with HA = $30,000-50,000/year. Using mid-range estimate of $15,000 for a commercial solution that provides vulnerability scanning, RBAC, replication, and vendor support - critical for air-gapped security compliance. Many organizations choose commercial over OSS for air-gapped use cases due to liability and support requirements. This is annual licensing amortized as one-time adoption cost.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "artifact-registry",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly provides an internal registry for storing and managing artifacts (OCI containers and language-specific packages), which is the core function of an artifact registry."
+    },
+    {
+      "capability": "container-registry",
+      "confidence": "high",
+      "reasoning": "The pattern specifically supports OCI containers as part of its artifact storage capabilities, providing a dedicated container/Docker image registry function."
+    },
+    {
+      "capability": "supply-chain-controls",
+      "confidence": "medium",
+      "reasoning": "The pattern enforces promotion workflows and provenance tracking, which are essential supply chain security controls for ensuring artifact integrity and traceability in air-gapped environments."
+    },
+    {
+      "capability": "artifact-promotion",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly enforces promotion workflows as a core feature, managing the progression of artifacts through different stages or environments with controlled gates."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "persistent-storage",
+      "confidence": "high",
+      "reasoning": "An artifact registry requires persistent storage to store container images, artifacts, and metadata across restarts and ensure durability in an air-gapped environment.",
+      "optional": false
+    },
+    {
+      "capability": "authentication",
+      "confidence": "high",
+      "reasoning": "Registry access needs authentication to control who can push/pull artifacts and enforce security policies, especially critical in air-gapped environments.",
+      "optional": false
+    },
+    {
+      "capability": "authorization",
+      "confidence": "high",
+      "reasoning": "Fine-grained authorization is needed to implement promotion workflows and control which users/services can access or promote artifacts through different stages.",
+      "optional": false
+    },
+    {
+      "capability": "network-isolation",
+      "confidence": "high",
+      "reasoning": "Air-gapped deployments require network isolation capability to ensure the registry operates in a disconnected or highly controlled network environment, preventing unauthorized external access.",
+      "optional": false
+    },
+    {
+      "capability": "backup-restore",
+      "confidence": "medium",
+      "reasoning": "Artifact availability and disaster recovery are critical in isolated environments where external sources are unavailable, requiring backup and restore capabilities for business continuity.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "on-prem",
+    "air-gapped",
+    "registry",
+    "supply-chain"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "On-prem artifact registry with HA configuration (replicated storage, load-balanced nodes) can achieve up to four nines availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Artifact and container registry reads from persistent storage have at least 10ms p95 latency due to storage I/O."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Large artifact downloads and storage operations result in at least 50ms p99 latency due to on-prem disk and network overhead."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Registry service recovery in air-gapped environment requires local service restart and storage remount, taking at least 5 minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "On-prem storage and network bandwidth limit registry to approximately 10,000 concurrent pulls per second (36M per hour ceiling)."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "On-prem artifact registry with persistent storage and network constraints can handle up to 50,000 artifact read requests per second."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Artifact push operations with promotion workflows and storage writes are limited to 10,000 write operations per second on-prem."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "Air-gapped registry with promotion workflows requires comprehensive audit logging for supply chain security and compliance tracking."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Registry can support GDPR compliance through access controls and audit logging when necessary for EU operations."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Air-gapped registry with proper controls can meet HIPAA requirements for healthcare software supply chain management."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Registry access controls and audit trails support CCPA compliance when necessary for California-based operations."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Internal registry with controlled promotion workflows supports SOX compliance through immutable artifact storage and audit trails."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Registry can provide read-your-writes consistency for artifact pushes or operate with eventual consistency depending on configuration."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": true,
+      "reason": "Artifacts must be durably stored with replication as they are critical dependencies for application deployments and builds."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "on-prem",
+      "reason": "Air-gapped artifact registry pattern is specifically designed for on-premises environments with network isolation requirements."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Infrastructure pattern that provisions artifact and container registry supporting all language ecosystems and package formats."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Infrastructure pattern that provides artifact storage and distribution for any platform type requiring dependencies or containers."
+    }
+  ],
+  "defaultConfig": {
+    "registry_type": "oci-and-language",
+    "storage_backend": "filesystem",
+    "promotion_workflow": "manual-approval",
+    "vulnerability_scanning": true,
+    "artifact_retention_days": 90,
+    "replication_mode": "single-node"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "registry_type": {
+        "type": "string",
+        "enum": [
+          "oci-only",
+          "oci-and-language",
+          "language-only"
+        ],
+        "description": "Type of artifacts to support. oci-only: Docker/container images only. oci-and-language: Containers plus language-specific packages (npm, Maven, PyPI, etc.). language-only: Only language package managers without container support."
+      },
+      "storage_backend": {
+        "type": "string",
+        "enum": [
+          "filesystem",
+          "s3-compatible",
+          "block-storage"
+        ],
+        "description": "Underlying storage mechanism. filesystem: Local disk (simple, lower cost). s3-compatible: Object storage like MinIO (scalable, durable). block-storage: Network-attached block volumes (performance, snapshots)."
+      },
+      "promotion_workflow": {
+        "type": "string",
+        "enum": [
+          "manual-approval",
+          "automated-policy",
+          "no-promotion"
+        ],
+        "description": "How artifacts move between environments. manual-approval: Human review required for promotion. automated-policy: Policy-based automatic promotion (e.g., after tests pass). no-promotion: Direct push to all repositories."
+      },
+      "vulnerability_scanning": {
+        "type": "boolean",
+        "description": "Enable automated vulnerability scanning of artifacts and container images before allowing promotion or deployment."
+      },
+      "artifact_retention_days": {
+        "type": "integer",
+        "minimum": 7,
+        "maximum": 365,
+        "description": "Number of days to retain old artifact versions before automatic cleanup. Longer retention increases storage costs but provides more rollback options."
+      },
+      "replication_mode": {
+        "type": "string",
+        "enum": [
+          "single-node",
+          "multi-node-active-passive",
+          "multi-node-active-active"
+        ],
+        "description": "Registry availability architecture. single-node: One instance (simple, lower cost). active-passive: Primary with standby replica (HA with failover). active-active: Multiple active nodes (highest availability and performance)."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At <1 req/s, a shared external registry or simple file server may be more cost-effective than maintaining a dedicated on-prem artifact registry infrastructure.",
+      "message": "onprem-airgapped-artifact-registry: peak read QPS is {actual} req/s (<1). For very low traffic, simpler artifact distribution methods may be more appropriate than a full registry."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 0.1,
+      "reason": "At <0.1 write req/s (roughly one artifact push every 10 seconds), the operational overhead of running and maintaining an on-prem registry with promotion workflows may outweigh benefits.",
+      "message": "onprem-airgapped-artifact-registry: peak write QPS is {actual} req/s (<0.1). With infrequent artifact pushes, simpler artifact storage solutions may be more cost-effective."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<",
+      "value": 0.95,
+      "reason": "Air-gapped artifact registry requires HA infrastructure (replicated storage, load balancers). Very low availability targets (<95%) suggest this infrastructure investment may not be necessary.",
+      "message": "onprem-airgapped-artifact-registry: availability target is {actual} (<0.95). For low availability requirements, simpler single-node artifact storage may be more appropriate than HA registry infrastructure."
+    }
+  ]
+}

@@ -1,0 +1,298 @@
+{
+  "id": "api-versioning-header",
+  "version": "1.0.0",
+  "title": "API Versioning (Header/Content Negotiation)",
+  "description": "Version via headers/media types; keeps URLs stable; harder to debug and cache.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "API versioning via headers is a design pattern implementation within existing API infrastructure. It adds no additional infrastructure costs - the versioning logic is handled in application code through header parsing and routing. Any costs come from the existing API gateway, load balancer, or web server already in place. The pattern itself requires no databases, caches, or standalone services.",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) Framework/middleware setup for header parsing and version routing (2-4 hours); (2) Refactoring existing endpoints to support multiple versions with backward compatibility (8-16 hours); (3) Content negotiation logic for Accept headers and custom version headers (4-6 hours); (4) Documentation updates for API consumers on header usage (3-5 hours); (5) Testing across versions including edge cases (6-10 hours). Total: 23-41 hours at $50-60/hour blended rate (with AI assistance reducing by ~30%). Higher than URL versioning due to harder debugging, more complex caching strategies, and less intuitive client implementation. Teams need expertise in HTTP headers, content negotiation, and API gateway configuration.",
+      "licenseCost": "No licensing costs. Header-based versioning is implemented using open-source frameworks and standard HTTP protocols. Common implementations use free tools: Express.js middleware, Spring Boot content negotiation, ASP.NET Core versioning libraries, or API gateway header routing (built into AWS API Gateway, Azure APIM, Kong). All major frameworks provide native or community-supported open-source solutions for header-based versioning without additional license fees.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "api-versioning",
+      "confidence": "medium",
+      "reasoning": "This pattern directly implements API versioning through header-based content negotiation, providing a complete versioning strategy that keeps URLs stable while allowing multiple API versions to coexist."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "rest-api",
+      "confidence": "high",
+      "reasoning": "Header-based API versioning requires an existing API implementation to version. The pattern operates on top of an API layer to route requests to different versions.",
+      "optional": false
+    },
+    {
+      "capability": "content-negotiation",
+      "confidence": "high",
+      "reasoning": "This pattern specifically relies on HTTP content negotiation mechanisms (Accept headers, custom version headers) to determine which API version to serve, making content negotiation essential to its functionality.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "api-versioning-url"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "curated",
+    "api",
+    "versioning"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Header-based API versioning is a cloud-agnostic HTTP protocol pattern that works on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "API versioning via headers is a protocol-level pattern implementable in any language with HTTP support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "iot",
+        "cli",
+        "n/a"
+      ],
+      "reason": "This pattern applies to any HTTP-based API regardless of client platform (web, mobile, desktop, IoT)."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Header-based versioning is compatible with caching strategies though it may complicate cache key generation."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Header-based versioning works with AI inference APIs, allowing versioned model endpoints and schemas."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API versioning via headers is compatible with both single-tenant and multi-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Header-based versioning is neutral to batch processing requirements, which are backend implementation concerns."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API versioning pattern does not constrain distributed transaction requirements as they are orthogonal."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Header-based versioning is compatible with real-time streaming APIs using versioned event schemas."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API versioning via headers works with vector search APIs, allowing versioned embedding endpoints."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Header-based versioning supports OLTP workloads through efficient version routing of transactional requests."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API versioning pattern is compatible with OLAP workloads, allowing versioned analytical query endpoints."
+    }
+  ],
+  "defaultConfig": {
+    "version_header_name": "API-Version",
+    "version_format": "date-based",
+    "fallback_behavior": "latest-stable",
+    "content_negotiation": false,
+    "deprecation_policy": "warning-header"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "version_header_name": {
+        "type": "string",
+        "enum": [
+          "API-Version",
+          "X-API-Version",
+          "Accept-Version",
+          "Custom-Header"
+        ],
+        "description": "Header name for version specification. API-Version is RESTful standard, X-API-Version is legacy convention, Accept-Version follows HTTP semantics, Custom-Header for organizational standards."
+      },
+      "version_format": {
+        "type": "string",
+        "enum": [
+          "semantic",
+          "date-based",
+          "sequential"
+        ],
+        "description": "Version numbering scheme. Semantic (v1.2.3) communicates breaking changes, date-based (2024-01-15) indicates release timeline, sequential (v1, v2) is simplest for major versions only."
+      },
+      "fallback_behavior": {
+        "type": "string",
+        "enum": [
+          "latest-stable",
+          "oldest-supported",
+          "reject-request"
+        ],
+        "description": "Behavior when no version header provided. Latest-stable serves newest version (convenience), oldest-supported ensures backward compatibility, reject-request enforces explicit versioning."
+      },
+      "content_negotiation": {
+        "type": "boolean",
+        "description": "Use Accept/Content-Type headers for versioning (e.g., application/vnd.api+json;version=2). True follows REST hypermedia principles but harder to test, false uses dedicated version header for simplicity."
+      },
+      "deprecation_policy": {
+        "type": "string",
+        "enum": [
+          "sunset-header",
+          "warning-header",
+          "both"
+        ],
+        "description": "How to communicate version deprecation. Sunset-header (RFC 8594) provides end-of-life date, warning-header gives human-readable message, both maximizes visibility."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,503 @@
+{
+  "id": "arch-multi-tenant-consolidation",
+  "version": "1.0.0",
+  "title": "Tenant Consolidation for Cost Efficiency",
+  "description": "Prefer shared resources (shared DB, shared compute pools) to reduce per-tenant overhead; enforce isolation via RLS and quotas.",
+  "types": [
+    "cost",
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Multi-tenant consolidation involves shared infrastructure costs. Minimum represents a small-scale deployment with shared database (RDS t3.small ~$30), shared compute pool (ECS/K8s on t3.medium instances ~$50), and basic monitoring/quotas (~$20). Maximum represents production-scale with high-availability shared database cluster (RDS m5.xlarge Multi-AZ ~$500-800), shared compute pool with auto-scaling (multiple instances ~$2000-3000), advanced monitoring and tenant isolation tools (~$500), data transfer and storage (~$500), and reserved capacity for peak loads (~$1000-1500). Cost efficiency comes from amortizing these resources across multiple tenants rather than per-tenant dedicated infrastructure. Note: actual savings depend on tenant density - higher tenant count reduces per-tenant cost significantly.",
+      "adoptionCost": "High-medium complexity due to architectural re-design required. Implementation involves: (1) Designing and implementing Row-Level Security (RLS) policies in database (~$800 - requires deep database security expertise), (2) Building tenant isolation mechanisms in application layer (~$1000 - context propagation, middleware, filters), (3) Implementing quota management and enforcement systems (~$800 - rate limiting, resource tracking per tenant), (4) Refactoring existing code to be tenant-aware (~$500 - adding tenant_id columns, updating queries), (5) Testing isolation boundaries and security guarantees (~$400 - critical security testing). Requires expertise in database security, multi-tenancy patterns, and infrastructure optimization. Teams with existing multi-tenant experience can reduce this by 30-40%.",
+      "licenseCost": "No direct licensing costs as this is an architectural pattern implemented using standard cloud infrastructure. RLS is native to PostgreSQL and most modern databases. Quota management can be built with open-source tools (Redis for rate limiting, Prometheus for monitoring). Commercial tenant management platforms exist (e.g., Frontegg, PropelAuth) but are optional and would add $200-2000/month to operational costs rather than one-time license fees. Core pattern is implementable entirely with open-source and cloud-native tools.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cost-efficient-tenancy",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly optimizes for cost efficiency in multi-tenant architectures by consolidating resources rather than isolating them per tenant. This is the core value proposition."
+    },
+    {
+      "capability": "quota-enforcement",
+      "confidence": "medium",
+      "reasoning": "The pattern description explicitly mentions enforcing isolation via quotas, which is essential for preventing noisy neighbor problems in shared resource environments."
+    },
+    {
+      "capability": "multi-tenancy",
+      "confidence": "high",
+      "reasoning": "This pattern is fundamentally about implementing a specific multi-tenant architecture strategy through resource consolidation and logical isolation mechanisms."
+    },
+    {
+      "capability": "isolation",
+      "confidence": "medium",
+      "reasoning": "The pattern provides logical isolation through RLS and quotas in a consolidated environment, ensuring tenant data and resource separation even within shared infrastructure."
+    },
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "Multi-tenant consolidation uses RLS as its primary isolation mechanism \u2014 shared infrastructure with per-tenant data visibility enforced at the database layer."
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "Consolidation patterns require robust tenant identification at every layer \u2014 API, application, and database \u2014 to prevent cross-tenant data leakage."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly mentions using RLS (row-level security) for tenant isolation in shared databases. This is a fundamental requirement to safely implement this consolidation pattern.",
+      "optional": false
+    },
+    {
+      "capability": "connection-pooling",
+      "confidence": "high",
+      "reasoning": "The pattern requires the ability to create and manage shared resource pools (compute pools, databases) that can be allocated across multiple tenants.",
+      "optional": true
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "To enforce RLS and quotas in a shared environment, the system must be able to identify which tenant each request or data row belongs to.",
+      "optional": false
+    },
+    {
+      "capability": "resource-monitoring",
+      "confidence": "high",
+      "reasoning": "Tracking per-tenant resource usage is critical for both quota enforcement and cost allocation in consolidated environments, ensuring fair resource distribution and accurate billing.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "tenancy-database-per-tenant"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "multi-tenant",
+    "consolidation",
+    "quotas",
+    "rls"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Shared database architecture with consolidated resources limits maximum availability to three nines due to single points of failure."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Row-level security policy evaluation and tenant identification checks add minimum 10ms overhead at p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Shared resource contention and RLS policy evaluation under load cause p99 latency spikes of at least 50ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 30,
+      "reason": "Consolidated database recovery affects all tenants simultaneously, requiring at least 30 minutes for coordinated restoration."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Cost-effective consolidated backup strategies use 15-minute intervals to balance expense and data loss tolerance."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 5000000,
+      "reason": "Consolidated resource pools with quota enforcement and RLS overhead scale efficiently up to 5M jobs per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Shared database with row-level security filtering supports up to 50K read QPS before connection pooling and RLS overhead degrades performance."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Consolidated write path with tenant quotas and shared transaction log supports up to 10K write QPS before contention limits scalability."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern supports both audited and non-audited deployments, though audit logging is recommended for multi-tenant compliance."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant"
+      ],
+      "reason": "Pattern specifically supports shared database with row-level security or schema-per-tenant isolation for cost-efficient consolidation."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Consolidated architecture handles both PII and non-PII data through row-level security and tenant-scoped access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports GDPR compliance through tenant-level data isolation, deletion capabilities, and access controls in shared infrastructure."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support HIPAA requirements when combined with appropriate encryption, audit logging, and tenant isolation controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA requirements for data access and deletion are achievable through tenant-scoped queries and RLS-enforced data boundaries."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance is supported through proper access controls, audit trails, and tenant-isolated financial data in shared database."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Shared database architecture supports both eventual and read-your-writes consistency models depending on application requirements."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both strict and relaxed durability guarantees based on database configuration and cost-performance tradeoffs."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Multi-tenant consolidation works on any cloud platform or on-premises environment that supports database row-level security."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Architectural pattern for resource consolidation and tenant isolation applies across all programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Tenant consolidation is a cross-cutting architectural concern applicable to any platform type requiring multi-tenancy."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern is specifically designed for multi-tenant architectures and requires multi-tenancy feature to be enabled."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without caching layers, though tenant-aware caching can improve performance in consolidated environments."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Consolidation pattern applies to both synchronous and asynchronous workloads with tenant-scoped message routing."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports AI inference workloads through shared compute pools with tenant quotas and resource isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing benefits from consolidated resource pools with tenant-scoped job scheduling and quota enforcement."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports distributed transactions within and across tenants using shared transaction coordination in consolidated database."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming workloads can leverage consolidated infrastructure with tenant-partitioned streams and quota controls."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search operations benefit from shared index infrastructure with row-level security for tenant isolation."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores support consolidation through tenant-scoped collections or RLS policies on shared document tables."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value stores achieve consolidation through tenant-prefixed keys in shared data structures with quota enforcement."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support multi-tenant consolidation through tenant node properties and edge-level access control policies."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases benefit from consolidated storage with tenant tags for efficient querying and retention policies."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads achieve cost efficiency through shared transaction processing infrastructure with tenant-level isolation."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workloads benefit from consolidated analytical compute pools with tenant-scoped queries and resource quotas."
+    }
+  ],
+  "defaultConfig": {
+    "resource_sharing_level": "database",
+    "isolation_mechanism": "rls",
+    "quota_enforcement": "application",
+    "compute_pooling": "shared",
+    "storage_strategy": "shared_schema"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "resource_sharing_level": {
+        "type": "string",
+        "enum": [
+          "infrastructure",
+          "database",
+          "application",
+          "hybrid"
+        ],
+        "description": "Level of resource consolidation: infrastructure (shared VMs/containers), database (shared DB with RLS), application (shared app instances with tenant context), or hybrid (mix of approaches)"
+      },
+      "isolation_mechanism": {
+        "type": "string",
+        "enum": [
+          "rls",
+          "schema_per_tenant",
+          "database_per_tenant",
+          "application_logic"
+        ],
+        "description": "Data isolation strategy: RLS (row-level security for maximum consolidation), schema_per_tenant (moderate isolation), database_per_tenant (strong isolation, higher cost), or application_logic (app-enforced filtering)"
+      },
+      "quota_enforcement": {
+        "type": "string",
+        "enum": [
+          "database",
+          "application",
+          "api_gateway",
+          "none"
+        ],
+        "description": "Where to enforce tenant quotas: database (DB-level limits), application (app-level metering), api_gateway (request throttling), or none (trust-based)"
+      },
+      "compute_pooling": {
+        "type": "string",
+        "enum": [
+          "shared",
+          "tiered",
+          "dedicated"
+        ],
+        "description": "Compute resource allocation: shared (all tenants share pool, lowest cost), tiered (premium tenants get dedicated resources), dedicated (per-tenant compute, highest cost)"
+      },
+      "storage_strategy": {
+        "type": "string",
+        "enum": [
+          "shared_schema",
+          "shared_table_partitioned",
+          "separate_schemas",
+          "separate_databases"
+        ],
+        "description": "Database storage approach: shared_schema (single schema with tenant_id, most efficient), shared_table_partitioned (partitioned by tenant for performance), separate_schemas (schema per tenant), separate_databases (full isolation)"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 100,
+      "reason": "Tenant consolidation overhead (RLS evaluation, tenant identification) is not justified at very low QPS; simpler single-tenant or schema-per-DB approaches are more appropriate.",
+      "message": "arch-multi-tenant-consolidation: peak read QPS is {actual} req/s (<100). Consolidation overhead (RLS, tenant tracking) may not be cost-effective at this scale."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">",
+      "value": 0.999,
+      "reason": "Pattern explicitly supports max 99.9% availability due to shared database single points of failure. Higher availability targets require database-per-tenant isolation.",
+      "message": "arch-multi-tenant-consolidation: availability target is {actual} (>99.9%). This pattern's shared database architecture limits maximum availability to 99.9% due to consolidated failure domains."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "==",
+      "value": "database-per-tenant",
+      "reason": "Database-per-tenant isolation contradicts the consolidation cost optimization goal of this pattern; use multi-tenant-database-per-tenant pattern instead.",
+      "message": "arch-multi-tenant-consolidation: spec requires tenant_isolation=database-per-tenant, which contradicts this pattern's shared-resource consolidation approach. Consider multi-tenant-database-per-tenant pattern instead."
+    }
+  ]
+}

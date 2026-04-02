@@ -1,0 +1,451 @@
+{
+  "id": "hosting-managed-paas--flyio",
+  "version": "1.0.0",
+  "title": "Managed Web/API Hosting on Fly.io",
+  "description": "Deploy APIs and background workers globally on Fly.io\u2019s edge platform with automatic multi-region placement, built-in WireGuard VPN for private networking, and persistent volumes for stateful workloads. Suited to latency-sensitive APIs that benefit from edge-proximity to users.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 50.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "flyio"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free allowance: 3 shared-cpu-1x VMs (256MB), 3GB storage, 160GB egress/month. Ideal for globally distributed APIs; charges apply beyond free tier.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Minimum $0 represents usage within Fly.io's generous free tier (3 shared-cpu-1x VMs with 256MB RAM, 3GB persistent storage, 160GB egress/month), suitable for development, small personal projects, or low-traffic APIs serving <100k requests/month. Maximum $50 represents a small production API exceeding free tier: 1-2 additional shared-cpu VMs ($5-10/month), upgraded to 512MB-1GB RAM ($3-8/month), additional storage beyond 3GB ($0.15/GB), and moderate egress beyond 160GB ($0.02/GB). A typical small business API with moderate traffic (500k-1M requests/month) would cost $15-30/month. Larger production workloads requiring dedicated CPUs, high availability across multiple regions, or significant traffic would exceed this range.",
+      "adoptionCost": "Medium-high adoption cost due to several factors: (1) Learning flyctl CLI and Fly.io-specific configuration (fly.toml) which differs from traditional PaaS like Heroku - estimated 8-16 hours for developers familiar with containerization. (2) Understanding Fly.io's unique edge architecture, WireGuard VPN networking, and global distribution model - 4-8 hours. (3) Dockerizing applications if not already containerized - 4-16 hours depending on application complexity. (4) Setting up proper deployment pipelines, health checks, and monitoring - 8-12 hours. (5) Learning persistent volume management and database integration patterns - 4-8 hours. With AI coding assistants reducing implementation time by ~30%, total estimated effort is 20-40 hours. At $75/hour blended developer rate, this yields $1,500. Organizations already using Docker and familiar with infrastructure-as-code concepts would be on the lower end; teams transitioning from managed platforms like Heroku or Firebase would be on the higher end.",
+      "licenseCost": "Fly.io operates on a pure pay-as-you-go consumption model with no platform fees, subscription charges, or licensing costs. There are no enterprise agreements, support tiers requiring payment, or minimum commitments. Users pay only for actual resource consumption (compute, storage, bandwidth) beyond the free tier. The flyctl CLI and all platform tooling are free and open source. Unlike some PaaS providers that charge platform fees on top of infrastructure costs, Fly.io's pricing is transparent with no hidden licensing components.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "Fly.io provides managed hosting infrastructure for APIs, handling deployment, scaling, and infrastructure management."
+    },
+    {
+      "capability": "global-edge-distribution",
+      "confidence": "high",
+      "reasoning": "Fly.io's core feature is deploying applications globally across edge locations for distributed presence."
+    },
+    {
+      "capability": "low-latency-routing",
+      "confidence": "high",
+      "reasoning": "Edge distribution combined with Fly.io's Anycast routing enables low-latency request routing to nearest regions."
+    },
+    {
+      "capability": "container-orchestration",
+      "confidence": "high",
+      "reasoning": "Fly.io manages container lifecycle and orchestration, handling deployment, scaling, and management of containerized workloads."
+    },
+    {
+      "capability": "persistent-storage",
+      "confidence": "high",
+      "reasoning": "Fly.io provides persistent volumes support for stateful applications that require data persistence across deployments."
+    },
+    {
+      "capability": "vpn-networking",
+      "confidence": "high",
+      "reasoning": "Built-in WireGuard VPN is provided as a key feature for secure private networking between services and regions."
+    },
+    {
+      "capability": "background-job-processing",
+      "confidence": "high",
+      "reasoning": "The platform explicitly supports background workers as a deployment target alongside APIs."
+    },
+    {
+      "capability": "automated-deployment",
+      "confidence": "high",
+      "reasoning": "Fly.io provides automated deployment workflows and handles infrastructure provisioning, reducing operational overhead."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "containerized-application",
+      "confidence": "high",
+      "reasoning": "Fly.io requires applications to be containerized using Docker for deployment on their platform.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "flyio",
+    "api-hosting",
+    "edge"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Fly.io is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Free tier shared-cpu infrastructure and lack of enterprise SLA limit maximum availability to two nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Managed PaaS platform introduces network overhead and shared infrastructure latency floor."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Tail latencies on shared infrastructure with resource contention require minimum 200ms p99."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Automated health checks with 30s interval and instant failover achieve minimum 2-minute RTO."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Free/low-cost tier CPU, memory, and network limits cap maximum job throughput at 10K per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Free tier shared-cpu VMs with 3 instances and network limits cap read QPS at 1000."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Shared infrastructure CPU and I/O contention on free tier limits write QPS to 500."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "mtls",
+        "password",
+        "jwt",
+        "saml",
+        "n/a"
+      ],
+      "reason": "Fly.io supports all authentication mechanisms including OAuth2/OIDC, API keys, mTLS, JWT, SAML, and password-based auth."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support GDPR compliance when combined with appropriate data handling and regional deployment."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support HIPAA compliance with proper encryption, access controls, and audit logging implementation."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support CCPA compliance when combined with data access and deletion capabilities at application level."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support SOX compliance with appropriate audit logging and access control mechanisms."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": false,
+      "reason": "Shared infrastructure and free tier limitations prevent guaranteed strict durability requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Fly.io is a cloud-agnostic PaaS that abstracts underlying infrastructure across multiple cloud providers."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "c",
+        "cpp",
+        "dart",
+        "swift",
+        "sql",
+        "objective-c",
+        "n/a"
+      ],
+      "reason": "Docker-based platform supports any language that can be containerized including all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Fly.io hosts backend services including APIs, web applications, background workers, and batch processing workloads."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "flyio"
+      ],
+      "reason": "Pattern specifically requires flyio as the backend provider"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports optional caching through Redis or in-memory caching within containerized applications."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports async messaging through background workers and integration with external message queue services."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Free tier shared-cpu VMs lack GPU resources and compute power required for AI inference workloads. But Fly.io supports AI infernce through external Model API."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports multi-tenancy through application-level implementation with various isolation strategies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Free-tier PaaS has runtime limits and auto-sleeping that prevent long-running batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Distributed transaction coordination requires specialized infrastructure beyond basic PaaS container orchestration."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Real-time streaming requires dedicated streaming infrastructure not provided by general-purpose PaaS hosting."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports vector search through integration with vector database services or containerized vector engines."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports document stores through containerized MongoDB, CouchDB, or managed database integrations."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports key-value stores through Redis, persistent volumes, or managed KV database services."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports graph databases through containerized Neo4j or managed graph database integrations."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports time-series databases through containerized InfluxDB, TimescaleDB, or managed time-series services."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports OLTP workloads through transactional databases with persistent volumes on containerized infrastructure."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "OLAP workloads require dedicated analytical databases and compute resources beyond free-tier PaaS capabilities."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "flyio",
+    "deployment_strategy": "rolling",
+    "auto_scaling": false,
+    "persistent_storage": false,
+    "global_distribution": true,
+    "health_check_path": "/health"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "flyio"
+        ],
+        "description": "PaaS provider for managed API/web hosting"
+      },
+      "deployment_strategy": {
+        "type": "string",
+        "enum": [
+          "rolling",
+          "blue-green",
+          "canary"
+        ],
+        "description": "Deployment strategy: rolling for zero-downtime sequential updates, blue-green for instant rollback capability, canary for gradual traffic shifting to test new versions"
+      },
+      "auto_scaling": {
+        "type": "boolean",
+        "description": "Enable automatic horizontal scaling based on traffic. Increases costs beyond free tier but provides better availability under load"
+      },
+      "persistent_storage": {
+        "type": "boolean",
+        "description": "Enable persistent volumes for stateful applications. Required for databases or file storage but adds complexity and cost"
+      },
+      "global_distribution": {
+        "type": "boolean",
+        "description": "Deploy to multiple regions for lower latency worldwide. Uses more resources but improves user experience globally"
+      },
+      "health_check_path": {
+        "type": "string",
+        "description": "HTTP endpoint path for health checks (e.g., /health, /api/status). Used to determine instance health and trigger restarts"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "At <10 req/s, managed PaaS overhead (container orchestration, edge routing) outweighs benefits vs simpler hosting.",
+      "message": "hosting-managed-paas--flyio: peak read QPS is {actual} req/s (<10). Managed PaaS overhead may outweigh benefit; consider simpler static hosting or serverless."
+    }
+  ]
+}

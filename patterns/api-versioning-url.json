@@ -1,0 +1,289 @@
+{
+  "id": "api-versioning-url",
+  "version": "1.0.0",
+  "title": "API Versioning (URL Path)",
+  "description": "Version APIs via URL (/v1/...); explicit and cache-friendly; requires deprecation policy.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 750.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "URL path versioning is a pure design pattern that adds no infrastructure costs. It's implemented through routing configuration in existing API gateway/load balancer infrastructure already required for the API. The pattern involves structuring URL paths (e.g., /v1/users vs /v2/users) which requires no additional services, compute resources, or bandwidth beyond what the API already consumes. All major frameworks (Express, Spring Boot, FastAPI, ASP.NET) support route versioning natively without additional licensing or infrastructure.",
+      "adoptionCost": "Medium complexity implementation requiring: (1) Initial setup: 4-8 hours to configure routing rules, update API gateway/reverse proxy configurations, and modify OpenAPI specifications ($200-$400); (2) Code refactoring: 8-16 hours to restructure controllers/handlers into versioned namespaces, handle shared business logic, and implement version-specific request/response transformations ($400-$800); (3) Documentation and testing: 4-8 hours to update API documentation, create version-specific test suites, and establish deprecation policy ($200-$400). Requires intermediate backend development skills. Complexity factors include: managing multiple API versions simultaneously, establishing routing conventions, coordinating with frontend teams on version adoption, and planning migration/deprecation timelines. Lower than microservices patterns but higher than simple design patterns due to coordination overhead and operational considerations.",
+      "licenseCost": "URL path versioning requires no specialized licenses. Implementation uses native features of standard web frameworks and API gateways (nginx, Kong, AWS API Gateway, Azure API Management, Express.js, Spring Boot, FastAPI, etc.). All necessary tooling is either open source or included in existing API infrastructure licensing. OpenAPI/Swagger specifications for documenting versioned APIs are open standards. No commercial tools or proprietary technologies are required for this pattern.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "api-versioning",
+      "confidence": "medium",
+      "reasoning": "This pattern explicitly provides API versioning functionality through URL path structure (e.g., /v1/, /v2/). The URL-based approach is the implementation mechanism for delivering versioning capability."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "rest-api",
+      "confidence": "high",
+      "reasoning": "URL-based API versioning requires an existing API to version. This pattern is applied on top of an API implementation and cannot exist without one.",
+      "optional": false
+    },
+    {
+      "capability": "routing",
+      "confidence": "high",
+      "reasoning": "URL path versioning requires routing capability to parse the version segment (/v1/, /v2/) and direct requests to appropriate handlers or backend services.",
+      "optional": true
+    },
+    {
+      "capability": "api-versioning",
+      "confidence": "medium",
+      "reasoning": "Pattern description explicitly states 'requires deprecation policy', which is a core component of API lifecycle management for handling version transitions and retirement.",
+      "optional": true
+    },
+    {
+      "capability": "api-documentation",
+      "confidence": "medium",
+      "reasoning": "Versioned APIs require documentation to indicate which version supports what features, endpoints, and breaking changes to enable proper client integration and migration.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "api-versioning-header"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "curated",
+    "api",
+    "versioning"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "URL-based API versioning is a cloud-agnostic pattern that works on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "API versioning via URL path is a language-agnostic architectural pattern implementable in any language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "agnostic",
+        "n/a"
+      ],
+      "reason": "URL versioning applies to any HTTP-based API that serves clients across all platforms."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "URL versioning is compatible with and without caching as version paths enable cache-friendly immutable URLs."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "URL versioning works for AI inference APIs and non-AI APIs alike as it is a routing concern."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "URL versioning is independent of multi-tenancy and works for both single-tenant and multi-tenant systems."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "URL versioning applies to synchronous API endpoints regardless of backend batch processing capabilities."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "URL versioning is a routing pattern that does not constrain or require distributed transaction support."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "URL versioning works for both request-response APIs and streaming endpoints via versioned paths."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "URL versioning is independent of vector search capabilities in the underlying data layer."
+    }
+  ],
+  "defaultConfig": {
+    "version_prefix": "v",
+    "current_version": "1",
+    "deprecation_notice_period_days": 180,
+    "version_header_support": true,
+    "default_version_behavior": "latest"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "version_prefix": {
+        "type": "string",
+        "enum": [
+          "v",
+          "version",
+          "api/v"
+        ],
+        "description": "URL prefix format for versions. 'v' creates /v1/..., 'version' creates /version1/..., 'api/v' creates /api/v1/..."
+      },
+      "current_version": {
+        "type": "string",
+        "description": "Current active API version number (e.g., '1', '2', '3')"
+      },
+      "deprecation_notice_period_days": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 730,
+        "description": "Number of days to maintain deprecated API versions before removal. Longer periods provide better backward compatibility but increase maintenance burden."
+      },
+      "version_header_support": {
+        "type": "boolean",
+        "description": "Whether to support version specification via Accept header as fallback (e.g., Accept: application/vnd.api+json;version=1). Provides flexibility but adds complexity."
+      },
+      "default_version_behavior": {
+        "type": "string",
+        "enum": [
+          "latest",
+          "oldest",
+          "explicit_required"
+        ],
+        "description": "Behavior when no version specified in URL. 'latest' routes to newest version (convenient but risky), 'oldest' routes to v1 (safest for compatibility), 'explicit_required' returns 400 error (most explicit)."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,474 @@
+{
+  "id": "api-graphql-schema-first",
+  "version": "1.0.0",
+  "title": "GraphQL Schema-First API",
+  "description": "GraphQL API designed schema-first: the SDL schema is the authoritative contract authored before implementation, enabling parallel frontend/backend development and strong type safety. Clients request exactly the fields they need, eliminating over-fetching; requires DataLoader-style batching to prevent N+1 resolver queries and a caching strategy for expensive field resolvers.",
+  "types": [
+    "design",
+    "build",
+    "ops",
+    "test"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 3000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "GraphQL Schema-First API requires infrastructure for hosting, caching, and monitoring. Min ($50): Small-scale deployment with container hosting (AWS ECS Fargate ~$15-30/month for 0.25 vCPU), basic Redis cache (ElastiCache t3.micro ~$13/month), API Gateway/ALB (~$10-15/month), and minimal data transfer. Suitable for development or low-traffic APIs (<1000 req/day). Max ($3000): Production deployment with auto-scaling containers (ECS/EKS ~$500-800), multi-AZ Redis cluster (~$400-600), GraphQL-specific features like Apollo Router/Federation (~$200-500 managed), CDN caching (~$100-300), comprehensive monitoring/APM (~$200-400), and significant data transfer for high-traffic APIs (>1M req/day). Costs scale with resolver complexity, nested query depth, and N+1 query patterns requiring DataLoader implementations.",
+      "adoptionCost": "Medium-high complexity pattern. Schema-first approach requires: (1) Learning GraphQL schema design patterns and SDL (Schema Definition Language) - 20-40 hours for team training, (2) Designing comprehensive type system and schema contracts - 40-60 hours, (3) Implementing efficient resolvers with DataLoader for N+1 prevention - 60-80 hours, (4) Setting up query complexity analysis and depth limiting to prevent abuse - 20-30 hours, (5) Implementing caching strategy (Redis, response caching, persisted queries) - 30-40 hours, (6) Integration testing for schema validation and breaking change detection - 20-30 hours, (7) Performance testing and resolver optimization - 20-30 hours. Total 210-310 hours. At blended rate of $75-100/hour (considering AI coding assistants reduce time by 30-40%), adoption cost ranges $2000-3000. Schema-first requires more upfront design than code-first but provides better API governance.",
+      "licenseCost": "GraphQL core tooling is open source and MIT-licensed (GraphQL.js, Apollo Server, GraphQL Yoga, Mercurius). Schema-first tools like GraphQL Code Generator, graphql-tools, and schema stitching libraries are also open source. However, production deployments may optionally use commercial tools: Apollo Studio (free tier available, Team plan $200-500/month for advanced features like schema registry and federated gateway), AWS AppSync (pay-per-use, not license fee), or GraphQL managed services. Base implementation uses entirely free/open-source stack, so license cost is $0. Commercial tooling is optional enhancement, not required for schema-first approach.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "graphql-api",
+      "confidence": "high",
+      "reasoning": "This pattern implements a GraphQL API with schema-first approach, providing the core GraphQL API capability as the primary interface pattern."
+    },
+    {
+      "capability": "flexible-client-queries",
+      "confidence": "high",
+      "reasoning": "GraphQL's query language allows clients to request exactly the data they need, avoiding over-fetching and under-fetching, which is a core feature distinguishing it from REST APIs."
+    },
+    {
+      "capability": "schema-contract",
+      "confidence": "high",
+      "reasoning": "Schema-first approach means the GraphQL schema serves as a formal contract between frontend and backend, enabling parallel development and clear API boundaries."
+    },
+    {
+      "capability": "type-safety",
+      "confidence": "high",
+      "reasoning": "Schema-first GraphQL provides strong typing through the schema definition, ensuring type safety across the API contract and enabling code generation."
+    },
+    {
+      "capability": "query-batching",
+      "confidence": "high",
+      "reasoning": "GraphQL schema-first implementations commonly include DataLoader or equivalent batching mechanisms to address the N+1 query problem, providing query-batching capability to dependent patterns."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "schema-contract",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Schema-first approach requires governance processes to manage schema evolution, versioning, and breaking changes to maintain the schema contract reliability across teams."
+    },
+    {
+      "capability": "caching",
+      "confidence": "high",
+      "reasoning": "The pattern description explicitly states caching is needed since GraphQL queries can be expensive, especially with complex nested queries and multiple resolvers.",
+      "optional": false
+    },
+    {
+      "capability": "metrics-collection",
+      "confidence": "high",
+      "reasoning": "The pattern requires resolver performance controls and monitoring to identify bottlenecks, track query complexity, and manage performance issues inherent in GraphQL implementations.",
+      "optional": true
+    },
+    {
+      "capability": "query-batching",
+      "confidence": "high",
+      "reasoning": "GraphQL implementations commonly face N+1 query problems where nested resolvers trigger multiple database queries. Batching capabilities like DataLoader are essential to prevent performance degradation.",
+      "optional": true
+    },
+    {
+      "capability": "schema-validation",
+      "confidence": "medium",
+      "reasoning": "Schema-first GraphQL requires validation capabilities to test schema definitions, ensure query validity, and verify resolver implementations against the schema contract.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "api-rest-resource-oriented"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "api",
+    "graphql"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "GraphQL resolver chains, query parsing overhead, and DataLoader batching delays contribute minimum 100ms p95 latency floor."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "GraphQL resolver CPU overhead and DataLoader batching limit throughput ceiling to 360M jobs/hour (100K/sec) compared to simpler REST APIs."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 99999,
+      "reason": "GraphQL read queries are resolver-bounded but can scale to very high QPS with proper caching and DataLoader optimization strategies."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "GraphQL over HTTP supports all standard authentication mechanisms via HTTP headers and resolver context injection."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL field-level audit logging can be implemented through resolver middleware but is optional based on compliance requirements."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "GraphQL resolver context supports all tenant isolation strategies through context-based authorization and data filtering in resolvers."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL schema-first design handles PII with field-level access control, schema directives, and resolver-level masking or encryption."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL supports GDPR compliance through schema-defined mutations for data deletion, field-level access control, and audit logging in resolvers."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL can comply with HIPAA when combined with field-level encryption, resolver-level authorization, and comprehensive audit logging middleware."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL schema-first design supports CCPA compliance through explicitly typed mutations for data access requests and opt-out operations."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL resolvers can implement SOX-compliant field-level audit trails and access controls for financial data through middleware patterns."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL schema-first with synchronous resolver execution supports read-your-writes consistency when resolvers query consistent data sources."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "GraphQL is cloud-agnostic and can run on any cloud provider or on-premises infrastructure as a standard HTTP-based API layer."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "GraphQL schema-first API is a backend API pattern that can be implemented in any language with GraphQL server libraries available."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "GraphQL APIs are backend services that can be consumed by any platform type including web, mobile, desktop, CLI, and IoT clients."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "==",
+      "value": true,
+      "reason": "GraphQL queries benefit significantly from caching strategies (query result caching, DataLoader, persisted queries) making caching effectively required."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL can work with or without async messaging; subscriptions may use it but the pattern itself is messaging-agnostic."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL is database-agnostic and works with any data source including document stores through resolver abstraction layer."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL is database-agnostic and works with any data source including key-value stores for caching or primary storage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL APIs commonly serve OLTP workloads through queries and mutations but are not limited to transactional use cases."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL can serve analytical queries but requires careful performance optimization, query complexity limits, and timeout controls for OLAP workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL schema-first design supports multi-tenancy through resolver-level authorization, context-based tenant filtering, and schema directives."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL's graph-like query model maps naturally to graph database traversals through nested resolvers but works with any data source."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL resolvers can query time-series databases; subscriptions are useful for real-time time-series updates but not required."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL resolvers can expose vector search operations through typed query fields with embedding input arguments and similarity scoring."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL mutations can trigger and monitor batch jobs; DataLoader inherently performs batch processing for resolver data fetching."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL is neutral on distributed transactions; saga or 2PC coordination happens in resolvers or underlying services, not in the API layer."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL subscriptions over WebSocket natively support real-time streaming use cases but are optional; queries/mutations work without streaming."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GraphQL resolvers can expose AI inference operations; flexible query structure is ideal for model input/output but not AI-specific."
+    }
+  ],
+  "defaultConfig": {
+    "schema_validation": "strict",
+    "introspection_enabled": true,
+    "query_depth_limit": 10,
+    "query_complexity_limit": 1000,
+    "caching_strategy": "field-level",
+    "batching_enabled": true,
+    "persisted_queries": false,
+    "subscription_transport": "websocket"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "schema_validation": {
+        "type": "string",
+        "enum": [
+          "strict",
+          "permissive"
+        ],
+        "description": "Schema validation mode. Strict enforces all type constraints and nullability rules at runtime. Permissive allows more flexibility but may lead to runtime errors."
+      },
+      "introspection_enabled": {
+        "type": "boolean",
+        "description": "Enable GraphQL introspection queries. Useful for development and GraphQL clients, but should be disabled in production for security."
+      },
+      "query_depth_limit": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 20,
+        "description": "Maximum nesting depth for queries. Prevents deeply nested queries that could cause performance issues or DoS attacks."
+      },
+      "query_complexity_limit": {
+        "type": "integer",
+        "minimum": 100,
+        "maximum": 10000,
+        "description": "Maximum query complexity score based on field weights. Prevents expensive queries from overwhelming resolvers and databases."
+      },
+      "caching_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "field-level",
+          "query-level",
+          "response-level"
+        ],
+        "description": "Caching granularity. Field-level caches individual resolver results (most flexible), query-level caches entire query results, response-level caches HTTP responses, none disables caching."
+      },
+      "batching_enabled": {
+        "type": "boolean",
+        "description": "Enable DataLoader-style batching to combine multiple resolver requests into single database queries. Reduces N+1 query problems but adds complexity."
+      },
+      "persisted_queries": {
+        "type": "boolean",
+        "description": "Use persisted/automatic persisted queries where clients send query hashes instead of full query strings. Improves performance and security but requires client support."
+      },
+      "subscription_transport": {
+        "type": "string",
+        "enum": [
+          "websocket",
+          "sse",
+          "polling"
+        ],
+        "description": "Transport mechanism for GraphQL subscriptions. WebSocket provides bidirectional real-time communication, SSE is simpler but server-to-client only, polling is most compatible but least efficient."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "GraphQL adds resolver overhead, schema parsing, and DataLoader batching complexity. At low QPS, simpler REST APIs are more efficient.",
+      "message": "api-graphql-schema-first: peak read QPS is {actual} req/s (<10). GraphQL overhead (resolver chains, DataLoader, query parsing) may outweigh flexibility benefits. Consider simpler REST API."
+    }
+  ]
+}

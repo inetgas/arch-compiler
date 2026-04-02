@@ -1,0 +1,447 @@
+{
+  "id": "hosting-managed-paas",
+  "version": "1.0.0",
+  "title": "Managed Web/API Hosting on Free/Low-Cost PaaS",
+  "description": "Deploy APIs and background workers on free/low-cost PaaS/managed hosting providers (e.g., Render/Railway/Fly.io) to reduce ops; validate sleeping behavior, quotas, and SLA/availability targets.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 150.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "render",
+      "railway",
+      "flyio",
+      "digitalocean-app-platform",
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing. Free tiers are quota-limited; production use may require paid plans and compliance agreements.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents free tier usage across providers (Render free instances with 750hrs/month, Railway $5 credit, Fly.io 3 shared-cpu VMs free). Max $150 represents low-cost production usage: 2-3 paid instances on Render ($7-21/month each for starter instances), Railway hobby tier ($20-50/month with usage), or Fly.io paid instances ($1.94-5.70/month per VM). This range covers hobby/side projects to small production APIs with moderate traffic. Enterprise production workloads would exceed this range but fall outside the 'low-cost PaaS' pattern scope.",
+      "adoptionCost": "Medium-low complexity adoption. Requires: (1) Platform evaluation and selection (4-8 hours comparing Render/Railway/Fly.io features, pricing, SLAs), (2) Application containerization/buildpack setup (8-12 hours for proper production configuration), (3) CI/CD pipeline setup (4-8 hours integrating GitHub/GitLab), (4) Environment variable and secrets management (2-4 hours), (5) Monitoring and logging configuration (4-6 hours), (6) Sleep behavior testing and cold-start optimization (4-6 hours critical for free tiers), (7) Backup and disaster recovery planning (4-6 hours). Total 30-50 hours at $50-80/hour blended rate (considering junior/mid-level developers can handle with senior oversight). Lower than self-managed infrastructure but requires PaaS-specific expertise.",
+      "licenseCost": "No license costs. All mentioned PaaS providers (Render, Railway, Fly.io, DigitalOcean App Platform) operate on pay-as-you-go consumption models with free tiers and no upfront license fees. Costs are purely usage-based (compute hours, bandwidth, storage). No proprietary software licenses, SDK fees, or platform access charges required. Open-source application frameworks and tooling typically used with these platforms are also license-free.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "This pattern specifically provides managed hosting infrastructure for APIs and web applications on PaaS platforms, eliminating the need to manage underlying infrastructure."
+    },
+    {
+      "capability": "managed-infrastructure",
+      "confidence": "high",
+      "reasoning": "PaaS providers handle all infrastructure management including servers, networking, and OS maintenance, which is the core value proposition of this pattern."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "Most PaaS platforms (Render, Railway, Fly.io) include automatic scaling capabilities as a standard feature of their managed hosting."
+    },
+    {
+      "capability": "background-job-hosting",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly mentions deploying background workers alongside APIs on these PaaS platforms as a distinct hosting capability."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "containerized-application",
+      "confidence": "high",
+      "reasoning": "Most modern PaaS providers (Render, Railway, Fly.io) require applications to be containerized or follow specific buildpack conventions as a prerequisite for deployment.",
+      "optional": true
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Free/low-cost PaaS often involves sleeping instances and horizontal scaling, which requires stateless application design. This is critical given the pattern's mention of validating sleeping behavior.",
+      "optional": false
+    },
+    {
+      "capability": "external-data-persistence",
+      "confidence": "high",
+      "reasoning": "Since PaaS instances can sleep or restart, the pattern requires external databases or storage services rather than relying on local disk persistence.",
+      "optional": true
+    },
+    {
+      "capability": "cold-start-latency",
+      "confidence": "high",
+      "reasoning": "Free-tier PaaS services involve sleeping and waking instances, requiring applications to tolerate cold start delays and design for this behavior.",
+      "optional": true
+    },
+    {
+      "capability": "health-check",
+      "confidence": "high",
+      "reasoning": "PaaS platforms require health check endpoints for monitoring instance health and managing sleep/wake behavior effectively.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "render",
+    "api-hosting"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Free/low-cost PaaS tiers lack enterprise SLAs and have auto-sleeping, limiting availability to ~99%."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Managed PaaS platforms on shared infrastructure introduce network overhead and cold starts."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Tail latencies on shared infrastructure with cold starts and network variability require minimum 200ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Managed PaaS platforms provide automated healing but require time to detect failures and restart."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Free/low-cost PaaS relies on external persistence with eventual consistency and replication lag."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Free/low-cost tiers have CPU, memory, and concurrency limits that cap throughput to ~10K jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Free/low-cost PaaS shared infrastructure and resource limits cap read QPS to ~1000."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Free/low-cost PaaS CPU and memory constraints limit write QPS to ~500 for stateless APIs."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS providers support GDPR-compliant deployments through region selection and data residency controls."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Some PaaS providers offer HIPAA-compliant tiers; pattern is compatible with HIPAA requirements when configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting is compatible with CCPA compliance requirements when configured appropriately."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS platforms can support SOX compliance through audit trails and access controls."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "PaaS providers abstract cloud infrastructure and run on multiple clouds, supporting cloud-agnostic deployments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala"
+      ],
+      "reason": "PaaS providers support containerized deployments with broad language compatibility."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "PaaS providers host backend services including APIs, web frontends, and background workers."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting is compatible with applications using caching or not."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS platforms can host applications with or without async messaging capabilities."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting supports AI inference workloads within compute and memory limits."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting is compatible with multi-tenant and single-tenant application architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Free-tier PaaS has runtime limits and auto-sleeping that make long-running batch jobs infeasible."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Distributed transactions require stable, always-available infrastructure incompatible with auto-sleeping PaaS."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Real-time streaming requires always-on infrastructure incompatible with auto-sleeping free-tier PaaS."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting can integrate with external vector databases for vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting integrates with external document stores for persistence needs."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting integrates with external key-value stores for fast lookups."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting integrates with external graph databases for relationship queries."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting integrates with external time-series databases for temporal data."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting supports OLTP workloads through stateless APIs backed by external databases."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PaaS hosting can serve OLAP queries through external analytical databases within resource limits."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "render",
+    "instance_type": "free",
+    "auto_sleep": true,
+    "health_check_enabled": true,
+    "scaling_strategy": "manual"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "render",
+          "railway",
+          "flyio",
+          "digitalocean-app-platform"
+        ],
+        "description": "PaaS provider selection. Render offers generous free tier with auto-sleep. Railway has simple pricing and excellent DX. Fly.io provides edge deployment globally. DigitalOcean App Platform offers predictable pricing."
+      },
+      "instance_type": {
+        "type": "string",
+        "enum": [
+          "free",
+          "starter",
+          "standard"
+        ],
+        "description": "Service tier selection. Free tier has sleep/quota limits but zero cost. Starter provides always-on with basic resources. Standard offers production-grade resources and SLA."
+      },
+      "auto_sleep": {
+        "type": "boolean",
+        "description": "Allow instance to sleep after inactivity (free tier requirement). Reduces costs but adds cold-start latency. Disable for always-on availability on paid tiers."
+      },
+      "health_check_enabled": {
+        "type": "boolean",
+        "description": "Enable health check endpoints for automatic restarts and monitoring. Recommended for production but may consume free tier quotas."
+      },
+      "scaling_strategy": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "horizontal-auto",
+          "vertical-auto"
+        ],
+        "description": "Scaling approach. Manual keeps costs predictable. Horizontal auto-scaling adds instances under load (higher cost). Vertical auto-scaling adjusts resources per instance."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 500,
+      "reason": "Free/low-cost PaaS shared resources and CPU limits make high-throughput workloads (>500 QPS) sub-optimal; dedicated infrastructure is more cost-effective at scale.",
+      "message": "hosting-managed-paas: peak read QPS is {actual} (>500 req/s). Free/low-cost PaaS resource limits make high-throughput workloads inefficient. Consider dedicated hosting or upgrading to higher-tier plans."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 200,
+      "reason": "Write operations are CPU/memory intensive; free/low-cost PaaS tiers become cost-inefficient above ~200 writes/sec compared to dedicated infrastructure.",
+      "message": "hosting-managed-paas: peak write QPS is {actual} (>200 req/s). Free/low-cost PaaS CPU and memory limits make high write throughput sub-optimal. Consider dedicated infrastructure for better cost efficiency."
+    }
+  ]
+}

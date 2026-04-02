@@ -1,0 +1,34 @@
+# NFR Compliance - HIPAA Enabled with Audit Logging and PII
+#
+# A healthcare API on AWS with Python, HIPAA compliance enabled, PII data present,
+# and audit_logging: true. This is the fully compliant HIPAA scenario where all
+# required security controls are in place. The hipaa compliance pattern requires
+# both pii: true and audit_logging: true to be selected.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - hipaa compliance pattern IS selected
+#   - PII protection patterns are selected
+#   - audit logging pattern is selected
+
+project:
+  name: Healthcare Patient Portal
+  domain: healthcare
+functional:
+  summary: Patient data management API with HIPAA compliance
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+nfr:
+  data:
+    pii: true
+    compliance:
+      hipaa: true
+  security:
+    audit_logging: true
+  availability:
+    target: 0.999
+cost:
+  ceilings:
+    monthly_operational_usd: 5000

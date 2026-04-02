@@ -1,0 +1,34 @@
+# NFR Latency - P95 Latency Requirement
+#
+# An AWS TypeScript API with strict p95 latency target of 200ms and p99 of 500ms.
+# 99.9% availability is required. This tests that latency-sensitive patterns
+# (caching, connection pooling, CDN, edge compute) are selected when tight
+# latency targets are specified in the nfr section.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - latency-optimizing patterns are selected (caching, connection pooling, etc.)
+#   - p95 and p99 latency targets are recorded in the compiled output
+
+project:
+  name: Low-Latency Product API
+  domain: ecommerce
+functional:
+  summary: High-performance product search API with strict latency requirements
+constraints:
+  platform: api
+  cloud: aws
+  language: typescript
+  features:
+    caching: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 200
+    p99Milliseconds: 500
+  data:
+    pii: false
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

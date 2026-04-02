@@ -1,0 +1,36 @@
+# Integration test fixture: cost ceiling exceeded
+#
+# Purpose:
+#   - $1/month ceiling is far below the cost of any realistic pattern set
+#   - No spec violations (patterns are compatible), only cost infeasibility
+#
+# Expected compiler behaviour:
+#   - rc=0 (cost is advisory, not a hard violation)
+#   - "Cost Feasibility Analysis" present in stdout
+#   - cost_opex_exceeds_ceiling or similar warning present
+
+project:
+  name: Cost Infeasibility Test
+  domain: test
+
+functional:
+  summary: Spec with a $1/month ceiling to trigger cost infeasibility warning
+
+constraints:
+  platform: api
+  cloud: agnostic
+  language: python
+  features:
+    caching: false
+
+nfr:
+  throughput:
+    peak_query_per_second_read: 50
+  availability:
+    target: 0.99
+
+cost:
+  intent:
+    priority: minimize-opex
+  ceilings:
+    monthly_operational_usd: 1

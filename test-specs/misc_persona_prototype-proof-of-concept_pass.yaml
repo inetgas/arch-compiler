@@ -1,0 +1,27 @@
+# Misc Persona - Prototype / Proof of Concept
+#
+# A GenAI integration prototype on the ml-inference platform with ai_inference
+# feature enabled, $100/month budget, and only 90% availability required. This
+# represents a low-stakes proof-of-concept where speed of development matters
+# more than production-grade reliability.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - AI inference patterns are selected for ml-inference platform
+#   - minimal infrastructure patterns appropriate for a PoC are selected
+
+project:
+  name: AI Feature Prototype
+  domain: ml
+functional:
+  summary: Testing GenAI integration
+constraints:
+  platform: ml-inference
+  features:
+    ai_inference: true
+cost:
+  ceilings:
+    monthly_operational_usd: 100
+nfr:
+  availability:
+    target: 0.9

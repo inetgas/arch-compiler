@@ -1,0 +1,20 @@
+# Cloud - AWS-Specific Patterns (Mislabeled Azure Scenario)
+#
+# A spec with cloud: aws but originally named "azure-only-policy". This tests
+# that when only cloud: aws is specified without other constraints, the compiler
+# correctly selects AWS-compatible patterns and excludes Azure/GCP-specific ones.
+# No language or platform restrictions are set.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - AWS-compatible patterns are selected
+#   - Azure-specific patterns are not selected
+
+constraints:
+  cloud: aws
+project:
+  name: Azure-Only Policy
+  domain: test
+functional:
+  summary: 'Test scenario: Azure-Only Policy'
+nfr: {}

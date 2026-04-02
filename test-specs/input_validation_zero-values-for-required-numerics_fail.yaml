@@ -1,0 +1,25 @@
+# Input Validation - Zero Values for Required Numerics
+#
+# An API spec with nfr.availability.target set to 0 and latency p95 set to 0.
+# Zero is out of the valid range for availability (must be > 0) and is not a
+# meaningful latency target, triggering schema validation failures.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: availability target 0 is out of valid range
+#   - compiler rejects before pattern selection
+
+nfr:
+  availability:
+    target: 0
+  latency:
+    p95Milliseconds: 0
+project:
+  name: Zero Values
+  domain: test
+functional:
+  summary: 'Test scenario: Zero Values'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

@@ -1,0 +1,38 @@
+# SaaS Disallowed - Migration: Disallow Old Provider (Neon Replaces Supabase)
+#
+# A fintech AWS TypeScript API spec where a team is migrating from Supabase to
+# Neon Postgres. Neon is in saas-providers and supabase is in disallowed-saas-providers
+# to prevent accidental re-introduction during migration. GDPR compliance and
+# audit logging are enabled for the fintech domain.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - db-managed-postgres--neon IS selected (neon is in saas-providers)
+#   - db-managed-postgres--supabase is NOT selected (supabase disallowed)
+#   - GDPR and audit logging patterns are selected
+
+project:
+  name: Post-Migration API
+  domain: fintech
+functional:
+  summary: REST API migrating database from Supabase to Neon Postgres
+constraints:
+  cloud: aws
+  language: typescript
+  platform: api
+  saas-providers:
+    - neon
+  disallowed-saas-providers:
+    - supabase
+nfr:
+  availability:
+    target: 0.999
+  data:
+    pii: true
+    compliance:
+      gdpr: true
+  security:
+    audit_logging: true
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

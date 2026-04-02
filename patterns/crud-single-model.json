@@ -1,0 +1,320 @@
+{
+  "id": "crud-single-model",
+  "version": "1.0.0",
+  "title": "CRUD with Single Data Model",
+  "description": "Simple CRUD on one canonical model; lowest complexity; best for straightforward domains.",
+  "types": [
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "CRUD with Single Data Model is a design/build pattern that describes application architecture and code organization, not infrastructure. It defines how to structure Create, Read, Update, Delete operations around a single canonical data model. The actual infrastructure costs (database, hosting, etc.) depend on implementation choices and are separate concerns. Like other design patterns (Factory, Singleton, Repository), this pattern itself has no direct monthly operational cost.",
+      "adoptionCost": "Very low adoption cost due to simplicity and straightforward implementation. This is the most basic CRUD pattern with minimal complexity: single data model means no complex relationships, transformations, or multiple representations to manage. With modern AI coding assistants (GitHub Copilot, Cursor, ChatGPT), generating CRUD boilerplate is nearly instantaneous. Typical implementation time: 2-4 hours for a junior developer, 1-2 hours for senior developer. Most frameworks (Rails, Django, Spring Boot, Express) have scaffolding tools or generators that create CRUD operations automatically. Learning curve is minimal as CRUD is a fundamental concept taught in basic programming courses. Main effort is in understanding domain model and basic framework setup.",
+      "licenseCost": "No licensing costs required. CRUD with Single Data Model is a fundamental software design pattern implemented using standard programming practices. All modern frameworks and languages that support this pattern are either open source (Express.js, Django, Rails, Spring Boot) or have free tiers/editions (ASP.NET Core). No proprietary tools, special libraries, or commercial licenses are needed to implement basic CRUD operations. Pattern is cloud-agnostic, language-agnostic, and platform-agnostic as stated, meaning it uses universally available programming constructs.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "simple-domain-model",
+      "confidence": "high",
+      "reasoning": "This pattern implements a straightforward CRUD approach with a single canonical data model, which directly provides a simple domain model capability. The single model approach means no complex relationships, transformations, or multiple representations."
+    },
+    {
+      "capability": "rest-api",
+      "confidence": "high",
+      "reasoning": "CRUD operations inherently expose create, read, update, and delete endpoints through a REST API interface layer, making this a fundamental capability provided by the pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "relational-database",
+      "confidence": "medium",
+      "reasoning": "Relational databases are well-suited for CRUD operations with single models, providing ACID guarantees and structured storage. This is one alternative for persistent storage.",
+      "optional": true
+    },
+    {
+      "capability": "document-store",
+      "confidence": "medium",
+      "reasoning": "Document stores like MongoDB are also appropriate for single-model CRUD, storing the canonical model as documents. This is an alternative to relational databases for persistent storage.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "cqrs-separate-read-write-models",
+      "event-sourcing"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "crud"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Single model CRUD handles up to 360M operations per hour with proper database scaling."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD is compatible with GDPR requirements through appropriate data handling and deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD is compatible with HIPAA requirements when combined with proper encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD is compatible with CCPA requirements through appropriate data access and deletion operations."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD is compatible with SOX requirements when combined with audit trails and access controls."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD supports both read-your-writes consistency and eventual consistency based on database configuration."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD supports both strict durability and relaxed durability based on database write settings."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Single model CRUD is cloud-agnostic and works on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Single model CRUD operations are implementable in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "api",
+        "mobile",
+        "desktop",
+        "cli",
+        "agnostic"
+      ],
+      "reason": "Single model CRUD can be exposed through any platform type including web UIs, APIs, and mobile applications."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Single model CRUD is designed for transactional OLTP workloads requiring create, read, update, and delete operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Single model CRUD is not designed for analytical workloads; use data warehouse patterns for OLAP."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Single model CRUD uses simple transactions; distributed transactions indicate multi-model complexity."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Single model CRUD is for interactive operations; batch processing requires different patterns."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Real-time streaming requires event-driven patterns, not simple CRUD operations."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": false,
+      "reason": "Time-series data requires specialized database patterns beyond single model CRUD."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": false,
+      "reason": "Graph databases are for complex relationship queries, not single model CRUD."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD can optionally emit events via async messaging but does not require it."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD supports both single-tenant and multi-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD is independent of vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD works with both relational and document-oriented data stores."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single model CRUD can optionally use key-value stores for simple lookups but does not require them."
+    }
+  ],
+  "defaultConfig": {
+    "api_style": "rest",
+    "validation_strategy": "server-side",
+    "soft_delete": false,
+    "audit_logging": false,
+    "pagination_default_size": 20
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "api_style": {
+        "type": "string",
+        "enum": [
+          "rest",
+          "graphql",
+          "rpc"
+        ],
+        "description": "API interface style: REST for resource-oriented, GraphQL for flexible querying, RPC for action-oriented operations"
+      },
+      "validation_strategy": {
+        "type": "string",
+        "enum": [
+          "server-side",
+          "client-side",
+          "both"
+        ],
+        "description": "Where validation occurs: server-side for security, client-side for UX, both for defense-in-depth"
+      },
+      "soft_delete": {
+        "type": "boolean",
+        "description": "Whether to mark records as deleted rather than physically removing them (enables recovery and audit trails)"
+      },
+      "audit_logging": {
+        "type": "boolean",
+        "description": "Track who created/modified/deleted records and when (compliance requirement for many domains)"
+      },
+      "pagination_default_size": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 100,
+        "description": "Default number of records returned per page (balance between performance and user experience)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

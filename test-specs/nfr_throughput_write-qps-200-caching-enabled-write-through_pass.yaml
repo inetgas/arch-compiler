@@ -1,0 +1,35 @@
+# NFR Throughput - Write QPS 200 With Caching Selects Write-Through Cache
+#
+# API with 200 peak write QPS and caching enabled. write-through-cache activates
+# at write QPS >= 200 with caching required. This tests that the write-through
+# strategy (synchronous write to cache and DB together) is selected for moderate
+# write throughput where data consistency matters.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - write-through-cache IS selected (write QPS >= 200, caching == true)
+
+project:
+  name: Order Management API
+  domain: retail
+functional:
+  summary: Order processing API with 200 write QPS and write-through caching
+constraints:
+  platform: api
+  cloud: gcp
+  language: typescript
+  features:
+    caching: true
+    oltp_workload: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 100
+    p99Milliseconds: 300
+  throughput:
+    peak_query_per_second_read: 100
+    peak_query_per_second_write: 200
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

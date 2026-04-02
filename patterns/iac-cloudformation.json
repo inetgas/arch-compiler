@@ -1,0 +1,224 @@
+{
+  "id": "iac-cloudformation",
+  "version": "1.0.0",
+  "title": "Infrastructure as Code (CloudFormation)",
+  "description": "AWS-native IaC; deep service coverage; AWS-specific.",
+  "types": [
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "CloudFormation itself is a free AWS service with no direct charges. You only pay for the AWS resources (EC2, RDS, S3, etc.) that CloudFormation provisions. The cost of those resources varies widely based on architecture but is not attributable to CloudFormation itself. Some indirect costs may include: CloudFormation API calls (generally free within normal usage), state storage in S3 (negligible, typically <$1/month), and optional StackSets features (free). Any CI/CD pipeline costs (CodePipeline, GitHub Actions) that invoke CloudFormation are separate infrastructure costs, not CloudFormation costs.",
+      "adoptionCost": "Medium-high adoption cost due to several factors: (1) Learning curve - engineers need to understand CloudFormation template syntax (JSON/YAML), intrinsic functions, pseudo-parameters, and dependency management (1-2 weeks), (2) Template development - creating reusable, modular templates with proper parameter design, outputs, and nested stacks (2-3 weeks), (3) Migration effort - converting existing infrastructure to IaC templates requires careful discovery, documentation, and incremental migration (3-4 weeks), (4) Testing and validation - implementing drift detection, change sets, and safe deployment practices (1-2 weeks), (5) Team training - establishing conventions, best practices, and troubleshooting skills across team (1 week). With AI coding assistants, template generation is faster but understanding CloudFormation's declarative model, circular dependency resolution, and AWS-specific quirks still requires hands-on experience. Total: 8-12 weeks at 25-30% of a senior engineer's time (~$150/hr), plus testing infrastructure costs ($200-500).",
+      "licenseCost": "CloudFormation is a native AWS service included with all AWS accounts at no additional charge. No separate licenses, subscriptions, or commercial tools are required. Optional complementary tools like cfn-lint (open source) or IDE extensions are free. Some organizations may choose commercial IaC tools like Terraform Cloud or Pulumi Service for multi-cloud support, but CloudFormation itself has zero licensing costs. AWS Service Catalog (which uses CloudFormation) and AWS Control Tower are also included services with no separate fees.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "iac-management",
+      "confidence": "medium",
+      "reasoning": "CloudFormation is specifically an Infrastructure as Code tool that manages AWS infrastructure through declarative templates, so providing IaC management capability is semantically correct and appropriately specific."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "aws-account-structure",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "CloudFormation operates within AWS accounts and needs an existing account structure to deploy resources into. It requires AWS credentials, account boundaries, and potentially multi-account configuration (org units, cross-account roles) to function properly."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "iac-terraform",
+      "iac-bicep"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "iac",
+    "aws"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudFormation provisions the AWS infrastructure that processes PII; the pattern applies regardless and is used to declaratively enforce PII-appropriate security controls such as KMS encryption, VPC private subnets, and IAM policies."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudFormation is the recommended pattern for GDPR-regulated AWS environments as it enables reproducible, auditable, code-reviewed infrastructure changes \u2014 directly supporting GDPR compliance posture and data residency controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudFormation is the recommended pattern for CCPA-regulated AWS environments as it enables reproducible, auditable, code-reviewed infrastructure changes \u2014 supporting CCPA compliance posture and data handling controls."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudFormation is the recommended pattern for HIPAA-regulated AWS environments as it enables reproducible, auditable, code-reviewed infrastructure changes with consistent security configurations for PHI environments."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudFormation is the recommended pattern for SOX-regulated AWS environments as it enables reproducible, auditable, code-reviewed infrastructure changes \u2014 supporting SOX IT general controls and change management requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudFormation provisions AWS data infrastructure that can be configured for any consistency requirement; the IaC pattern itself is orthogonal to read-your-writes consistency settings which are configured within the provisioned resources."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudFormation provisions and configures AWS storage replication, RDS Multi-AZ, S3 versioning, backup policies, and durability settings declaratively; the pattern is applicable for all durability requirements including strict configurations."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "CloudFormation is AWS-native IaC and exclusively works with AWS services and infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "CloudFormation provisions infrastructure that can host applications written in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "CloudFormation can provision AWS infrastructure to support any application platform or workload type."
+    }
+  ],
+  "defaultConfig": {
+    "stack_naming_convention": "project-environment-resource",
+    "change_set_enabled": true,
+    "termination_protection": false,
+    "drift_detection": true,
+    "stack_policy": "none"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "stack_naming_convention": {
+        "type": "string",
+        "enum": [
+          "project-environment-resource",
+          "environment-project-resource",
+          "flat-naming",
+          "custom"
+        ],
+        "description": "Naming convention for CloudFormation stacks. Hierarchical naming aids organization and filtering; flat naming simplifies references."
+      },
+      "change_set_enabled": {
+        "type": "boolean",
+        "description": "Whether to use change sets before stack updates. Enables preview of changes before execution, reducing risk of unintended modifications."
+      },
+      "termination_protection": {
+        "type": "boolean",
+        "description": "Enable termination protection on production stacks. Prevents accidental deletion but requires explicit disabling before stack removal."
+      },
+      "drift_detection": {
+        "type": "boolean",
+        "description": "Enable periodic drift detection to identify manual changes outside CloudFormation. Helps maintain infrastructure-as-code integrity."
+      },
+      "stack_policy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "protect-all",
+          "protect-data-resources",
+          "custom"
+        ],
+        "description": "Stack policy to prevent updates to critical resources. 'protect-data-resources' prevents accidental deletion of databases/storage; 'protect-all' locks entire stack."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,220 @@
+{
+  "id": "build-hermetic-builds",
+  "version": "1.0.0",
+  "title": "Hermetic Builds",
+  "description": "Reproducible builds with pinned deps and isolated envs; reduces 'works on my machine' issues.",
+  "types": [
+    "build",
+    "test",
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 4500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 2500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Hermetic builds require infrastructure for build caching, artifact storage, and containerized build environments. Min ($100) represents small team setup: basic build cache storage (~50GB at $2/mo), artifact repository (Artifactory OSS self-hosted on t3.small ~$15/mo), container registry storage (~$10/mo), and CI runner compute for isolated builds (~$70/mo for 2-3 concurrent isolated builds). Max ($2500) represents enterprise scale: distributed build cache with high IOPS storage (~$500/mo), enterprise artifact repository with HA (~$800/mo), large container image storage with geo-replication (~$300/mo), dedicated hermetic build infrastructure with multiple isolated build agents (~$900/mo for 20+ concurrent hermetic builds with containerization overhead). The pattern itself doesn't consume runtime resources but build-time infrastructure costs are significant due to storage for pinned dependencies, build caches, and compute overhead from isolated environments (containers/VMs add 20-40% build time overhead).",
+      "adoptionCost": "High complexity adoption requiring significant organizational change. Implementation involves: (1) Dependency management overhaul - migrating all projects to pinned/locked dependencies, establishing private mirror/proxy repositories for all external dependencies (~40 hours, $3000), (2) Build environment containerization - creating hermetic build containers/images with all tools at fixed versions, configuring CI/CD to use isolated build environments (~20 hours, $1500), (3) Tooling setup - configuring build cache systems (Bazel, Buck, or similar), setting up artifact repositories, establishing version pinning workflows (~15 hours, $1000), (4) Team training and documentation - educating developers on hermetic build principles, dependency pinning workflows, cache invalidation strategies (~10 hours, $750). Total: ~85 engineering hours. Complexity stems from the paradigm shift from mutable to immutable build environments, extensive testing needed to ensure reproducibility, and the need to refactor existing build scripts. Reduced slightly from typical high-complexity patterns due to availability of modern tooling (Docker, Bazel) and AI coding assistants that can help automate Dockerfile and build configuration generation.",
+      "licenseCost": "Hermetic builds can be fully implemented with open-source tools: Docker/Podman for containerization, Bazel/Buck/Gradle/Maven for build management with dependency locking, Artifactory OSS/Nexus OSS for artifact management, and standard container registries. Commercial options exist (JFrog Artifactory Pro, Gradle Enterprise, BuildBuddy) but are optional enhancements for caching and analytics, not requirements. Most organizations start with OSS stack and only upgrade if needing advanced features like build insights, distributed caching, or enterprise support. Setting license cost to $0 as the pattern is achievable without mandatory commercial licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "reproducible-builds",
+      "confidence": "high",
+      "reasoning": "Hermetic builds are specifically designed to produce identical build outputs given the same inputs, which is the definition of reproducible builds. This is the core value proposition of this pattern."
+    },
+    {
+      "capability": "build-isolation",
+      "confidence": "high",
+      "reasoning": "Hermetic builds require isolated environments to prevent external factors from affecting the build. This is a fundamental capability that prevents 'works on my machine' issues mentioned in the description."
+    },
+    {
+      "capability": "build-caching",
+      "confidence": "high",
+      "reasoning": "Hermetic builds enable safe and reliable caching due to their deterministic nature. Since the same inputs always produce the same outputs, cached build artifacts can be reused with confidence."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "dependency-pinning",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Pinned dependencies are essential for hermetic builds to ensure the same versions are used across all builds. Without this, reproducibility cannot be guaranteed."
+    },
+    {
+      "capability": "build-sandboxing",
+      "confidence": "high",
+      "reasoning": "Hermetic builds require a sandboxed or containerized environment to isolate the build process from the host system. This is implicit in 'isolated envs' mentioned in the description but must be explicit as a requirement.",
+      "optional": true
+    },
+    {
+      "capability": "dependency-verification",
+      "confidence": "high",
+      "reasoning": "Checksum verification or other integrity mechanisms are necessary to ensure that pinned dependencies haven't been tampered with or corrupted, maintaining the hermetic guarantee.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "build",
+    "supply-chain"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Hermetic builds are compatible with GDPR compliance requirements through reproducible audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Hermetic builds are compatible with HIPAA compliance requirements through reproducible builds."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Hermetic builds are compatible with CCPA compliance requirements through reproducible artifacts."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Hermetic builds are compatible with SOX compliance requirements through reproducible and auditable builds."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Hermetic builds are a build-time practice applicable to any cloud provider or on-premises environment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Hermetic builds are a build system pattern applicable to any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Hermetic builds are a build methodology that applies to any target platform."
+    }
+  ],
+  "defaultConfig": {
+    "dependency_pinning": "lock_file",
+    "build_isolation": "container",
+    "cache_strategy": "content_addressable",
+    "network_access": "restricted"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "dependency_pinning": {
+        "type": "string",
+        "enum": [
+          "lock_file",
+          "vendoring",
+          "hash_verification"
+        ],
+        "description": "How dependencies are pinned: lock_file (package-lock.json, Cargo.lock) for version pinning, vendoring for copying deps into repo, hash_verification for cryptographic integrity checks"
+      },
+      "build_isolation": {
+        "type": "string",
+        "enum": [
+          "container",
+          "vm",
+          "sandbox"
+        ],
+        "description": "Build environment isolation level: container (Docker/Podman) for lightweight isolation, vm for full virtualization, sandbox for OS-level isolation (Bazel, Nix)"
+      },
+      "cache_strategy": {
+        "type": "string",
+        "enum": [
+          "content_addressable",
+          "layer_based",
+          "disabled"
+        ],
+        "description": "Build caching approach: content_addressable (hash-based, most reproducible), layer_based (Docker layers, faster but less precise), disabled (no cache, slowest but guaranteed fresh)"
+      },
+      "network_access": {
+        "type": "string",
+        "enum": [
+          "restricted",
+          "allowed",
+          "offline"
+        ],
+        "description": "Network access during build: restricted (only pre-approved registries), allowed (full network access, less hermetic), offline (no network, requires pre-fetched deps)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

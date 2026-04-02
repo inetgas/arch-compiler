@@ -1,0 +1,419 @@
+{
+  "id": "cache-aside--redis",
+  "version": "1.0.0",
+  "title": "Cache-Aside Pattern (Redis Implementation)",
+  "description": "Cache-aside using Redis as the caching layer; configure TTL, eviction policy (allkeys-lru recommended), and connection pooling. Adds Redis-specific operational concerns: cluster mode, persistence settings, and AUTH configuration.",
+  "types": [
+    "design",
+    "build"
+  ],
+  "tags": [
+    "cache",
+    "performance",
+    "redis"
+  ],
+  "cost": {
+    "freeTierEligible": false,
+    "costCeilingCompatibleUsd": 50,
+    "estimatedMonthlyRangeUsd": {
+      "min": 15.0,
+      "max": 3500.0
+    },
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min represents a small-scale deployment using Redis cache.t3.micro instance (~$15/month on AWS ElastiCache, similar on Azure/GCP) suitable for development or low-traffic applications with basic caching needs. Max represents a production-grade high-availability Redis cluster with multiple cache.r6g.xlarge nodes (~$300-500 each), data persistence, multi-AZ replication, and cross-region failover for enterprise workloads handling millions of cache operations per second. Mid-range ($200-500) covers typical production scenarios with cache.r6g.large instances and standard replication.",
+      "adoptionCost": "Medium-high complexity implementation. Requires understanding of cache invalidation strategies, TTL management, read-through/write-through patterns, and handling cache misses. Development effort includes: implementing cache key design and namespacing (2-4 hours), coding cache-aside logic with proper error handling and fallback mechanisms (8-12 hours), configuring Redis connection pooling and timeout settings (2-4 hours), implementing cache warming strategies (4-6 hours), and thorough testing of cache invalidation scenarios and race conditions (8-10 hours). Total estimate: 24-36 hours at $25-35/hour blended rate with AI assistance reducing complexity by 30-40%. Without AI assistance, this would typically cost $1,500-2,000.",
+      "licenseCost": "Redis is open-source software under BSD 3-Clause license, completely free for commercial use. All major cloud providers (AWS ElastiCache, Azure Cache for Redis, Google Cloud Memorystore) offer managed Redis services with pay-as-you-go pricing included in monthly operational costs. Optional commercial Redis Enterprise with advanced features (active-active geo-distribution, enhanced security) would add $5,000-50,000+ annually, but is not required for standard cache-aside pattern implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "cache-aside",
+      "write-back-cache",
+      "write-through-cache"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "caching-layer",
+      "confidence": "strong",
+      "reasoning": "The cache-aside pattern fundamentally provides a caching layer that sits between the application and the data source, offering fast data access for frequently requested items."
+    },
+    {
+      "capability": "cache-aside-strategy",
+      "confidence": "high",
+      "reasoning": "This pattern provides a specific caching strategy (lazy loading) where the application is responsible for loading data into the cache on cache misses, distinguishing it from other caching patterns like write-through or read-through."
+    },
+    {
+      "capability": "distributed-cache",
+      "confidence": "high",
+      "reasoning": "Redis provides distributed caching capabilities, allowing multiple application instances to share the same cache and scale horizontally."
+    },
+    {
+      "capability": "in-memory-cache",
+      "confidence": "high",
+      "reasoning": "Redis is an in-memory data store that provides extremely fast data access by keeping cached data in RAM rather than on disk."
+    },
+    {
+      "capability": "key-value-store",
+      "confidence": "strong",
+      "reasoning": "Redis serves as the concrete cache-store implementation, satisfying the abstract cache-store role required by cache-aside, write-back-cache, write-through-cache, and caching-required-* patterns."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "key-value-store",
+      "confidence": "high",
+      "reasoning": "Redis is fundamentally a key-value store, and the cache-aside pattern requires this capability to function with fast key-based lookups for storing and retrieving cached data.",
+      "optional": false
+    },
+    {
+      "capability": "external-data-persistence",
+      "confidence": "high",
+      "reasoning": "Cache-aside pattern requires a primary data source (database, API, etc.) to fetch data from on cache misses. Without a backing data source, the pattern cannot function.",
+      "optional": true
+    }
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General availability pattern"
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "Cache-aside--redis uses eventual consistency; read-your-writes requires synchronous cache invalidation which adds latency and complexity.",
+      "message": "cache-aside--redis: spec requires needsReadYourWrites=true but cache-aside is eventually consistent. Ensure your invalidation strategy is synchronous or use a read-through cache instead."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "Cache-aside--redis adds infrastructure complexity (cache store, invalidation logic, serialization). At <10 read req/s the overhead rarely justifies the benefit.",
+      "message": "cache-aside--redis: peak read QPS is {actual} req/s (<10 req/s). Caching overhead (infrastructure, invalidation, serialization) may outweigh benefit at this scale. Consider simplifying to direct DB access."
+    }
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Redis cache-aside pattern supports up to 99.99% availability with Redis Cluster for read operations."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Redis cache-aside achieves sub-millisecond cache hits but cache misses require database access adding latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "P99 latency accounts for cache misses requiring database access and occasional Redis cluster failover."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Redis can handle up to 100K ops/sec per node, ceiling at 360M requests per hour with cluster configuration."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Cache-aside pattern supports all tenant isolation strategies through appropriate cache key prefixing."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside pattern works regardless of PII presence, though PII requires additional encryption and TTL policies."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside is GDPR-compatible with proper TTL policies and data deletion workflows for right-to-be-forgotten."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside supports HIPAA compliance when combined with encryption-at-rest and appropriate access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside is CCPA-compatible with proper cache invalidation mechanisms for data deletion requests."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside supports SOX compliance as it maintains database as source of truth with cache as read optimization."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern ensures strict durability as all writes go to database first with cache being ephemeral layer."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Redis cache-aside pattern is cloud-agnostic and works on all major cloud providers and on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Cache-aside is language-agnostic with Redis client libraries available for all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Cache-aside pattern with Redis applies across all platform types from web applications to batch processing."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "==",
+      "value": true,
+      "reason": "Cache-aside pattern explicitly requires caching feature to be enabled as it is fundamentally a caching strategy."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires a key-value store for Redis to work."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache AI inference results or model metadata but does not require AI inference capability."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside supports multi-tenancy through tenant-specific cache key prefixes and namespace isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside pattern works with or without batch processing, providing read acceleration for batch jobs."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside is compatible with distributed transactions though cache invalidation adds complexity."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache streaming aggregates or reference data but does not require real-time streaming."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache vector search results but the pattern itself does not require vector search capability."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside works with document stores as the backing database or with other data storage types."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache graph query results but does not require graph database as backing store."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache time-series aggregates or recent data points but works with any database type."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside is particularly beneficial for OLTP workloads to reduce database load but not strictly required."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache OLAP query results to improve analytical query performance but works without OLAP."
+    }
+  ],
+  "defaultConfig": {
+    "eviction_policy": "allkeys-lru",
+    "persistence": "rdb",
+    "max_memory": "256mb",
+    "ttl_strategy": "sliding",
+    "clustering_enabled": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "eviction_policy": {
+        "type": "string",
+        "enum": [
+          "allkeys-lru",
+          "allkeys-lfu",
+          "volatile-lru",
+          "volatile-ttl",
+          "noeviction"
+        ],
+        "description": "Redis eviction policy when max memory is reached. allkeys-lru removes least recently used keys, allkeys-lfu removes least frequently used, volatile-* only evicts keys with TTL, noeviction returns errors when full."
+      },
+      "persistence": {
+        "type": "string",
+        "enum": [
+          "none",
+          "rdb",
+          "aof",
+          "both"
+        ],
+        "description": "Data persistence strategy. none=no persistence (fastest, cache-only), rdb=periodic snapshots (good balance), aof=append-only file (most durable), both=maximum durability with performance cost."
+      },
+      "max_memory": {
+        "type": "string",
+        "enum": [
+          "256mb",
+          "512mb",
+          "1gb",
+          "2gb",
+          "4gb"
+        ],
+        "description": "Maximum memory Redis can use. Larger values allow more cached data but increase costs. Choose based on working set size and budget."
+      },
+      "ttl_strategy": {
+        "type": "string",
+        "enum": [
+          "fixed",
+          "sliding",
+          "none"
+        ],
+        "description": "Time-to-live strategy for cached items. fixed=expire after set time, sliding=reset TTL on access (keeps hot data), none=manual invalidation only."
+      },
+      "clustering_enabled": {
+        "type": "boolean",
+        "description": "Enable Redis clustering for horizontal scaling and high availability. Required for datasets larger than single-node memory or high-throughput scenarios. Adds complexity and cost."
+      }
+    }
+  }
+}

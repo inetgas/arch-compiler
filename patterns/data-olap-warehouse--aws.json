@@ -1,0 +1,328 @@
+{
+  "id": "data-olap-warehouse--aws",
+  "version": "1.0.0",
+  "title": "OLAP Warehouse: Amazon Redshift",
+  "description": "Columnar data warehouse on Amazon Redshift. Optimised for structured SQL analytics on petabyte-scale datasets stored in S3 (Redshift Spectrum) or managed Redshift storage. Redshift RA3 nodes separate compute from storage, enabling independent scaling. Concurrency Scaling adds transient clusters during peak query load. Best for teams already on AWS with structured data and SQL-centric analytics teams using Redshift as a long-term warehouse. Query latency is 500ms-30s for complex aggregations; simple aggregations on cached data return in under 1 second. Maximum 500 concurrent queries with Concurrency Scaling enabled.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 15000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws"
+    ],
+    "costCeilingCompatibleUsd": 12000,
+    "costNotes": "RA3.xlplus (2 nodes, 32 vCPU) ~$1,100/mo on-demand or ~$700/mo reserved. RA3.16xlarge (2 nodes) ~$10,000/mo on-demand. Managed storage $0.024/GB/mo. Concurrency Scaling billed per-second beyond 1 hour/day free.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($200): dc2.large single-node dev cluster ($0.25/hr = ~$180/mo) + minimal S3 managed storage. Max ($15,000): ra3.16xlarge 4-node production cluster ($5.17/hr each = ~$15,000/mo on-demand) + Concurrency Scaling burst + BI tool queries via JDBC. Most production teams land $1,000-$4,000/mo on ra3.xlplus reserved.",
+      "adoptionCost": "Schema design, Redshift-specific distribution/sort key tuning, Glue ETL or dbt pipeline setup, QuickSight or BI tool integration. Estimate 15-20 developer days at ~$160/day = $3,000.",
+      "licenseCost": "No software license. Redshift is pay-as-you-go. Enterprise support plan is extra.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "Redshift delivers columnar MPP query execution for analytical workloads up to petabyte scale."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "Integrates natively with QuickSight, Tableau, Power BI, and any JDBC/ODBC-compatible BI tool."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Redshift Spectrum queries data in S3 directly; COPY command bulk-loads from S3; dbt and Glue run ELT transformations in-warehouse."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Redshift expects data via COPY from S3, Kinesis Firehose, or AWS DMS. High-frequency point inserts degrade cluster performance."
+    },
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "RA3 nodes use S3-backed managed storage. Redshift Spectrum queries S3 directly without loading data into the cluster."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--snowflake",
+      "data-olap-warehouse--self-hosted"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "warehouse",
+    "redshift",
+    "aws",
+    "columnar"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable to any AWS OLAP workload"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "Redshift p95 query latency is 500ms-30s for analytical queries. Simple aggregations on cached results return in ~500ms; complex multi-table joins over billions of rows take 10-30s. Sub-500ms p95 requires query result caching or materialised views."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Redshift Multi-AZ deployment offers 99.99% availability SLA. Single-AZ clusters are 99.9%. Five-nines requires cross-region active-active which Redshift does not support natively."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 10,
+      "reason": "Redshift cluster restart or failover takes 10-20 minutes for single-AZ; Multi-AZ failover is 60-120 seconds."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "RPO is bounded by pipeline batch interval. Automated snapshots to S3 provide point-in-time recovery to the last snapshot."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 500,
+      "reason": "Redshift supports up to 500 concurrent queries with Concurrency Scaling enabled. Beyond this, queries queue and p95 latency degrades significantly."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100,
+      "reason": "Redshift is optimised for batch ingestion via COPY. Above ~100 write QPS, Kinesis Firehose micro-batching or S3-staged COPY is required."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Redshift supports IAM authentication, database user passwords, and federated SSO via SAML with AWS IAM Identity Center."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redshift audit logs (connection, user activity, user log) export to S3. CloudTrail captures API-level events."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redshift supports column-level encryption, dynamic data masking (preview), and row-level security. Compatible with PII workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when data residency controls, column masking, and right-to-erasure pipeline procedures are in place."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when warehouse-level encryption and appropriate BAA coverage are configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when consumer data deletion triggers a pipeline reprocess that excludes deleted records."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX when query audit logs provide an immutable trail of data access and transformation operations."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability is handled by the underlying object storage layer (S3, GCS, ADLS). All major managed warehouses provide durable storage by default."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "Amazon Redshift is an AWS-native service."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Redshift provides JDBC/ODBC drivers and is agnostic to language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Redshift serves as analytical backend for any platform."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Redshift is selected specifically for OLAP analytical workloads."
+    }
+  ],
+  "defaultConfig": {
+    "node_type": "ra3.xlplus",
+    "num_nodes": 2,
+    "distribution_key": "auto",
+    "sort_key": "auto",
+    "ingestion_mode": "batch-copy-s3",
+    "concurrency_scaling": true,
+    "query_result_cache": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "node_type": {
+        "type": "string",
+        "enum": [
+          "dc2.large",
+          "dc2.8xlarge",
+          "ra3.xlplus",
+          "ra3.4xlarge",
+          "ra3.16xlarge"
+        ],
+        "description": "dc2: compute-optimised with local SSD (fixed storage). ra3: managed S3-backed storage, independently scalable. ra3.xlplus is the recommended starting point for production."
+      },
+      "num_nodes": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 128,
+        "description": "Number of compute nodes. Single-node for dev/test; 2+ nodes for MPP parallelism and HA."
+      },
+      "distribution_key": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "manual",
+          "even",
+          "all"
+        ],
+        "description": "auto: Redshift chooses based on query patterns (recommended). manual: explicit distkey on join columns. even: round-robin. all: replicate small dimension tables to every node."
+      },
+      "sort_key": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "manual",
+          "compound",
+          "interleaved"
+        ],
+        "description": "auto: Redshift chooses. compound: ordered multi-column sort for range queries. interleaved: equal weight to multiple columns for ad-hoc filtering."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "batch-copy-s3",
+          "kinesis-firehose",
+          "aws-dms",
+          "redshift-streaming"
+        ],
+        "description": "batch-copy-s3: bulk COPY from S3 (highest throughput). kinesis-firehose: near-real-time micro-batch. aws-dms: CDC replication from OLTP. redshift-streaming: direct Kinesis/MSK streaming (preview)."
+      },
+      "concurrency_scaling": {
+        "type": "boolean",
+        "description": "Adds transient clusters during peak query concurrency. First 1 hour/day is free; billed per-second thereafter."
+      },
+      "query_result_cache": {
+        "type": "boolean",
+        "description": "Caches results of repeated identical queries. Reduces latency and cost for dashboard-style workloads."
+      }
+    }
+  },
+  "warn_nfr": []
+}

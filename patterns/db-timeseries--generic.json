@@ -1,0 +1,482 @@
+{
+  "id": "db-timeseries--generic",
+  "version": "1.0.0",
+  "title": "Time-Series Database (Generic)",
+  "description": "Generic base pattern for time-series databases optimized for temporal data. Stores timestamped data points with high write throughput and efficient time-range queries. Best for: IoT telemetry, metrics monitoring, financial tick data, sensor data. Common implementations: TimescaleDB, InfluxDB, Timestream. Choose a specific variant for deployment.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": []
+  },
+  "provides": [
+    {
+      "capability": "timeseries-storage",
+      "description": "Store and query time-stamped data efficiently",
+      "confidence": "medium",
+      "reasoning": "Core capability of time-series databases. This pattern specializes in storing timestamped data points optimized for temporal data access patterns."
+    },
+    {
+      "capability": "downsampling",
+      "description": "Automatic data aggregation for long-term storage",
+      "confidence": "medium",
+      "reasoning": "Essential feature of time-series databases to reduce data resolution over time. Allows aggregating high-frequency data into lower-frequency summaries for efficient long-term storage and querying."
+    },
+    {
+      "capability": "time-range-queries",
+      "confidence": "high",
+      "reasoning": "Distinguishing feature of time-series databases enabling efficient queries across temporal ranges. Optimized for retrieving data within specific time windows which is fundamental to temporal data analysis."
+    },
+    {
+      "capability": "high-write-throughput",
+      "confidence": "high",
+      "reasoning": "Key characteristic explicitly mentioned in the pattern description. Time-series databases are optimized to handle continuous high-volume writes from IoT devices, sensors, and monitoring systems."
+    },
+    {
+      "capability": "data-retention-policies",
+      "confidence": "high",
+      "reasoning": "Common time-series database feature for automatic data expiration and lifecycle management. Enables efficient storage management by automatically removing old data based on configurable retention rules."
+    },
+    {
+      "capability": "temporal-aggregation",
+      "confidence": "high",
+      "reasoning": "Core capability for time-series analytics enabling aggregation operations over time windows. Essential for computing metrics like averages, sums, and percentiles across temporal dimensions."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "persistent-storage",
+      "confidence": "high",
+      "reasoning": "Time-series databases need underlying persistent storage to durably store temporal data. Whether using local disks, network-attached storage, or cloud block storage, this is a fundamental requirement for any database pattern.",
+      "optional": false
+    },
+    {
+      "capability": "compute",
+      "confidence": "high",
+      "reasoning": "Requires computational resources to handle high write throughput, time-range queries, aggregations, and downsampling operations. Time-series workloads can be CPU and memory intensive, especially for real-time analytics.",
+      "optional": false
+    },
+    {
+      "capability": "network-connectivity",
+      "confidence": "medium",
+      "reasoning": "Required for distributed or clustered deployments common in TimescaleDB and InfluxDB implementations. Also needed for client connectivity and data ingestion from distributed sources.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "retention_days": 90,
+    "downsampling_enabled": true,
+    "compression_enabled": true,
+    "write_consistency": "eventual",
+    "query_optimization": "recent_data"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3650,
+        "description": "Data retention period before automatic deletion. Shorter retention reduces storage costs but limits historical analysis."
+      },
+      "downsampling_enabled": {
+        "type": "boolean",
+        "description": "Enable automatic data aggregation over time (e.g., raw \u2192 hourly \u2192 daily). Reduces storage and improves query performance for older data at the cost of granularity."
+      },
+      "compression_enabled": {
+        "type": "boolean",
+        "description": "Enable time-series compression algorithms to reduce storage costs by 10-20x. Minimal query performance impact for most workloads."
+      },
+      "write_consistency": {
+        "type": "string",
+        "enum": [
+          "strong",
+          "eventual"
+        ],
+        "description": "Strong consistency ensures immediate read-after-write visibility but reduces write throughput. Eventual consistency optimizes for high-volume ingestion (IoT, metrics)."
+      },
+      "query_optimization": {
+        "type": "string",
+        "enum": [
+          "recent_data",
+          "historical_data",
+          "balanced"
+        ],
+        "description": "Optimize for recent data queries (dashboards, real-time alerts), historical analysis (reports, ML training), or balanced workloads. Affects indexing and caching strategies."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Generic time-series database costs vary by implementation. Min $0 represents free tiers (InfluxDB Cloud free tier with 30-day retention, TimescaleDB self-hosted on existing infrastructure, or AWS Timestream free tier up to 1GB). Max $2000 represents production scenarios: managed TimescaleDB (~$300-800 for 4-8 vCPU instances), InfluxDB Cloud dedicated cluster ($500-1500 depending on throughput/retention), or AWS Timestream with ~50M writes/day and 100GB storage ($800-1200). Mid-range $200-500 covers small production workloads with managed services or moderate self-hosted infrastructure (EC2 t3.large ~$60/month + EBS storage ~$100-200). Costs scale primarily with data ingestion rate, retention period, and query volume.",
+      "adoptionCost": "Medium-high complexity implementation. Requires understanding time-series data modeling (tags vs fields, cardinality considerations, retention policies), schema design optimized for temporal queries, setting up continuous aggregates/materialized views for performance, implementing data retention/downsampling strategies, and integration with existing data pipelines. Development effort includes: data ingestion pipeline setup (2-3 days), schema design and optimization (2-3 days), query patterns and indexing strategies (1-2 days), monitoring/alerting setup (1-2 days), and testing time-range queries at scale (1-2 days). Total 7-12 days at blended rate of ~$150-200/day with AI assistance. Learning curve moderate as time-series concepts differ from traditional RDBMS, but modern tools have good documentation.",
+      "licenseCost": "Most time-series databases offer open-source core versions with no license cost: TimescaleDB (Apache 2.0/Timescale License for community edition), InfluxDB OSS (MIT), Prometheus (Apache 2.0), VictoriaMetrics (Apache 2.0). Commercial licenses apply only for enterprise features: TimescaleDB Enterprise ($0 for self-hosted open-source), InfluxDB Enterprise ($4000-20000+ annually for clustering/advanced features), AWS Timestream (pay-per-use, no license). For generic pattern assuming open-source implementations, license cost is $0. Enterprise features like advanced clustering, backup/restore tools, and premium support are optional add-ons.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "time-series",
+    "metrics",
+    "iot"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Time-series databases with high-availability configurations can achieve up to 99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Time-series databases have optimized write paths and indexed time-range queries achieving p95 latency of at least 5ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Time-series query engines with efficient time-based indexing achieve p99 latency of at least 20ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Automated failover to hot standby replicas completes within 1-10 minutes depending on configuration."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Time-series databases are optimized for high write throughput handling up to 100K writes/second (360M per hour)."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Time-series databases can handle up to 50K read queries per second for time-range analytical queries."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Time-series databases are optimized for high-frequency writes supporting up to 100K write operations per second."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Time-series databases support various tenant isolation strategies from row-level to database-per-tenant."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases can store any data type including PII depending on application requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR compliance depends on operational procedures, data retention policies, and encryption configurations."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compliance requires additional operational controls, encryption, and audit logging that can be configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compliance depends on data handling procedures and consumer rights management implemented on top of the database."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance for financial data requires audit trails and access controls that can be implemented with time-series databases."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases support read-your-writes consistency for single-client sessions or eventual consistency for replicas."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases provide configurable durability through write-ahead logging and synchronous replication options."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically requires time-series database capability as its core feature and defining characteristic."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Generic time-series database pattern is cloud-agnostic and can be deployed on any cloud provider or on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Time-series databases are infrastructure components accessed via network protocols from any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "iot",
+        "web",
+        "mobile",
+        "ml-training",
+        "ml-inference",
+        "agnostic"
+      ],
+      "reason": "Time-series databases support backend platforms that generate or consume temporal data streams and metrics."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases work with or without additional caching layers depending on read access patterns."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases support both direct writes and ingestion from async messaging systems like Kafka."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases can store telemetry and metrics from AI inference workloads or operate independently."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases support multi-tenant architectures through partitioning, tagging, or separate database instances."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases support both continuous data ingestion and batch loading of historical time-series data."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases typically optimize for append-only writes rather than distributed transactions but can coexist with transactional systems."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases can handle both real-time streaming data ingestion and batch historical data loading."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases focus on temporal queries but can coexist with vector search capabilities in polyglot architectures."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases are specialized for temporal data but can store document-like metadata alongside time-series points."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases are optimized for time-range queries rather than key-value lookups but support both access patterns."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases focus on temporal relationships rather than graph relationships but can complement graph databases."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases handle high-frequency transactional writes for metrics and telemetry but also support analytical queries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases support analytical queries over time ranges including aggregations, downsampling, and windowing functions."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Time-series databases with high-availability configurations can achieve up to 99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Time-series databases have optimized write paths and indexed time-range queries achieving p95 latency of at least 5ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Time-series query engines with efficient time-based indexing achieve p99 latency of at least 20ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Automated failover to hot standby replicas completes within 1-10 minutes depending on configuration."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Synchronous replication modes provide near-zero RPO with committed writes replicated to standby nodes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Time-series databases are optimized for high write throughput handling up to 100K writes/second (360M per hour)."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Time-series databases can handle up to 50K read queries per second for time-range analytical queries."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Time-series databases are optimized for high-frequency writes supporting up to 100K write operations per second."
+    }
+  ],
+  "warn_nfr": []
+}

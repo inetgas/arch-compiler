@@ -1,0 +1,31 @@
+# NFR Compliance - HIPAA Enabled Without Audit Logging
+#
+# A healthcare API with HIPAA compliance enabled and PII data present, but
+# audit_logging is not set (defaults to false/absent). HIPAA requires audit
+# logging as a mandatory technical safeguard. The compiler detects that HIPAA
+# is enabled without audit logging and rejects the spec.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - HIPAA compliance requires audit_logging: true
+#   - compiler rejects because HIPAA + missing audit logging is an invalid combination
+
+project:
+  name: Healthcare App Missing Audit
+  domain: healthcare
+functional:
+  summary: Patient records API with HIPAA compliance but missing audit controls
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+nfr:
+  data:
+    pii: true
+    compliance:
+      hipaa: true
+  availability:
+    target: 0.999
+cost:
+  ceilings:
+    monthly_operational_usd: 5000

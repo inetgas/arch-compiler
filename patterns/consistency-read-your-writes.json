@@ -1,0 +1,355 @@
+{
+  "id": "consistency-read-your-writes",
+  "version": "1.0.0",
+  "title": "Read-Your-Writes Consistency",
+  "description": "Consistency model that guarantees a client will always observe its own most-recent writes, implemented via sticky session routing, primary-read routing post-write, or monotonic read tokens. Weaker than strong consistency (other clients may lag) but eliminates the confusion of a user submitting a change and immediately seeing a stale view.",
+  "types": [
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Read-Your-Writes consistency is an architecture pattern that can be implemented through various mechanisms (session tokens, sticky routing, logical timestamps). Min=$0 represents implementing this with stateless session tokens (JWT with version numbers) that require no additional infrastructure beyond existing application servers. Max=$500 accounts for scenarios requiring sticky session infrastructure (application-layer session affinity via load balancers like AWS ALB with target group stickiness, or Redis for session token storage in a small deployment). For high-traffic scenarios with dedicated session stores, costs could approach $200-500/month for managed Redis (cache.t3.small) or similar session management infrastructure. Most implementations fall toward the lower end as sticky routing is often a load balancer configuration rather than additional infrastructure.",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) Understanding distributed systems consistency models and tradeoffs between strong/eventual consistency, (2) Implementing session token generation/validation or sticky routing logic across the application tier, (3) Modifying read paths to respect session consistency tokens or route to appropriate replicas, (4) Testing consistency guarantees across replica lag scenarios, (5) Handling edge cases like token expiration and replica failover. Implementation involves architectural changes to request routing, potentially modifying database client libraries or implementing custom consistency tracking. Team needs distributed systems knowledge. With AI coding assistants helping with session token logic and routing implementation, estimate 3-5 days senior engineer time ($1500-2500) plus 1-2 days for testing consistency scenarios and documentation ($500-1000). Total reflects middle-ground complexity between simple patterns and full distributed consensus systems.",
+      "licenseCost": "Read-Your-Writes consistency is an architectural pattern implemented using open-source tools and libraries. Session token approaches use standard JWT libraries (free/open-source in all languages). Sticky routing uses built-in load balancer features (AWS ALB, NGINX, HAProxy - all free or included in standard cloud pricing). Session stores can use open-source Redis, Memcached, or database-native features. No proprietary licenses required. Commercial databases (DynamoDB, Cosmos DB) that offer built-in session consistency use standard pricing models with no separate licensing fees for consistency features.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "read-your-writes-consistency",
+      "confidence": "high",
+      "reasoning": "This pattern specifically provides read-your-writes consistency guarantees, ensuring a client can always read data they just wrote. This is a distinct consistency model that sits between eventual and strong consistency."
+    },
+    {
+      "capability": "monotonic-reads",
+      "confidence": "medium",
+      "reasoning": "Read-your-writes consistency typically implies monotonic read guarantees for the same session, ensuring clients never see older versions of data once they've read a newer version."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "session-store",
+      "confidence": "high",
+      "reasoning": "Read-your-writes consistency requires tracking client sessions through tokens or sticky routing to ensure subsequent reads from the same client are routed appropriately to see their own writes.",
+      "optional": true
+    },
+    {
+      "capability": "distributed-system",
+      "confidence": "high",
+      "reasoning": "This pattern is only meaningful in distributed systems where data may be replicated across multiple nodes. In a single-node system, read-your-writes is automatically guaranteed.",
+      "optional": false
+    },
+    {
+      "capability": "routing",
+      "confidence": "medium",
+      "reasoning": "Sticky routing at the load balancer level is one implementation approach for read-your-writes consistency, routing client requests to the same replica that processed their writes.",
+      "optional": true
+    },
+    {
+      "capability": "api-versioning",
+      "confidence": "medium",
+      "reasoning": "Version vectors or timestamps are an alternative implementation mechanism to track and enforce read-your-writes guarantees without requiring sticky routing.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "curated"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 100,
+      "reason": "Read-your-writes coordination overhead is only justified at 100+ read QPS scale."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">=",
+      "value": 100,
+      "reason": "Session token management and versioning overhead justified at 100+ write QPS scale."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern explicitly guarantees read-your-writes consistency through session tokens when required."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Read-your-writes consistency is a cloud-agnostic architectural pattern implementable on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Session tracking and routing can be implemented in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "agnostic",
+        "n/a"
+      ],
+      "reason": "Pattern applies to any client-server architecture across all platform types."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without caching, though session-aware routing may leverage cache."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with both synchronous and asynchronous messaging architectures."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to both single-tenant and multi-tenant applications."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read-your-writes works for both interactive and batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with systems using distributed transactions or eventual consistency."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session consistency applies to both streaming and non-streaming data flows."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with vector search databases and traditional data stores alike."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read-your-writes consistency applies to document stores and other database types."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session-based consistency is compatible with key-value stores and relational databases."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to graph databases and other database paradigms."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read-your-writes works for time-series and non-time-series data stores."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern is primarily relevant for transactional workloads where users perform writes and immediately read their own data."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "While optimized for OLTP, pattern can apply to analytical workloads requiring session consistency."
+    }
+  ],
+  "defaultConfig": {
+    "consistency_mechanism": "session_tokens",
+    "token_storage": "client_side",
+    "fallback_strategy": "retry_with_delay",
+    "max_staleness_ms": 5000
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "consistency_mechanism": {
+        "type": "string",
+        "enum": [
+          "session_tokens",
+          "sticky_routing",
+          "monotonic_reads",
+          "hybrid"
+        ],
+        "description": "How to ensure read-your-writes consistency. session_tokens: Pass version/timestamp tokens between client and server. sticky_routing: Route requests to same replica. monotonic_reads: Guarantee reads never go backwards in time. hybrid: Combine multiple approaches for stronger guarantees."
+      },
+      "token_storage": {
+        "type": "string",
+        "enum": [
+          "client_side",
+          "server_side",
+          "distributed_cache"
+        ],
+        "description": "Where to store session consistency tokens. client_side: Tokens in cookies/headers (lower latency, client manages). server_side: Tokens in session store (more secure, server overhead). distributed_cache: Shared cache like Redis (scalable, adds dependency)."
+      },
+      "fallback_strategy": {
+        "type": "string",
+        "enum": [
+          "retry_with_delay",
+          "read_from_primary",
+          "accept_stale",
+          "fail_fast"
+        ],
+        "description": "What to do when consistency cannot be guaranteed. retry_with_delay: Wait and retry (eventual consistency). read_from_primary: Force read from authoritative source (higher latency). accept_stale: Return potentially stale data (best performance). fail_fast: Return error to client (explicit failure)."
+      },
+      "max_staleness_ms": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 60000,
+        "description": "Maximum acceptable staleness in milliseconds before triggering fallback strategy. 0 means strict read-your-writes. Higher values trade consistency for availability and performance."
+      }
+    }
+  },
+  "warn_nfr": []
+}

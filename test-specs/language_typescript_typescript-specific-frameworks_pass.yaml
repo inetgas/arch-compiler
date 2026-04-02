@@ -1,0 +1,21 @@
+# Language - TypeScript with Specific Frameworks
+#
+# An API spec with TypeScript language and no other constraints. This tests
+# that TypeScript-compatible patterns are selected and that the compiler
+# correctly handles language-specific framework patterns (Next.js, NestJS,
+# Prisma etc.) without requiring explicit framework constraints.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - TypeScript-compatible patterns are selected
+#   - language-specific patterns narrow the selection appropriately
+
+constraints:
+  platform: api
+  language: typescript
+project:
+  name: TypeScript + Specific Frameworks
+  domain: test
+functional:
+  summary: 'Test scenario: TypeScript + Specific Frameworks'
+nfr: {}

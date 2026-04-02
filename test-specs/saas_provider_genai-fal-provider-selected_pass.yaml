@@ -1,0 +1,31 @@
+# SaaS Provider - GenAI with FAL Provider Selected
+#
+# A GenAI image generation prototype on the ml-inference platform using Python
+# with FAL in saas-providers and ai_inference: true. No PII is present and the
+# budget is $100/month. This tests that the FAL-specific genai inference variant
+# is selected over the generic self-hosted pattern when fal is in saas-providers.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - genai-inference--fal IS selected (fal is in saas-providers + ai_inference: true)
+#   - genai-inference (generic) is NOT selected (vendor-specific variant takes precedence)
+
+project:
+  name: "GenAI Image Generation with FAL"
+  domain: ai
+functional:
+  summary: "Prototype for AI image generation using FAL provider"
+constraints:
+  platform: ml-inference
+  cloud: agnostic
+  language: python
+  saas-providers:
+    - fal
+  features:
+    ai_inference: true
+nfr:
+  data:
+    pii: false
+cost:
+  ceilings:
+    monthly_operational_usd: 100

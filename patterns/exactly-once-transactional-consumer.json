@@ -1,0 +1,420 @@
+{
+  "id": "exactly-once-transactional-consumer",
+  "version": "1.0.0",
+  "title": "Exactly-Once Transactional Consumer",
+  "description": "Exactly-once processing using transactions/dedupe tables or stream guarantees; complex and tool-dependent.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 7500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Exactly-once transactional consumer requires message broker infrastructure plus transactional storage. Min ($100): Kafka-compatible service (AWS MSK t3.small ~$75) + PostgreSQL for deduplication table (db.t3.micro ~$25) for dev/low-throughput. Max ($5000): Production-grade streaming with Kafka cluster (3-node MSK m5.large ~$2500) + high-performance transactional database (db.r5.xlarge RDS ~$600) + distributed state store for checkpointing (Redis cluster ~$400) + network/data transfer costs (~$1500 for high-throughput scenarios). Costs scale significantly with message volume, retention requirements, and availability zones. Stream-native solutions like Kafka Streams or Flink add compute costs ($500-2000/month for managed services).",
+      "adoptionCost": "Very high complexity pattern requiring deep distributed systems expertise. Implementation involves: (1) Understanding exactly-once semantics and idempotency guarantees (10-15 hours research/design), (2) Implementing transactional outbox or deduplication table logic with proper locking/isolation (20-30 hours), (3) Configuring message broker transactions (Kafka transactions, SQS FIFO with deduplication) (15-20 hours), (4) Building compensating logic for failure scenarios (15-25 hours), (5) Comprehensive testing of edge cases (duplicates, out-of-order, failures mid-transaction) (25-35 hours), (6) Performance tuning for transactional overhead (10-15 hours). Total: 95-140 hours at $75-100/hour blended rate = $7,125-$14,000. Using $7,500 as conservative estimate assuming some AI assistance but requiring senior engineering expertise. Pattern is tool-dependent and error-prone, requiring significant debugging and refinement.",
+      "licenseCost": "Pattern can be implemented entirely with open-source tools (Apache Kafka, PostgreSQL, Redis). While commercial distributions exist (Confluent Platform, Amazon MSK, Azure Event Hubs), these are typically consumption-based rather than license-based. Enterprise support contracts for Kafka (Confluent) range $25k-$100k+ annually but aren't required for implementation. The pattern itself is a design approach with no inherent licensing costs\u2014organizations pay for infrastructure usage rather than licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "exactly-once-processing",
+      "confidence": "high",
+      "reasoning": "This is the core guarantee provided by this pattern. It ensures that messages/events are processed exactly once despite failures, retries, or duplicate deliveries, which is the primary value proposition of this pattern."
+    },
+    {
+      "capability": "idempotent-operations",
+      "confidence": "high",
+      "reasoning": "Implementing exactly-once processing inherently requires and results in idempotent message handling, where processing the same message multiple times produces the same result as processing it once."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "event-store",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Required for one implementation approach where deduplication tables and atomic commits are used to track processed messages within transactions, ensuring idempotent processing. This could be a relational database or any storage system supporting ACID transactions. This is optional because it represents one of two alternative implementation approaches."
+    },
+    {
+      "capability": "streaming-platform",
+      "confidence": "medium",
+      "reasoning": "Required for the alternative implementation approach where the streaming platform itself provides exactly-once semantics (e.g., Kafka with transactional producers/consumers, or Pulsar's exactly-once guarantees). This is more specific than a basic streaming platform and is optional because it represents one of two alternative implementation approaches.",
+      "optional": true
+    },
+    {
+      "capability": "distributed-transaction-coordination",
+      "confidence": "low",
+      "reasoning": "Required for scenarios involving multiple transactional resources that need coordination (e.g., XA transactions, two-phase commit protocols) to maintain exactly-once semantics across distributed systems.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "queue-consumer-idempotency",
+      "async-fire-and-forget"
+    ],
+    "incompatibleAssumptions": [
+      "consistencyModel"
+    ]
+  },
+  "tags": [
+    "messaging",
+    "streaming",
+    "consistency"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/messaging_delivery_guarantee",
+      "op": "==",
+      "value": "exactly-once",
+      "reason": "Pattern implements transactional/dedup-table semantics for exactly-once delivery; incompatible with at-least-once (idempotency approach) or at-most-once (fire-and-forget)."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Exactly-once transactional consumer pattern is cloud-agnostic and can be implemented on any platform."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "This is a messaging/streaming architecture pattern that can be implemented in any language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Exactly-once transactional consumers are typically used in backend systems that process async messages."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without caching layers."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Exactly-once delivery requires async messaging infrastructure. Setting messaging_delivery_guarantee without enabling async_messaging is a logical contradiction."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern typically requires distributed transaction coordination or deduplication tables."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both multi-tenant and single-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can be used for both batch and real-time message processing."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with both real-time streaming and batch messaging systems."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is agnostic to vector search usage."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can work with document stores or other database types for deduplication."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can use key-value stores or other databases for deduplication tracking."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is agnostic to graph database usage."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is agnostic to time-series database usage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both OLTP and non-OLTP workloads with transactional guarantees."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can be used for OLAP workloads that require exactly-once processing."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Database dependency and transaction coordination limit max availability to 99.99%."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Transactional overhead and deduplication checks add minimum 50ms latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Transaction coordination and deduplication table lookups add tail latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Recovery requires transaction log replay and deduplication state verification."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Exactly-once semantics with transactions guarantee zero data loss."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Transactional processing and deduplication table contention limit throughput to 100K jobs/hour."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "Transactional semantics inherently provide read-your-writes consistency."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": true,
+      "reason": "Transaction-based processing ensures strict durability guarantees."
+    }
+  ],
+  "defaultConfig": {
+    "implementation_strategy": "transactional_outbox",
+    "idempotency_mechanism": "dedupe_table",
+    "transaction_isolation": "read_committed",
+    "dedupe_retention_hours": 168,
+    "enable_dead_letter_queue": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "implementation_strategy": {
+        "type": "string",
+        "enum": [
+          "transactional_outbox",
+          "stream_native",
+          "two_phase_commit",
+          "idempotent_consumer"
+        ],
+        "description": "Strategy for achieving exactly-once semantics. Transactional outbox uses database transactions with outbox pattern; stream_native relies on platform guarantees (Kafka transactions); two_phase_commit uses distributed transactions; idempotent_consumer uses application-level deduplication."
+      },
+      "idempotency_mechanism": {
+        "type": "string",
+        "enum": [
+          "dedupe_table",
+          "unique_constraint",
+          "distributed_cache",
+          "stream_offset"
+        ],
+        "description": "How to track processed messages. Dedupe table stores message IDs in database; unique_constraint uses DB constraints; distributed_cache uses Redis/Memcached; stream_offset relies on consumer offset management."
+      },
+      "transaction_isolation": {
+        "type": "string",
+        "enum": [
+          "read_committed",
+          "repeatable_read",
+          "serializable"
+        ],
+        "description": "Database transaction isolation level. Read_committed prevents dirty reads (fastest); repeatable_read prevents non-repeatable reads; serializable prevents phantom reads (slowest, strongest guarantee)."
+      },
+      "dedupe_retention_hours": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 8760,
+        "description": "How long to retain deduplication records in hours (1 hour to 1 year). Longer retention prevents duplicate processing of delayed/replayed messages but increases storage costs."
+      },
+      "enable_dead_letter_queue": {
+        "type": "boolean",
+        "description": "Whether to route failed messages to a dead letter queue after exhausting retries. Enables manual inspection and reprocessing of problematic messages."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 100,
+      "reason": "Exactly-once transactional processing adds significant overhead (distributed transactions, deduplication table lookups, coordination). Below 100 jobs/hour, simpler at-least-once + idempotency is more cost-effective.",
+      "message": "exactly-once-transactional-consumer: peak_jobs_per_hour is {actual} (<100). The transactional overhead and complexity may outweigh benefits at this low volume. Consider simpler at-least-once delivery with application-level idempotency."
+    }
+  ]
+}

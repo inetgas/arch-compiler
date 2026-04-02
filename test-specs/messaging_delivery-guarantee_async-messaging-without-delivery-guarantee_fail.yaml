@@ -1,0 +1,23 @@
+# Messaging - Async Messaging Enabled Without Delivery Guarantee
+#
+# An API spec with async_messaging: true but messaging_delivery_guarantee set
+# to null. When async messaging is enabled, a delivery guarantee level must be
+# specified (at-least-once, at-most-once, or exactly-once). The null value
+# fails validation for the delivery guarantee field.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - async_messaging: true requires messaging_delivery_guarantee to be set
+#   - compiler rejects because null is not a valid delivery guarantee value
+
+constraints:
+  platform: api
+  features:
+    messaging_delivery_guarantee: null
+    async_messaging: true
+project:
+  name: "async_messaging set to true without messaging_delivery_guarantee set"
+  domain: test
+functional:
+  summary: 'Test scenario: async_messaging set to true without messaging_delivery_guarantee set'
+nfr: {}

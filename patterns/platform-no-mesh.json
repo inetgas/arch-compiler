@@ -1,0 +1,402 @@
+{
+  "id": "platform-no-mesh",
+  "version": "1.0.0",
+  "title": "No Service Mesh (Gateway-Only)",
+  "description": "Use ingress/API gateway and client libraries; lower complexity; fewer advanced traffic controls.",
+  "types": [
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 8000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 8000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Gateway-only architecture requires API gateway infrastructure and compute for services. Min ($200): Small workload with managed API gateway (AWS API Gateway ~$50-100 for 1M requests + ~$100-150 for modest ECS/EKS compute for 2-3 services). Max ($8000): Production workload with high-availability API gateway cluster (~$2000-3000 for multi-AZ setup handling 100M+ requests), plus compute infrastructure for multiple services (~$4000-5000 for EKS/ECS with auto-scaling), and egress/data transfer costs (~$1000). Does not include service mesh control/data plane overhead (Istio/Linkerd would add $3000-10000/month), making this significantly cheaper than mesh alternatives.",
+      "adoptionCost": "Medium-high complexity adoption. Requires: (1) API gateway configuration and routing rules (20-30 hours), (2) implementing client-side libraries for service discovery, circuit breaking, retries, and load balancing (40-50 hours), (3) setting up observability without mesh-native distributed tracing (15-20 hours), (4) establishing governance and API standards across teams (10-15 hours). Total ~85-115 hours at $50-75/hour blended rate = $4250-8625, but with AI coding assistants reducing boilerplate client library implementation by 60-70%, bringing effective cost to ~$1500-2500. Lower than service mesh ($5000-15000) but higher than monolith ($500-800) due to distributed system patterns needed.",
+      "licenseCost": "Zero licensing cost for open-source implementations. Popular gateway options are free: Kong Gateway (OSS), Nginx, Envoy Gateway, Traefik, AWS API Gateway (pay-per-use, no license), Azure API Management (consumption tier), GCP API Gateway. Client libraries (Resilience4j, Polly, Netflix OSS) are open-source. Organizations may optionally purchase commercial gateway support (Kong Enterprise $25k-100k/year, Apigee $50k-250k/year) but not required for basic pattern implementation. Estimated at $0 for typical OSS adoption.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "gateway-based-routing",
+      "confidence": "high",
+      "reasoning": "This pattern uses an ingress/API gateway as the primary mechanism for routing external traffic to internal services, providing centralized routing logic without requiring service mesh complexity."
+    },
+    {
+      "capability": "centralized-ingress",
+      "confidence": "high",
+      "reasoning": "The pattern provides a single entry point via the API gateway for all external traffic, simplifying external-to-internal communication patterns."
+    },
+    {
+      "capability": "client-side-resilience",
+      "confidence": "medium",
+      "reasoning": "Client libraries in this pattern typically provide resilience patterns like circuit breakers, retries, and timeouts at the client side, compensating for the absence of service mesh features."
+    },
+    {
+      "capability": "basic-traffic-management",
+      "confidence": "medium",
+      "reasoning": "This pattern provides fundamental traffic management capabilities through the gateway and client libraries, though without the advanced features of a full service mesh."
+    },
+    {
+      "capability": "api-gateway",
+      "confidence": "high",
+      "reasoning": "The no-mesh gateway pattern IS an API gateway \u2014 it provides centralized ingress, routing, and basic traffic management for all service-to-service and client-to-service communication."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "api-gateway",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly relies on an API gateway as its primary entry point for traffic routing and management, replacing the more complex service mesh approach.",
+      "optional": false
+    },
+    {
+      "capability": "service-client-libraries",
+      "confidence": "high",
+      "reasoning": "Client libraries are essential to this pattern as they handle service-to-service communication, load balancing, and resilience patterns that would otherwise be provided by a service mesh.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-service-mesh"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "platform",
+    "simplicity"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Gateway-only architecture without service mesh lacks automated failover and circuit-breaking capabilities limiting availability to two nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Gateway routing and client-side resilience libraries introduce minimum 50ms p95 latency overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Without mesh-level traffic management, tail latencies under load cannot be optimized below 200ms p99."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 10,
+      "reason": "Manual intervention and gateway reconfiguration without automated mesh traffic control requires at least 10 minutes RTO."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Without mesh-level request buffering and retry capabilities, in-flight request loss during failures results in 5 minute RPO."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "At very high read QPS (>50K req/s), service mesh provides better observability, dynamic routing, and traffic splitting that gateway-only lacks."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Gateway-only architecture supports very high write query throughput limited only by gateway horizontal scaling."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compliance requirements can be met with gateway-only architecture through appropriate application controls."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance can be achieved with gateway-only architecture through appropriate audit controls."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Gateway-only architecture pattern is cloud-agnostic and works across all cloud providers and on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Gateway-only is infrastructure pattern independent of application programming language choice."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Pattern applies to any platform type requiring service-to-service communication through gateway."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Caching can be implemented at gateway or application level regardless of mesh absence."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Gateway-only pattern can coexist with async messaging for event-driven components."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AI inference workloads can be routed through gateway-only architecture without service mesh."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy can be implemented at application or gateway level without requiring service mesh."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing workloads are compatible with gateway-only architecture for API access patterns."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Distributed transactions can be coordinated at application level using client libraries without mesh."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming can be handled alongside gateway-only architecture for request-response traffic."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search services can be accessed through gateway routing without requiring service mesh."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document store databases are data layer concern independent of gateway-only architecture."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value stores can be used by services behind gateway without requiring service mesh."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases are data layer concern compatible with gateway-only service communication."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases can be integrated with services using gateway-only architecture."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads are supported through gateway routing with client-side resilience libraries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workloads can be routed through gateway to analytical services without requiring service mesh."
+    }
+  ],
+  "defaultConfig": {
+    "gateway_type": "api_gateway",
+    "client_library_approach": "rest_http",
+    "load_balancing": "gateway_level",
+    "observability_strategy": "application_level"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "gateway_type": {
+        "type": "string",
+        "enum": [
+          "api_gateway",
+          "ingress_controller",
+          "load_balancer"
+        ],
+        "description": "Type of gateway for external traffic. API Gateway provides request routing and API management; Ingress Controller for Kubernetes environments; Load Balancer for simple traffic distribution."
+      },
+      "client_library_approach": {
+        "type": "string",
+        "enum": [
+          "rest_http",
+          "grpc",
+          "graphql"
+        ],
+        "description": "Protocol for service-to-service communication via client libraries. REST/HTTP is simplest and most universal; gRPC offers better performance and type safety; GraphQL provides flexible data querying."
+      },
+      "load_balancing": {
+        "type": "string",
+        "enum": [
+          "gateway_level",
+          "dns_round_robin",
+          "client_side"
+        ],
+        "description": "Where load balancing occurs. Gateway-level centralizes control; DNS round-robin is simplest but least flexible; client-side provides most control but requires library support."
+      },
+      "observability_strategy": {
+        "type": "string",
+        "enum": [
+          "application_level",
+          "gateway_only",
+          "hybrid"
+        ],
+        "description": "How to implement monitoring without service mesh. Application-level requires instrumentation in each service; gateway-only provides limited visibility; hybrid combines both for comprehensive observability."
+      }
+    }
+  },
+  "warn_nfr": []
+}

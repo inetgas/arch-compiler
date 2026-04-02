@@ -1,0 +1,388 @@
+{
+  "id": "idp-oidc--auth0",
+  "version": "1.0.0",
+  "title": "Auth0 Identity Provider",
+  "description": "Auth0 as a managed OIDC/OAuth2 identity provider. Handles social login (30+ providers), enterprise federation via Active Directory and LDAP, machine-to-machine credentials, customizable login flows via Actions, and MFA. Well-suited to B2C and B2B apps that need flexible social and enterprise login without operating identity infrastructure.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 100.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 23.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "auth0"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 7,500 MAU, unlimited logins, social connections, MFA. Essentials plan from $23/month for 1,000 MAU. Professional from $240/month with advanced enterprise features and SLA.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Auth0 Free tier supports 7,500 MAU at $0/month with no credit card required. Essentials starts at $23/month for 1,000 MAU with $0.023/MAU overage. Min=0 reflects free tier; max=23 reflects entry paid tier for small apps.",
+      "adoptionCost": "Auth0 has SDKs for all major languages and quickstart guides. Integration: create application in dashboard, install SDK, configure callback URLs, add login button (~2 hours at $50/hour = $100). AI tools reduce boilerplate significantly.",
+      "licenseCost": "Auth0 Free tier requires no license fees. Commercial use allowed on free tier up to 7,500 MAU.",
+      "source": "LLM analysis (as of March 2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "identity-provider",
+      "confidence": "high",
+      "reasoning": "Auth0 is a purpose-built managed identity provider service delivering full OAuth2/OIDC and SAML identity services."
+    },
+    {
+      "capability": "user-authentication",
+      "confidence": "high",
+      "reasoning": "Auth0 handles username/password, social, enterprise, and passwordless authentication flows."
+    },
+    {
+      "capability": "single-sign-on",
+      "confidence": "high",
+      "reasoning": "Auth0 provides SSO across multiple applications via shared session and Universal Login."
+    },
+    {
+      "capability": "social-login",
+      "confidence": "high",
+      "reasoning": "Auth0 supports 30+ social identity providers including Google, GitHub, Apple, Facebook."
+    },
+    {
+      "capability": "mfa",
+      "confidence": "high",
+      "reasoning": "Auth0 supports MFA via TOTP (Google Authenticator), SMS, push notifications, and WebAuthn."
+    },
+    {
+      "capability": "machine-to-machine-auth",
+      "confidence": "high",
+      "reasoning": "Auth0 supports M2M authentication via OAuth2 client credentials flow for API-to-API auth."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Auth0 is a cloud SaaS requiring internet access for all authentication flows."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "idp-oidc--okta",
+      "idp-oidc--cognito"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "auth",
+    "identity",
+    "oauth2",
+    "oidc",
+    "sso",
+    "auth0",
+    "saas",
+    "free-tier",
+    "social-login",
+    "mfa"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Auth0 is publicly available with a generous free tier"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "oauth2_oidc",
+      "reason": "Auth0 is an OAuth2/OIDC identity provider. Specs using other auth mechanisms (mtls, api_key, jwt, saml) do not require an external IdP of this type."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Auth0 guarantees 99.99% uptime SLA on Professional and Enterprise plans; free/Essentials tiers have best-effort availability without contractual SLA."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Auth0 Universal Login and token endpoints introduce minimum 100ms p95 latency due to hosted login page round-trips and token issuance."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 300,
+      "reason": "Auth0 p99 latency floor is ~300ms due to geographic routing variability and peak-load token issuance."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Auth0 is a managed SaaS; recovery from outages depends on Auth0 infrastructure, not application-level rollback."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Auth0 HIPAA BAA is only available on Enterprise plan. Free and Essentials tiers must not process PHI."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 is GDPR-compliant with data processing agreements available; applicable to all paid tiers and free tier with configuration."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 supports CCPA compliance through data export and deletion APIs available on all tiers."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 SOC 2 Type II certification supports SOX audit trail requirements on Professional and Enterprise plans."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Auth0 is a cloud-agnostic SaaS identity provider that works with any cloud or on-premises deployment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "swift",
+        "dart",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c"
+      ],
+      "reason": "Auth0 provides official SDKs for all major languages and works with any backend via standard OAuth2/OIDC HTTP flows."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api"
+      ],
+      "reason": "Auth0 supports web apps (Universal Login), mobile (native SDKs), and API authorization (JWT/M2M)."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "auth0"
+      ],
+      "reason": "Pattern requires Auth0 as the identity provider."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 Organizations feature supports multi-tenant identity management for B2B SaaS."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to caching requirements."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to async messaging requirements."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to AI inference requirements."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to batch processing requirements."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to distributed transaction requirements."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to real-time streaming requirements."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to vector search requirements."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to document store requirements."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to key-value store requirements."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to graph database requirements."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to time-series database requirements."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to OLTP workload requirements."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to OLAP workload requirements."
+    }
+  ],
+  "defaultConfig": {
+    "connection_type": "universal-login",
+    "mfa_enabled": false,
+    "social_connections": [
+      "google-oauth2"
+    ],
+    "token_lifetime_seconds": 86400
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "connection_type": {
+        "type": "string",
+        "enum": [
+          "universal-login",
+          "embedded",
+          "social-only",
+          "enterprise-only"
+        ],
+        "description": "Login UI mode. universal-login (hosted by Auth0, recommended \u2014 protects against phishing), embedded (custom UI using Auth0 APIs \u2014 requires careful XSS mitigation), social-only, or enterprise-only."
+      },
+      "mfa_enabled": {
+        "type": "boolean",
+        "description": "Enable multi-factor authentication for all users. Recommended for any app with sensitive data. Can be enforced via Auth0 policies or selectively via Rules/Actions."
+      },
+      "social_connections": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Social identity providers to enable (e.g., google-oauth2, github, apple). Each requires configuring OAuth2 app credentials in the respective provider's developer console."
+      },
+      "token_lifetime_seconds": {
+        "type": "integer",
+        "description": "Access token lifetime in seconds. Default 86400 (24h). Shorter lifetimes improve security; longer lifetimes reduce re-authentication friction. Refresh token rotation recommended for SPAs and mobile."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">",
+      "value": 0.999,
+      "reason": "Availability above 99.9% requires Auth0 Professional or Enterprise plan with contractual SLA.",
+      "message": "idp-oidc--auth0: availability target {actual} exceeds free/Essentials tier best-effort availability. Upgrade to Professional (99.99% SLA) or implement fallback authentication for high-availability requirements."
+    }
+  ]
+}

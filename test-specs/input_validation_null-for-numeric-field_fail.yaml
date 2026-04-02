@@ -1,0 +1,24 @@
+# Input Validation - Null Value for Numeric Field
+#
+# An API spec that sets nfr.availability.target and cost ceiling to null
+# instead of valid numeric values. The schema requires these fields to be
+# numeric (float and number respectively), so null is a type violation.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: null is not valid for a numeric field
+#   - compiler rejects before pattern selection
+
+constraints:
+  platform: api
+nfr:
+  availability:
+    target: null
+cost:
+  ceilings:
+    monthly_operational_usd: null
+project:
+  name: Null Values
+  domain: test
+functional:
+  summary: 'Test scenario: Null Values'

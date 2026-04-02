@@ -1,0 +1,17 @@
+# Input Validation - Missing Required Project Section
+#
+# A minimal spec that omits the required project.domain field, providing only
+# project.name, functional.summary, and constraints.platform. The canonical
+# schema requires project.domain to be present, making this spec invalid.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: required field project.domain is missing
+#   - compiler rejects before pattern selection
+
+project:
+  name: Test
+functional:
+  summary: Test
+constraints:
+  platform: api

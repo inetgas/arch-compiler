@@ -1,0 +1,481 @@
+{
+  "id": "db-read-replicas",
+  "version": "1.0.0",
+  "title": "Read Replicas",
+  "description": "Scale reads with replicas; handle replication lag and read-your-writes requirements.",
+  "types": [
+    "design",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Read replicas require running additional database instances. Minimum assumes 1 primary + 1 read replica on small instances (e.g., AWS RDS db.t3.small ~$25/each = $50 total for dev/test). Maximum represents production scenarios with 1 primary + 3-5 read replicas on larger instances (e.g., db.r5.2xlarge ~$800-1000/each), plus cross-region data transfer costs ($0.02/GB), backup storage, and potential multi-AZ deployment. Geographic distribution and high-traffic applications can push costs higher. Does not include data storage costs which vary by volume.",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) Database replication setup and configuration (4-8 hours), (2) Application code changes to route reads to replicas while handling read-your-writes consistency (8-16 hours), (3) Implementing read/write splitting logic in connection pools or middleware (4-8 hours), (4) Handling replication lag scenarios and fallback mechanisms (8-12 hours), (5) Monitoring setup for replication lag and replica health (4-6 hours), (6) Load testing and optimization (8-12 hours), (7) Documentation and runbooks for operations (4-6 hours). Total ~40-68 hours at $50-75/hour blended rate. Requires understanding of database replication mechanics, eventual consistency patterns, and distributed systems concepts.",
+      "licenseCost": "Read replica functionality is a standard feature in all major database platforms (PostgreSQL, MySQL, MongoDB, etc.) with no additional licensing fees. Cloud providers (AWS RDS, Azure Database, GCP Cloud SQL) include replication as a built-in feature - you only pay for the compute/storage of additional instances. Open-source databases support replication natively. No proprietary tools or commercial licenses required for basic implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "read-scaling",
+      "confidence": "high",
+      "reasoning": "The primary purpose of read replicas is to scale read operations horizontally by distributing read traffic across multiple database copies."
+    },
+    {
+      "capability": "high-availability-reads",
+      "confidence": "high",
+      "reasoning": "Read replicas provide redundancy and fault tolerance for read operations, ensuring reads can continue even if one replica fails."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "high",
+      "reasoning": "Read replicas inherently introduce replication lag between primary and replicas, resulting in eventual consistency for read operations across the system."
+    },
+    {
+      "capability": "read-after-write-consistency",
+      "confidence": "medium",
+      "reasoning": "This pattern can implement read-your-writes logic by routing certain reads to the primary database or using session-based routing to ensure users see their own writes."
+    },
+    {
+      "capability": "database-replication",
+      "confidence": "high",
+      "reasoning": "Read replicas ARE database replication \u2014 the pattern establishes and manages replication streams from primary to replica nodes."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "Read replicas are typically implemented on top of a primary relational database like PostgreSQL or MySQL that supports replication.",
+      "optional": false
+    },
+    {
+      "capability": "database-replication",
+      "confidence": "high",
+      "reasoning": "The pattern fundamentally depends on the underlying database's ability to replicate data from primary to replica instances.",
+      "optional": false
+    },
+    {
+      "capability": "load-balancing",
+      "confidence": "high",
+      "reasoning": "Requires a mechanism to distribute read queries across multiple replicas, either through application-level routing or database proxy load balancing.",
+      "optional": false
+    },
+    {
+      "capability": "monitoring",
+      "confidence": "high",
+      "reasoning": "Tracking replication lag is critical for this pattern's operational success to ensure data freshness meets application requirements and to detect replication issues.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "curated"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Read replicas with automated failover can provide up to 99.99% availability for read traffic."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Relational database read operations through replicas have a minimum p95 latency of 5ms due to network and query execution overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Replica routing and replication lag considerations result in a minimum p99 latency of 20ms for read operations."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Read traffic can failover to healthy replicas within 1-2 minutes using automated health checks and DNS updates."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000000,
+      "reason": "Maximum throughput of 50M jobs/hour achievable with multi-region replica deployments and read distribution."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 500,
+      "reason": "Read replicas are a scalability tool only beneficial when read QPS exceeds 500, justifying the operational complexity."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Read replicas work with any tenant isolation strategy as they faithfully replicate the primary database structure and data."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas are compatible with GDPR requirements when combined with appropriate encryption, access controls, and data residency configurations."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas support HIPAA-compliant deployments with proper encryption at rest and in transit, audit trails, and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas are compatible with CCPA compliance when combined with appropriate data governance and user data management capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas support SOX-compliant architectures with proper audit trails, transaction integrity, and change management controls."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas can support both eventual consistency and read-your-writes patterns through routing strategies like session affinity or sync reads from primary."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas support both strict and relaxed durability requirements depending on replication mode (synchronous vs asynchronous) configuration."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Read replicas are supported by all major cloud providers and on-premises database systems with native replication capabilities."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Read replicas are a database infrastructure pattern that works with any programming language using standard database drivers."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Read replicas are applicable to any platform that requires database read scalability and high availability."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas work with or without caching layers as they are complementary scalability strategies for read-heavy workloads."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas are compatible with both synchronous request-response and asynchronous messaging architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas can serve AI inference workloads that require read-heavy database access for feature retrieval and model metadata."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas support both single-tenant and multi-tenant database architectures with any isolation strategy."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas are useful for offloading batch read operations and analytics queries from the primary database instance."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas can participate in distributed transaction architectures for read operations while writes remain on the primary."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas can serve real-time streaming applications with eventual consistency guarantees for read queries."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas can replicate vector search indexes for scaling vector similarity queries across multiple read instances."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas work with both relational and document-oriented databases that support database-level replication."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas can be implemented for key-value stores that support database-level replication capabilities."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas can scale read-heavy graph query workloads when the graph database supports replication."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas are effective for scaling time-series database read queries and analytical workloads."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Read replicas are primarily designed for scaling OLTP read-heavy workloads with transactional consistency requirements."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read replicas can support OLAP workloads by offloading analytical queries from the primary transactional database."
+    }
+  ],
+  "defaultConfig": {
+    "replication_mode": "asynchronous",
+    "replica_count": 2,
+    "read_consistency": "eventual",
+    "routing_strategy": "manual",
+    "failover_behavior": "read_only"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "replication_mode": {
+        "type": "string",
+        "enum": [
+          "asynchronous",
+          "synchronous",
+          "semi-synchronous"
+        ],
+        "description": "Replication mode: asynchronous (fastest, eventual consistency), synchronous (slower, strong consistency), semi-synchronous (balance between performance and durability)"
+      },
+      "replica_count": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 15,
+        "description": "Number of read replicas to provision. More replicas increase read capacity but add replication lag and cost"
+      },
+      "read_consistency": {
+        "type": "string",
+        "enum": [
+          "eventual",
+          "session",
+          "strong"
+        ],
+        "description": "Read consistency level: eventual (read from any replica), session (read-your-writes within session), strong (read from primary for critical data)"
+      },
+      "routing_strategy": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "round-robin",
+          "least-connections",
+          "geographic"
+        ],
+        "description": "How to route read queries: manual (app controls), round-robin (distribute evenly), least-connections (load-based), geographic (nearest replica)"
+      },
+      "failover_behavior": {
+        "type": "string",
+        "enum": [
+          "read_only",
+          "promote_replica",
+          "circuit_breaker"
+        ],
+        "description": "Behavior when primary fails: read_only (replicas serve reads only), promote_replica (auto-promote to new primary), circuit_breaker (fail fast and retry)"
+      }
+    }
+  },
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Read replicas with automated failover can provide up to 99.99% availability for read traffic."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Relational database read operations through replicas have a minimum p95 latency of 5ms due to network and query execution overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Replica routing and replication lag considerations result in a minimum p99 latency of 20ms for read operations."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Read traffic can failover to healthy replicas within 1-2 minutes using automated health checks and DNS updates."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Synchronous or near-synchronous replication to replicas provides near-zero RPO for committed transactions."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000000,
+      "reason": "Maximum throughput of 50M jobs/hour achievable with multi-region replica deployments and read distribution."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "Read replicas introduce replication lag (typically 10-1000ms). Supporting read-your-writes requires routing reads to primary or session affinity, reducing replica utilization and increasing complexity.",
+      "message": "db-read-replicas: spec requires needsReadYourWrites=true. Replication lag means reads must route to primary or use session affinity, reducing replica effectiveness."
+    }
+  ]
+}

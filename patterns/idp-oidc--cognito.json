@@ -1,0 +1,373 @@
+{
+  "id": "idp-oidc--cognito",
+  "version": "1.0.0",
+  "title": "AWS Cognito Identity Provider",
+  "description": "Use AWS Cognito as a managed identity provider natively integrated with the AWS ecosystem. Provides user pools (authentication, registration, MFA), identity pools (federated AWS resource access), social and enterprise federation, and Lambda triggers for customization. Best choice for AWS-native applications requiring tight IAM integration. Free tier: 50,000 MAU.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 27.5
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 50,000 MAU per month permanently. Beyond free tier: $0.0055/MAU for direct sign-in, $0.015/MAU for federated users. SAML/OIDC federation: $0.015/MAU. Advanced security features: $0.050/MAU additional.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "AWS Cognito free tier of 50,000 MAU is generous for most applications. For 5,000 MAU after free tier: 5,000 \u00d7 $0.0055 = $27.50/month for direct sign-in users. Min=0 reflects free tier eligibility; max=27.50 reflects 5,000 MAU on paid tier.",
+      "adoptionCost": "Cognito has steep initial learning curve (user pools vs identity pools distinction, Lambda trigger model, JWT claim customization). Integration: 4 hours at $50/hour = $200 with AI assistance. More complex than Auth0 due to AWS-specific mental model.",
+      "licenseCost": "No license fees; pure pay-per-use SaaS on AWS.",
+      "source": "LLM analysis (as of March 2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "identity-provider",
+      "confidence": "high",
+      "reasoning": "AWS Cognito User Pools provide a fully managed identity provider service."
+    },
+    {
+      "capability": "user-authentication",
+      "confidence": "high",
+      "reasoning": "Cognito handles user registration, authentication, password management, and session tokens via OAuth2/OIDC."
+    },
+    {
+      "capability": "single-sign-on",
+      "confidence": "medium",
+      "reasoning": "Cognito supports SSO via hosted UI and OIDC federation across applications in the same user pool."
+    },
+    {
+      "capability": "mfa",
+      "confidence": "high",
+      "reasoning": "Cognito supports MFA via SMS, TOTP (e.g., Google Authenticator), and optional enforcement policies."
+    },
+    {
+      "capability": "social-login",
+      "confidence": "high",
+      "reasoning": "Cognito supports social identity federation with Google, Facebook, Apple, and Amazon."
+    },
+    {
+      "capability": "aws-iam-federation",
+      "confidence": "high",
+      "reasoning": "Cognito Identity Pools federate authenticated users to temporary AWS IAM credentials for direct AWS resource access."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "AWS Cognito is a cloud SaaS requiring internet access for authentication flows."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "idp-oidc--auth0",
+      "idp-oidc--okta"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "auth",
+    "identity",
+    "oauth2",
+    "oidc",
+    "sso",
+    "aws",
+    "cognito",
+    "free-tier",
+    "mfa",
+    "aws-native"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "AWS Cognito is publicly available with a generous permanent free tier"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "oauth2_oidc",
+      "reason": "AWS Cognito is an OAuth2/OIDC identity provider. Specs using other auth mechanisms (mtls, api_key, jwt, saml) do not require an external IdP of this type."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "AWS Cognito is covered by the AWS regional SLA (99.99% for multi-AZ deployments)."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Cognito token issuance and hosted UI round-trips introduce minimum ~100ms p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 300,
+      "reason": "Cognito Lambda trigger invocations and cross-region token validation can push p99 latency to ~300ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Cognito is a managed AWS service; RTO depends on AWS regional availability and Cognito service health."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS Cognito is covered under the AWS HIPAA BAA for eligible accounts, enabling HIPAA-compliant authentication workflows."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS Cognito supports GDPR with EU region hosting, DPA, and user data deletion APIs."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS Cognito supports CCPA with data subject request handling via user pool APIs."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS SOC 2 Type II and ISO 27001 certifications cover Cognito, supporting SOX audit requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "aws"
+      ],
+      "reason": "AWS Cognito is an AWS-native service only. Non-AWS deployments should use cloud-agnostic IdPs (Auth0, Okta) instead."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "swift",
+        "dart",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c"
+      ],
+      "reason": "AWS Cognito has official SDKs (Amplify) for major languages and works with any backend via standard OIDC/OAuth2."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api"
+      ],
+      "reason": "Cognito supports web (hosted UI, Amplify), mobile (iOS/Android Amplify SDKs), and API authorization (JWT validation)."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cognito supports multi-tenancy via separate user pools per tenant or custom attributes for tenant identification."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to caching requirements."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to async messaging requirements."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to AI inference requirements."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to batch processing requirements."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to distributed transaction requirements."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to real-time streaming requirements."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to vector search requirements."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to document store requirements."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to key-value store requirements."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to graph database requirements."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to time-series database requirements."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to OLTP workload requirements."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to OLAP workload requirements."
+    }
+  ],
+  "defaultConfig": {
+    "pool_type": "user-pool",
+    "mfa_configuration": "OPTIONAL",
+    "password_policy": "medium",
+    "lambda_triggers_enabled": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "pool_type": {
+        "type": "string",
+        "enum": [
+          "user-pool",
+          "user-pool-and-identity-pool"
+        ],
+        "description": "User Pool handles authentication and JWT issuance. Adding Identity Pool enables federating authenticated users to temporary AWS IAM credentials for direct S3, DynamoDB, etc. access from client apps."
+      },
+      "mfa_configuration": {
+        "type": "string",
+        "enum": [
+          "OFF",
+          "OPTIONAL",
+          "ON"
+        ],
+        "description": "MFA enforcement. OFF disables MFA entirely. OPTIONAL lets users enroll. ON requires MFA for all users. SMS MFA requires verified phone; TOTP requires authenticator app setup."
+      },
+      "password_policy": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "description": "Password strength policy. low: 8+ chars. medium: 8+ chars, uppercase, lowercase, number. high: 12+ chars, uppercase, lowercase, number, symbol. Maps to Cognito password policy settings."
+      },
+      "lambda_triggers_enabled": {
+        "type": "boolean",
+        "description": "Enable Lambda triggers for customizing auth flows (pre-signup validation, post-confirmation, pre-token generation for custom claims, custom auth challenge). Powerful but adds Lambda cold-start latency to auth flows."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,33 @@
+# Integration test fixture: NFR threshold activation + constraint violation
+#
+# Purpose:
+#   - caching-required-high-read-throughput activates because peak_query_per_second_read >= 200
+#   - Then it violates because constraints.features.caching == false
+#
+# Expected compiler behaviour:
+#   - rc=1 (violation)
+#   - "peak_query_per_second_read: 500  # caching-required-high-read-throughput" in stdout
+#     (NFR >= threshold annotates the field — regression test for the activation-gate fix)
+#   - "caching: false  # ❌ caching-required-high-read-throughput" in stdout
+#   - 💡 Suggestions block mentions peak_query_per_second_read with "threshold: >="
+
+project:
+  name: NFR Threshold Violation Test
+  domain: test
+
+functional:
+  summary: High-QPS API without caching enabled — triggers NFR threshold activation gate
+
+constraints:
+  platform: api
+  cloud: agnostic
+  language: python
+  features:
+    caching: false
+
+nfr:
+  throughput:
+    peak_query_per_second_read: 500
+    peak_query_per_second_write: 100
+  availability:
+    target: 0.99

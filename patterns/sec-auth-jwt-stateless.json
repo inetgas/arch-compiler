@@ -1,0 +1,463 @@
+{
+  "id": "sec-auth-jwt-stateless",
+  "version": "1.0.0",
+  "title": "Stateless JWT Access Tokens",
+  "description": "Self-contained JWTs; good for APIs; requires key rotation, audience, and careful lifetimes.",
+  "types": [
+    "ops",
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Stateless JWT is a design pattern for authentication/authorization that adds no direct infrastructure costs. JWT generation and validation happen in-application using existing compute resources. No additional databases, caches, or managed services are required - the 'stateless' nature means tokens are self-contained and verified cryptographically without external lookups. Any costs are absorbed into existing API/application hosting (which would exist regardless). If using a managed identity provider like Auth0 or Cognito for JWT issuance, those would be separate 'identity provider' patterns with their own costs.",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) Understanding JWT spec, claims, and security best practices (aud, iss, exp, nbf), (2) Implementing proper key rotation infrastructure and procedures, (3) Setting up signing and verification logic across all services, (4) Configuring appropriate token lifetimes and refresh patterns, (5) Implementing proper audience validation for multi-service architectures, (6) Security hardening (preventing algorithm confusion attacks, proper secret management), (7) Integration with existing auth flows and middleware, (8) Testing token expiry, refresh, and revocation scenarios. The pattern description explicitly mentions 'requires key rotation, audience, and careful lifetimes' which adds operational complexity. Estimate 3-5 days for a mid-level team with security review.",
+      "licenseCost": "JWT libraries are open source and freely available across all major languages (jsonwebtoken for Node.js, PyJWT for Python, jose4j for Java, golang-jwt for Go, etc.). The JWT specification (RFC 7519) is an open standard. No commercial licenses required for implementation. Organizations may choose commercial secret management tools (HashiCorp Vault, AWS KMS) for key storage, but those are separate infrastructure decisions, not licensing costs for the JWT pattern itself.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "stateless-authentication",
+      "confidence": "high",
+      "reasoning": "Self-contained JWTs carry all authentication information within the token itself, eliminating the need for server-side session storage or database lookups during validation."
+    },
+    {
+      "capability": "api-authorization",
+      "confidence": "high",
+      "reasoning": "JWT tokens provide authorization through claims and scopes, enabling fine-grained access control for API endpoints without additional lookups."
+    },
+    {
+      "capability": "claims-based-authorization",
+      "confidence": "high",
+      "reasoning": "JWTs use embedded claims for fine-grained access control, allowing authorization decisions based on user attributes, roles, and scopes contained within the token."
+    },
+    {
+      "capability": "secrets-rotation",
+      "confidence": "high",
+      "reasoning": "JWT stateless auth requires and implements signing key rotation \u2014 new keys are issued periodically while old keys remain valid for outstanding tokens during the rotation window."
+    },
+    {
+      "capability": "secure-key-storage",
+      "confidence": "high",
+      "reasoning": "JWT signing keys must be stored securely (HSM, KMS, or secrets manager) \u2014 this pattern implements secure key storage as a mandatory operational requirement."
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "JWT tokens carry tenant claims (tenant_id, org_id) in the payload, enabling any downstream service or database RLS policy to identify and enforce tenant context from the token alone."
+    },
+    {
+      "capability": "token-validation",
+      "confidence": "high",
+      "reasoning": "Stateless JWT authentication implements token validation as a core mechanism \u2014 verifying signatures, expiration times, audience claims, and issuer for every request."
+    },
+    {
+      "capability": "token-expiration-management",
+      "confidence": "high",
+      "reasoning": "JWT stateless auth manages token lifetimes and expiration through the exp claim, configurable token_lifetime_minutes, and refresh token lifecycle \u2014 making token-expiration-management a first-class output of this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "secrets-rotation",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Signing keys must be rotated periodically to limit exposure window if keys are compromised, which is essential for maintaining JWT security."
+    },
+    {
+      "capability": "token-validation",
+      "confidence": "high",
+      "reasoning": "Critical requirement for verifying JWT signatures, expiration times, audience claims, and issuer validation to ensure token integrity and authenticity.",
+      "optional": false
+    },
+    {
+      "capability": "secure-key-storage",
+      "confidence": "high",
+      "reasoning": "JWT signing keys, especially private keys for asymmetric algorithms, must be stored securely to maintain the security guarantees of the authentication pattern.",
+      "optional": false
+    },
+    {
+      "capability": "token-expiration-management",
+      "confidence": "high",
+      "reasoning": "Careful management of token lifetimes is explicitly mentioned in the pattern description and is essential for limiting the window of token validity and reducing security risks.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "sec-auth-api-key",
+      "sec-auth-oauth2-oidc",
+      "sec-auth-password",
+      "sec-auth-saml-sso",
+      "sec-auth-session-cookies",
+      "sec-auth-mtls-service-mesh"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "security",
+    "jwt"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "jwt",
+      "reason": "This pattern specifically implements JWT-based stateless authentication as its core mechanism."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication works with or without audit logging depending on security requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless tokens are compatible with GDPR requirements when proper claims and expiration are configured."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication can be used in HIPAA-compliant systems with appropriate key management."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless tokens are compatible with CCPA compliance requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication works with or without SOX compliance requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "JWT stateless authentication is cloud-agnostic and works across all cloud environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "JWT libraries are available for all major programming languages making this pattern language-agnostic."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "agnostic",
+        "n/a"
+      ],
+      "reason": "Stateless JWT tokens are used for authentication across all platform types from web to IoT devices."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication works with or without caching layers."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT tokens can authenticate both synchronous and asynchronous messaging patterns."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication can secure AI inference endpoints and non-AI systems equally."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT tokens can include tenant claims for multi-tenant systems or work without multi-tenancy."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication can secure batch processing jobs and interactive workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication is orthogonal to distributed transaction requirements."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT tokens can authenticate real-time streaming connections and batch workloads."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication can secure vector search APIs and non-vector systems."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication works with document stores and all other database types."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication is compatible with key-value stores and all database types."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication can secure graph database APIs and other database types."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication works with time-series databases and all other storage types."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication can secure OLTP workloads and other transaction patterns."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "JWT stateless authentication can secure OLAP analytical workloads and transactional systems."
+    }
+  ],
+  "defaultConfig": {
+    "signing_algorithm": "RS256",
+    "token_lifetime_minutes": 15,
+    "refresh_token_enabled": true,
+    "refresh_token_lifetime_days": 7,
+    "audience_validation": "strict",
+    "key_rotation_days": 90,
+    "include_claims": "standard"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "signing_algorithm": {
+        "type": "string",
+        "enum": [
+          "RS256",
+          "ES256",
+          "HS256"
+        ],
+        "description": "JWT signing algorithm. RS256 (RSA) recommended for distributed systems with public key verification. ES256 (ECDSA) for smaller tokens. HS256 (HMAC) only for single-service scenarios where secret can be safely shared."
+      },
+      "token_lifetime_minutes": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 60,
+        "description": "Access token lifetime in minutes. Shorter lifetimes (5-15 min) increase security but require more frequent refreshes. Longer lifetimes (30-60 min) reduce refresh overhead but increase revocation window."
+      },
+      "refresh_token_enabled": {
+        "type": "boolean",
+        "description": "Enable refresh tokens for long-lived sessions. True allows seamless token renewal without re-authentication. False requires re-login after access token expires (more secure but worse UX)."
+      },
+      "refresh_token_lifetime_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 90,
+        "description": "Refresh token lifetime in days. Balances security (shorter = more frequent re-auth) vs user experience (longer = less frequent logins). Common: 7-30 days."
+      },
+      "audience_validation": {
+        "type": "string",
+        "enum": [
+          "strict",
+          "relaxed",
+          "disabled"
+        ],
+        "description": "Audience (aud) claim validation strictness. Strict requires exact match (recommended for multi-service). Relaxed allows prefix matching. Disabled skips validation (not recommended)."
+      },
+      "key_rotation_days": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 365,
+        "description": "Signing key rotation frequency in days. More frequent rotation (30-90 days) limits key compromise impact. Less frequent (180-365 days) reduces operational complexity."
+      },
+      "include_claims": {
+        "type": "string",
+        "enum": [
+          "minimal",
+          "standard",
+          "extended"
+        ],
+        "description": "Claims to include in JWT payload. Minimal (sub, exp, iat) keeps tokens small. Standard adds aud, iss, jti. Extended includes custom user/role data (larger tokens but fewer DB lookups)."
+      }
+    }
+  },
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "JWT stateless authentication requires key distribution infrastructure and clock synchronization limiting availability to four nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "JWT signature verification adds 1-5ms latency. For ultra-low latency requirements (<10ms), this overhead is significant relative to the latency budget."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "JWT parsing and signature verification under load requires at least 5ms at p99."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Stateless JWT authentication can recover immediately once key material is restored."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000000,
+      "reason": "JWT validation is CPU-bound for signature verification limiting throughput to 1M jobs per second."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 1,
+      "reason": "JWT stateless authentication adds cryptographic verification overhead. Below 1 req/s, simpler authentication (e.g., API keys with lookup) may be more appropriate."
+    }
+  ],
+  "requires_constraints": [],
+  "warn_nfr": []
+}

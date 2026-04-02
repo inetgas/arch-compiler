@@ -1,0 +1,22 @@
+# Cloud - AWS-Specific Services Selected
+#
+# An API spec on AWS with an empty saas-providers list and no language specified.
+# This tests that AWS-specific patterns (Lambda, RDS, DynamoDB, etc.) are
+# selected when the cloud is explicitly set to aws, and that an empty
+# saas-providers list correctly results in no SaaS provider variants being selected.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - AWS-native service patterns are selected
+#   - no SaaS provider variant patterns are selected (empty saas-providers)
+
+project:
+  name: AWS-Specific Services
+  domain: test
+functional:
+  summary: 'Test scenario: AWS-Specific Services'
+constraints:
+  platform: api
+  cloud: aws
+  saas-providers: []
+nfr: {}

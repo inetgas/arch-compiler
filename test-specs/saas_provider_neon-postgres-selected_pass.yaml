@@ -1,0 +1,36 @@
+# SaaS Provider - Neon Postgres Selected
+#
+# An AWS TypeScript API with neon in saas-providers, representing a project
+# that uses Neon serverless Postgres as its relational database. 99.9%
+# availability and PII data are set. This tests that the db-relational--neon
+# provider variant is selected when neon is in the saas-providers list.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - db-relational--neon IS selected (neon in saas-providers)
+#   - generic db-relational pattern is not selected (vendor variant takes precedence)
+#   - PII and audit logging patterns are selected
+
+project:
+  name: TypeScript API with Neon Database
+  domain: saas
+functional:
+  summary: REST API using Neon serverless Postgres for relational data storage
+constraints:
+  platform: api
+  cloud: aws
+  language: typescript
+  saas-providers:
+    - neon
+nfr:
+  availability:
+    target: 0.999
+  data:
+    pii: true
+  security:
+    audit_logging: true
+  latency:
+    p95Milliseconds: 100
+cost:
+  ceilings:
+    monthly_operational_usd: 1000

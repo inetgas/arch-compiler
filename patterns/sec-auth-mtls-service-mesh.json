@@ -1,0 +1,440 @@
+{
+  "id": "sec-auth-mtls-service-mesh",
+  "version": "1.0.0",
+  "title": "mTLS via Service Mesh",
+  "description": "Automatic mutual TLS between services; policy + telemetry; simplifies secure east-west traffic.",
+  "types": [
+    "ops",
+    "deploy"
+  ],
+  "cost": {
+    "adoptionCost": 4500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 8000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 8000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Service mesh infrastructure costs include: (1) Control plane: 2-3 replicas of Istio/Linkerd control plane components (~$50-200/month for small clusters), (2) Data plane: Envoy sidecar proxies add 10-30% CPU/memory overhead per pod (100-pod cluster = ~$150-2000/month in additional compute), (3) Observability: Prometheus, Grafana, Jaeger for mesh telemetry (~$50-1000/month for storage and compute). Min represents small dev cluster (10-20 services, low traffic). Max represents production cluster (100+ services, high throughput, multi-region, with enterprise-grade observability and HA control plane). Does not include base Kubernetes costs.",
+      "adoptionCost": "High complexity adoption involving: (1) Infrastructure setup: Installing and configuring service mesh (Istio/Linkerd/Consul Connect) with HA control plane, certificate management, and integration with existing infrastructure (40-80 hours), (2) Migration planning: Analyzing existing services, planning gradual rollout, configuring mTLS policies, and traffic management rules (60-100 hours), (3) Team training: DevOps and development teams need training on service mesh concepts, debugging, and operational practices (40-60 hours), (4) Testing and validation: Load testing with sidecars, validating certificate rotation, testing failure scenarios (30-50 hours). With AI coding assistants reducing config/YAML generation time by 30-40%, total effort is 120-200 engineering hours at $50-75/hour blended rate. Includes steep learning curve for distributed tracing, mTLS certificate lifecycle, and mesh-specific debugging tools.",
+      "licenseCost": "Open source service mesh solutions dominate: Istio (Apache 2.0), Linkerd (Apache 2.0), and Consul Connect (MPL 2.0 for core features) are free. Commercial offerings exist (Istio Enterprise by Tetrate, Consul Enterprise by HashiCorp) but are optional and primarily add enterprise support, advanced RBAC, and compliance features. Most organizations start with OSS versions. Enterprise support contracts if needed typically run $20k-100k annually but are not required for implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "service-to-service-encryption",
+      "confidence": "high",
+      "reasoning": "mTLS via service mesh directly provides encrypted communication channels between services, ensuring data in transit is protected during east-west traffic."
+    },
+    {
+      "capability": "mutual-authentication",
+      "confidence": "high",
+      "reasoning": "mTLS inherently provides mutual authentication where both client and server services verify each other's identities through certificates - this is a core feature of the pattern."
+    },
+    {
+      "capability": "zero-trust-networking",
+      "confidence": "high",
+      "reasoning": "Service mesh mTLS enforces identity verification for every service-to-service connection, implementing zero-trust principles where no service is trusted by default."
+    },
+    {
+      "capability": "traffic-policy-enforcement",
+      "confidence": "high",
+      "reasoning": "Service meshes enable granular authorization policies alongside mTLS, controlling which services can communicate based on identity and other attributes."
+    },
+    {
+      "capability": "encrypted-traffic-telemetry",
+      "confidence": "medium",
+      "reasoning": "Service mesh provides observability and telemetry for encrypted traffic flows, enabling monitoring and troubleshooting without compromising encryption."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "service-mesh",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "This pattern explicitly depends on a service mesh infrastructure (e.g., Istio, Linkerd, Consul Connect) to handle automatic certificate management, traffic interception, and mTLS enforcement."
+    },
+    {
+      "capability": "certificate-management",
+      "confidence": "high",
+      "reasoning": "mTLS requires PKI infrastructure for issuing, rotating, and managing service certificates - typically provided by the service mesh's control plane but fundamental to the pattern's operation.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "sec-auth-api-key",
+      "sec-auth-jwt-stateless",
+      "sec-auth-oauth2-oidc",
+      "sec-auth-password",
+      "sec-auth-saml-sso",
+      "sec-auth-session-cookies"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "security",
+    "mtls",
+    "mesh"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "mtls",
+      "reason": "This pattern requires mutual TLS authentication using client certificates for service-to-service communication."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS service mesh is compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh mTLS provides encryption in transit compatible with GDPR requirements but does not require it."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS encryption supports HIPAA compliance for data in transit but works in non-HIPAA environments."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh operates independently of CCPA compliance requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS encryption can support SOX compliance but does not require it."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Service mesh implementations like Istio, Linkerd, and Consul run on Kubernetes across all major cloud providers and on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Service mesh mTLS operates at infrastructure level and is language-agnostic."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "mTLS service mesh secures east-west traffic between backend services across multiple platform types."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh mTLS works with or without caching layers."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS secures both synchronous and asynchronous service-to-service communication."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh mTLS applies to AI inference services as well as standard workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS provides service identity and encryption regardless of tenancy model."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh can secure batch processing workloads and real-time services equally."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS operates at transport layer and does not affect distributed transaction semantics."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh mTLS can encrypt real-time streaming connections between services."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS secures communication regardless of whether vector search is used."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh mTLS works with any database type including document stores."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS encrypts traffic to key-value stores and all other backend services."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh secures connections to graph databases as part of service-to-service traffic."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS applies to time-series database connections within the service mesh."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Service mesh mTLS secures OLTP workloads without affecting transaction processing semantics."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS encryption applies to OLAP analytical workloads as well as transactional systems."
+    }
+  ],
+  "defaultConfig": {
+    "mesh_provider": "istio",
+    "mtls_mode": "strict",
+    "certificate_rotation_days": 90,
+    "authorization_policy": "namespace",
+    "telemetry_enabled": true,
+    "traffic_management": "basic"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "mesh_provider": {
+        "type": "string",
+        "enum": [
+          "istio",
+          "linkerd",
+          "consul",
+          "aws-app-mesh",
+          "gcp-traffic-director"
+        ],
+        "description": "Service mesh implementation. Istio: feature-rich, complex. Linkerd: lightweight, simpler. Consul: multi-cloud. AWS/GCP: cloud-native integrations."
+      },
+      "mtls_mode": {
+        "type": "string",
+        "enum": [
+          "strict",
+          "permissive",
+          "disabled"
+        ],
+        "description": "mTLS enforcement level. Strict: all traffic encrypted, rejects plaintext. Permissive: accepts both encrypted and plaintext (migration mode). Disabled: no mTLS."
+      },
+      "certificate_rotation_days": {
+        "type": "integer",
+        "enum": [
+          30,
+          90,
+          180,
+          365
+        ],
+        "description": "Certificate lifetime before automatic rotation. Shorter is more secure but increases rotation overhead. 90 days balances security and operational burden."
+      },
+      "authorization_policy": {
+        "type": "string",
+        "enum": [
+          "namespace",
+          "service",
+          "workload",
+          "none"
+        ],
+        "description": "Authorization granularity. Namespace: broad isolation. Service: per-service rules. Workload: fine-grained per-pod. None: authentication only, no authorization."
+      },
+      "telemetry_enabled": {
+        "type": "boolean",
+        "description": "Enable distributed tracing and metrics collection. Provides observability but adds latency (1-5ms) and resource overhead."
+      },
+      "traffic_management": {
+        "type": "string",
+        "enum": [
+          "basic",
+          "advanced",
+          "full"
+        ],
+        "description": "Traffic control features. Basic: load balancing only. Advanced: adds circuit breaking, retries, timeouts. Full: includes canary deployments, traffic splitting, fault injection."
+      }
+    }
+  },
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Service mesh with multi-zone deployment and automated failover can achieve up to four nines availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Service mesh proxy adds minimum 5ms p95 latency overhead; aggressive latency targets below 10ms are difficult to meet with the mesh overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 15,
+      "reason": "Service mesh proxy adds minimum 10ms p99 latency overhead for mTLS and telemetry; very aggressive latency targets may not be achievable."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Service mesh automated failover with health checks enables RTO as low as 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 10000000,
+      "reason": "Service mesh with optimized sidecars and horizontal scaling can handle up to 10M jobs per hour."
+    }
+  ],
+  "requires_constraints": [],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "Service mesh adds latency overhead (5-10ms) and operational complexity; at low QPS, simpler mTLS solutions (e.g., application-level TLS) may be more appropriate.",
+      "message": "sec-auth-mtls-service-mesh: peak read QPS is {actual} req/s (<10). Service mesh overhead may outweigh benefits at this scale; consider simpler mTLS approaches."
+    }
+  ]
+}

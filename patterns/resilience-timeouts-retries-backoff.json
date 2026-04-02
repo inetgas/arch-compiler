@@ -1,0 +1,444 @@
+{
+  "id": "resilience-timeouts-retries-backoff",
+  "version": "1.0.0",
+  "title": "Timeouts + Retries + Backoff",
+  "description": "Deadlines, bounded retries, exponential backoff with jitter; avoid retry storms.",
+  "types": [
+    "design",
+    "build",
+    "ops",
+    "test"
+  ],
+  "cost": {
+    "adoptionCost": 1200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "This is a code-level resilience pattern that adds retry logic, timeout handling, and exponential backoff to service calls. It has no direct infrastructure cost - it's implemented in application code using standard libraries or lightweight frameworks. While retries may slightly increase request volume to downstream services (potentially 2-3x in failure scenarios), this is negligible compared to normal traffic and doesn't warrant a separate cost allocation. The pattern actually reduces costs by preventing cascading failures and unnecessary resource consumption during outages.",
+      "adoptionCost": "Medium complexity implementation. Requires 3-5 days of development effort: (1) Understanding existing failure modes and identifying services needing resilience (1 day), (2) Implementing timeout/retry/backoff logic using libraries like Polly (.NET), resilience4j (Java), or tenacity (Python) - 1-2 days, (3) Tuning parameters (max retries, backoff coefficients, jitter) based on SLAs and failure characteristics - 1 day, (4) Writing tests for retry scenarios, timeout handling, and backoff behavior - 1 day, (5) Documentation and team training on configuration. Most languages have mature libraries making implementation straightforward, but proper tuning requires understanding of distributed systems behavior. Team needs familiarity with concepts like idempotency, circuit breakers, and cascading failures.",
+      "licenseCost": "All major retry/backoff libraries are open source and free: Polly (BSD), resilience4j (Apache 2.0), tenacity (Apache 2.0), Spring Retry (Apache 2.0), go-retry (MIT), and built-in features in AWS SDK, Azure SDK, and GCP client libraries. No commercial licenses required. This is a standard pattern with widespread free tooling across all major programming languages and cloud providers.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "fault-tolerance",
+      "confidence": "high",
+      "reasoning": "This pattern provides fault tolerance by automatically recovering from transient failures through retries with exponential backoff, preventing temporary issues from causing permanent failures."
+    },
+    {
+      "capability": "graceful-degradation",
+      "confidence": "high",
+      "reasoning": "Timeouts and bounded retries prevent cascading failures and allow systems to degrade gracefully rather than hang indefinitely, maintaining partial functionality during failure scenarios."
+    },
+    {
+      "capability": "backpressure-handling",
+      "confidence": "medium",
+      "reasoning": "Exponential backoff with jitter and bounded retries manage load during failures by preventing retry storms and distributing retry attempts over time, effectively providing backpressure against failing services."
+    },
+    {
+      "capability": "timeout-handling",
+      "confidence": "strong",
+      "reasoning": "This pattern implements timeout enforcement with configurable initial timeout, exponential backoff, and retry limits \u2014 directly providing timeout-handling capability to dependent patterns."
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "high",
+      "reasoning": "This pattern implements automatic retry with exponential backoff and jitter, directly providing retry-mechanism capability to dependent patterns."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "idempotent-operations",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Retries can only be safely implemented when operations are idempotent. Without idempotency, retries could cause duplicate side effects such as charging a customer twice or creating duplicate records."
+    },
+    {
+      "capability": "circuit-breaker",
+      "confidence": "medium",
+      "reasoning": "Circuit breakers complement bounded retries to fully prevent retry storms by stopping retry attempts when a service is known to be failing, preventing resource exhaustion.",
+      "optional": false
+    },
+    {
+      "capability": "observability-baseline",
+      "confidence": "medium",
+      "reasoning": "Properly implementing this pattern requires monitoring retry rates, timeout frequencies, and backoff behavior to tune parameters and detect systemic issues versus transient failures.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "resilience",
+    "retries"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Timeouts and retries with exponential backoff can achieve up to four nines availability by recovering from transient failures."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.99,
+      "reason": "Timeouts, retries, and backoff add latency overhead and complexity; at availability targets below 99%, simpler error handling may be more appropriate."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Retry attempts with exponential backoff increase tail latencies, requiring at least 50ms p95 for retry overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Multiple retry attempts with backoff can significantly increase p99 latency under failure conditions."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 0.05,
+      "reason": "Pattern supports RTO of approximately 3 seconds (0.05 minutes) as retries provide fast recovery from transient failures."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 1,
+      "reason": "At very low throughput, the complexity of implementing timeouts, retries, and exponential backoff may outweigh the resilience benefits; simpler error handling suffices."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Retry patterns work with both eventual and strong consistency models when operations are idempotent."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timeout and retry mechanisms are compatible with both strict and relaxed durability requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Timeouts, retries, and exponential backoff are universal resilience patterns applicable to any cloud or on-premises environment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Timeout and retry logic can be implemented in any programming language with timer and loop constructs."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "This resilience pattern applies to any platform that performs network operations or fallible external calls."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Retry patterns apply to both cached and non-cached data access scenarios."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging systems benefit from retry patterns for handling transient failures, but retries apply to synchronous calls as well."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AI inference calls to external services benefit from retry logic to handle rate limits and transient errors."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timeout and retry strategies work for both single-tenant and multi-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs should implement retries with backoff for handling transient failures, but pattern applies to all workload types."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Distributed transactions require retry mechanisms to handle partial failures and network issues."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming systems need timeout and retry strategies for maintaining connectivity and handling backpressure."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search operations benefit from retries when dealing with transient connection or service failures."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document store operations should use timeouts and retries for resilience against transient failures."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value store operations benefit from retry logic with backoff to handle temporary unavailability."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph database queries should implement timeouts and retries for handling transient connectivity issues."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database operations benefit from retry mechanisms for handling write buffer overflows and network issues."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads require timeout and retry patterns to maintain transactional availability during transient failures."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workloads benefit from retry logic with backoff for long-running analytical queries that may timeout or fail transiently."
+    }
+  ],
+  "defaultConfig": {
+    "initial_timeout_ms": 5000,
+    "max_retries": 3,
+    "backoff_strategy": "exponential_jitter",
+    "backoff_multiplier": 2,
+    "max_backoff_ms": 30000,
+    "retry_on_timeout": true,
+    "retry_on_errors": [
+      "network",
+      "5xx",
+      "throttle"
+    ],
+    "circuit_breaker_enabled": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "initial_timeout_ms": {
+        "type": "integer",
+        "minimum": 100,
+        "maximum": 60000,
+        "description": "Initial timeout in milliseconds before considering a request failed. Lower values fail fast but may timeout valid slow operations; higher values are more tolerant but delay failure detection."
+      },
+      "max_retries": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10,
+        "description": "Maximum number of retry attempts after initial failure. More retries increase success rate for transient failures but add latency and load. 0 disables retries."
+      },
+      "backoff_strategy": {
+        "type": "string",
+        "enum": [
+          "exponential",
+          "exponential_jitter",
+          "linear",
+          "constant"
+        ],
+        "description": "Retry delay strategy. Exponential reduces load during outages but can synchronize retries. Exponential with jitter (recommended) adds randomness to prevent retry storms. Linear/constant are simpler but less effective at scale."
+      },
+      "backoff_multiplier": {
+        "type": "number",
+        "minimum": 1,
+        "maximum": 5,
+        "description": "Multiplier for exponential backoff (e.g., 2 means delays double each retry: 1s, 2s, 4s). Higher values back off more aggressively, reducing load but increasing total retry time."
+      },
+      "max_backoff_ms": {
+        "type": "integer",
+        "minimum": 1000,
+        "maximum": 300000,
+        "description": "Maximum backoff delay in milliseconds to cap exponential growth. Prevents excessively long waits while still allowing multiple retries within reasonable time bounds."
+      },
+      "retry_on_timeout": {
+        "type": "boolean",
+        "description": "Whether to retry when requests timeout. Enable for idempotent operations; disable if timeouts indicate the operation may have partially succeeded."
+      },
+      "retry_on_errors": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "network",
+            "5xx",
+            "429",
+            "throttle",
+            "4xx",
+            "all"
+          ]
+        },
+        "description": "Which error types trigger retries. Network/5xx/throttle errors are typically transient and safe to retry. 4xx errors usually indicate client mistakes and shouldn't be retried (except 429). Choose based on idempotency and error semantics."
+      },
+      "circuit_breaker_enabled": {
+        "type": "boolean",
+        "description": "Enable circuit breaker pattern to stop retrying a failing dependency after threshold is reached. Prevents cascading failures and wasted resources, but requires careful tuning of failure thresholds and recovery time."
+      }
+    }
+  },
+  "warn_nfr": []
+}

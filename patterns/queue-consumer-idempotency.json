@@ -1,0 +1,475 @@
+{
+  "id": "queue-consumer-idempotency",
+  "version": "1.0.0",
+  "title": "Idempotent Queue Consumer",
+  "description": "Idempotent consumption with dedupe keys, retries/backoff, and poison-message handling for at-least-once delivery.",
+  "types": [
+    "design",
+    "build",
+    "test",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 3000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Idempotent queue consumer requires: (1) Message queue infrastructure (SQS: $0.40/million requests, Azure Queue: $0.03/10k ops, or self-hosted RabbitMQ/Kafka on VMs), (2) Deduplication storage (Redis/DynamoDB for tracking message IDs: $20-500/month), (3) Dead-letter/poison message queue storage ($5-100/month), (4) Compute for consumers (serverless functions: $10-500/month, or dedicated instances: $20-1500/month). Min represents low-throughput workload with managed queues (10M msgs/month, small Redis, Lambda functions). Max represents high-throughput production (1B+ msgs/month, Redis cluster for dedup store, dedicated consumer instances, multi-region setup with cross-region data transfer).",
+      "adoptionCost": "Medium-high complexity implementation requiring: (1) Deduplication logic design and key strategy (4-8 hours), (2) Idempotency storage implementation with TTL management (8-16 hours), (3) Retry mechanism with exponential backoff implementation (8-12 hours), (4) Poison message detection and dead-letter queue handling (6-10 hours), (5) Testing scenarios including duplicates, partial failures, concurrent processing (12-20 hours), (6) Monitoring and observability setup for duplicate rates, retry metrics (6-8 hours), (7) Documentation of deduplication strategy and operational runbooks (4-6 hours). Total: 48-80 hours at $50-75/hour blended rate with AI assistance = $2400-6000. Mid-point reflects typical implementation with some existing queue infrastructure but new idempotency layer.",
+      "licenseCost": "Pattern uses open-source message queue systems (RabbitMQ, Apache Kafka, NATS) or pay-per-use cloud services (AWS SQS, Azure Queue Storage, GCP Pub/Sub). Deduplication storage typically uses open-source Redis, or cloud-native services (DynamoDB, Azure Table Storage) with usage-based pricing. No proprietary licenses required. Commercial message queue support (Confluent, CloudAMQP) or enterprise Redis (Redis Enterprise) are optional add-ons, not required for pattern implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "idempotent-consumption",
+      "confidence": "high",
+      "reasoning": "Core capability of this pattern - ensures messages are processed exactly once semantically even with at-least-once delivery guarantees through deduplication keys."
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "medium",
+      "reasoning": "Pattern explicitly implements retry logic with backoff for failed message processing, providing resilient consumption behavior."
+    },
+    {
+      "capability": "poison-message-handling",
+      "confidence": "high",
+      "reasoning": "Pattern includes poison-message handling as stated in description; this is a key capability for production-ready queue consumers that prevents stuck messages from blocking processing."
+    },
+    {
+      "capability": "at-least-once-delivery",
+      "confidence": "high",
+      "reasoning": "Pattern is specifically designed to handle at-least-once delivery semantics safely through idempotency mechanisms, making this delivery guarantee safe for consumers."
+    },
+    {
+      "capability": "dead-letter-queue",
+      "confidence": "high",
+      "reasoning": "Idempotent consumer pattern requires a dead-letter queue (DLQ) for poison message handling after max retry exhaustion — this pattern implements and configures DLQ behavior."
+    },
+    {
+      "capability": "deduplication-store",
+      "confidence": "high",
+      "reasoning": "Idempotent consumption requires a deduplication store (Redis, DynamoDB) to track processed message IDs and prevent duplicate processing."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "message-queue",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Fundamental dependency - this is a queue consumer pattern that requires a message queue infrastructure to consume messages from."
+    },
+    {
+      "capability": "deduplication-store",
+      "confidence": "high",
+      "reasoning": "To implement idempotent consumption with dedupe keys, pattern requires persistent storage (database, cache, or key-value store) to track processed message IDs/keys across restarts and failures.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "exactly-once-transactional-consumer",
+      "async-fire-and-forget"
+    ],
+    "incompatibleAssumptions": [
+      "consistencyModel"
+    ]
+  },
+  "tags": [
+    "messaging",
+    "retries",
+    "idempotency"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports optional audit logging for message processing events and deduplication operations."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with GDPR requirements through proper message and deduplication data retention policies."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports HIPAA compliance when queue and deduplication store are properly secured and audited."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with CCPA requirements for message data processing and retention management."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports SOX compliance with appropriate audit logging and message durability guarantees."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Deduplication key lookups can support read-your-writes consistency when required by the store implementation."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "At-least-once delivery with persistent queue and deduplication store enforces strict durability guarantees."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/messaging_delivery_guarantee",
+      "op": "==",
+      "value": "at-least-once",
+      "reason": "Pattern implements idempotent consumption to safely handle at-least-once delivery; incompatible with at-most-once (no dedup needed) or exactly-once (transactional approach required)."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Idempotent queue consumer pattern is cloud-agnostic and works with any cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Queue consumer pattern can be implemented in any backend programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Queue consumers typically run as background workers, batch processors, data pipelines, or async API handlers."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with optional caching for deduplication lookups or message processing optimization."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "At-least-once delivery requires async messaging infrastructure. Setting messaging_delivery_guarantee without enabling async_messaging is a logical contradiction."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires a key-value store or similar fast lookup mechanism for deduplication key tracking."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both multi-tenant and single-tenant queue consumer deployments."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Queue consumers can process messages individually or in batches depending on implementation strategy."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can participate in distributed transactions or operate with simpler idempotency-based guarantees."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with both real-time streaming queues and traditional message queue implementations."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is independent of vector search capabilities in the application domain."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works regardless of whether document store is used for message data or deduplication storage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is independent of graph database usage in the application domain."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is independent of time-series database usage in the application domain."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Queue consumers can process OLTP workloads or other workload types asynchronously via message queue."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Queue consumers can process OLAP workloads or other workload types asynchronously via message queue."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Queue-based async processing with deduplication store dependency limits maximum availability to four nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Queue polling, deduplication lookup, and async processing introduce minimum 100ms p95 latency floor."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "Retry attempts with exponential backoff and deduplication checks cause p99 latency floor of 500ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Automated retry with exponential backoff enables RTO of at least 1 minute for recovery."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "At-least-once delivery guarantees zero data loss, supporting RPO of 0 minutes or better."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 10000000,
+      "reason": "Pattern scales to 10M jobs/hour ceiling with horizontal consumer scaling and parallelism."
+    }
+  ],
+  "defaultConfig": {
+    "deduplication_strategy": "message_id",
+    "deduplication_ttl_seconds": 3600,
+    "max_retry_attempts": 3,
+    "backoff_strategy": "exponential",
+    "initial_backoff_seconds": 1,
+    "max_backoff_seconds": 300,
+    "poison_message_threshold": 5,
+    "poison_message_action": "dead_letter_queue",
+    "visibility_timeout_seconds": 30,
+    "batch_size": 1
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "deduplication_strategy": {
+        "type": "string",
+        "enum": [
+          "message_id",
+          "content_hash",
+          "custom_key"
+        ],
+        "description": "How to identify duplicate messages. message_id uses queue-provided ID, content_hash computes hash of message body, custom_key uses application-defined deduplication key from message attributes."
+      },
+      "deduplication_ttl_seconds": {
+        "type": "integer",
+        "minimum": 60,
+        "maximum": 86400,
+        "description": "How long to remember processed message IDs for deduplication. Longer TTL prevents more duplicates but uses more storage. Typical range: 1 hour to 24 hours."
+      },
+      "max_retry_attempts": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10,
+        "description": "Maximum number of times to retry a failed message before marking as poison. 0 disables retries, 3-5 is typical for transient failures."
+      },
+      "backoff_strategy": {
+        "type": "string",
+        "enum": [
+          "exponential",
+          "linear",
+          "fixed"
+        ],
+        "description": "Retry delay strategy. Exponential (2^n) prevents thundering herd, linear increases steadily, fixed uses constant delay."
+      },
+      "initial_backoff_seconds": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 60,
+        "description": "Initial delay before first retry. Lower values retry faster but may overwhelm failing dependencies."
+      },
+      "max_backoff_seconds": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 3600,
+        "description": "Maximum delay between retries for exponential/linear backoff. Caps retry delays to prevent indefinite waiting."
+      },
+      "poison_message_threshold": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20,
+        "description": "Number of receive attempts before treating message as poison. Should be higher than max_retry_attempts to account for visibility timeouts."
+      },
+      "poison_message_action": {
+        "type": "string",
+        "enum": [
+          "dead_letter_queue",
+          "log_and_delete",
+          "alert_and_quarantine"
+        ],
+        "description": "What to do with poison messages. dead_letter_queue moves to DLQ for investigation, log_and_delete removes permanently with logging, alert_and_quarantine triggers alerts and stores separately."
+      },
+      "visibility_timeout_seconds": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 43200,
+        "description": "How long message is hidden from other consumers while processing. Should exceed typical processing time to prevent duplicate processing."
+      },
+      "batch_size": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "description": "Number of messages to fetch per poll. Higher batches improve throughput but increase blast radius of failures and memory usage."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "At <10 jobs/hour, queue-based async processing with deduplication overhead is not justified; synchronous processing is simpler.",
+      "message": "queue-consumer-idempotency: peak_jobs_per_hour is {actual} (<10). Queue infrastructure and deduplication overhead likely outweighs benefits; consider synchronous processing."
+    }
+  ]
+}

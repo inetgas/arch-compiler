@@ -1,0 +1,430 @@
+{
+  "id": "sec-auth-saml-sso",
+  "version": "1.0.0",
+  "title": "SAML Single Sign-On (SSO)",
+  "description": "SAML 2.0 based single sign-on for enterprise identity provider integration; enables centralized authentication with Okta, Azure AD, or other IdPs.",
+  "types": [
+    "ops",
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 5000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 3000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 5000,
+    "costNotes": "SAML SSO has moderate infrastructure costs and typically requires enterprise IdP subscriptions.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "SAML SSO infrastructure costs vary by IdP choice. Min=$0 for self-hosted open-source SAML SP implementation (passport-saml, Spring Security SAML, SimpleSAMLphp) with no IdP costs if customer brings their own IdP. Max=$3000 represents production enterprise scenarios: (1) Enterprise IdP subscription if providing SSO - Okta Workforce Identity ($2-8/user/mo for 50-500 users = $100-4000/mo), Azure AD Premium P1 ($6/user/mo), Ping Identity ($3-10/user/mo), (2) SAML service provider infrastructure for high availability - load balancer ($30/mo), application servers ($100-200/mo), session storage Redis ($30-50/mo), certificate management ($0-50/mo), (3) Monitoring and logging ($50-100/mo). B2B SaaS apps typically do NOT pay IdP costs (customer provides their own Okta/Azure AD), so costs are primarily infrastructure ($200-500/mo). Apps providing SSO to end users bear full IdP costs. Auth0 B2B SSO starts at $240/mo base + per-connection fees.",
+      "adoptionCost": "High complexity implementation. SAML SSO requires: (1) Understanding SAML 2.0 protocol (assertions, bindings, profiles, certificates) - 20-40 hours learning, (2) Service Provider (SP) implementation with SAML library integration - 40-60 hours development, (3) Certificate management and key rotation setup - 12-20 hours, (4) IdP integration and metadata exchange for each customer IdP (Okta, Azure AD, Google, Ping) - 8-16 hours per IdP, (5) Attribute mapping and user provisioning logic - 16-24 hours, (6) Session management post-authentication - 12-16 hours, (7) Testing across multiple IdPs with different configurations - 20-30 hours, (8) Support for SP-initiated and IdP-initiated flows - 12-20 hours, (9) Admin UI for SAML configuration - 20-30 hours, (10) Documentation and customer onboarding guides - 12-20 hours. Total: 172-276 developer hours at $150/hour = $25,800-41,400. With mature SAML libraries (passport-saml, python3-saml, OneLogin SAML toolkits), pre-built integration guides, and AI assistance reducing XML/certificate handling code by 40-50%, realistic adoption cost is $5000-8000 for teams with enterprise auth experience, representing 30-50 focused development hours plus extensive testing time.",
+      "licenseCost": "SAML 2.0 is an open standard (OASIS) with no licensing fees. Service Provider implementation uses open-source libraries: passport-saml (Node.js), python3-saml/python-saml (Python), spring-security-saml (Java), ruby-saml (Ruby), SimpleSAMLphp (PHP) - all free. However, enterprise customers often require commercial IdP subscriptions: Okta, Azure AD Premium, Ping Identity, OneLogin charge per-user fees ($2-10/user/mo). For B2B SaaS, customers provide their own IdP at no cost to the service provider. Self-hosted IdP options (Keycloak, Shibboleth, SimpleSAMLphp) are open-source with optional commercial support contracts.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "saml-authentication",
+      "confidence": "high",
+      "reasoning": "This pattern implements SAML 2.0 authentication protocol, enabling users to authenticate via enterprise identity providers. This is more specific than saml-sso as it clearly indicates the authentication mechanism."
+    },
+    {
+      "capability": "single-sign-on",
+      "confidence": "high",
+      "reasoning": "This pattern provides SSO functionality, allowing users to authenticate once and access multiple applications. This is the core user experience capability delivered by the pattern."
+    },
+    {
+      "capability": "federated-identity",
+      "confidence": "high",
+      "reasoning": "SAML SSO inherently provides federated identity management by delegating authentication to external identity providers. This is a key capability that downstream systems may depend on."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "identity-provider",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "SAML SSO absolutely requires an external identity provider (Okta, Azure AD, etc.) to function. The pattern cannot operate without an IdP to handle authentication assertions."
+    },
+    {
+      "capability": "certificate-management",
+      "confidence": "high",
+      "reasoning": "SAML relies on XML digital signatures and encryption, requiring X.509 certificates for secure assertion exchange between service provider and identity provider. This is a critical technical dependency.",
+      "optional": false
+    },
+    {
+      "capability": "session-management",
+      "confidence": "high",
+      "reasoning": "After successful SAML authentication, the application needs session management to maintain authenticated state. This is required to track user sessions post-authentication.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "sec-auth-api-key",
+      "sec-auth-jwt-stateless",
+      "sec-auth-oauth2-oidc",
+      "sec-auth-password",
+      "sec-auth-session-cookies",
+      "sec-auth-mtls-service-mesh"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "security",
+    "auth",
+    "enterprise"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly for enterprise applications"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "saml",
+      "reason": "This pattern is exclusively for SAML 2.0 based authentication and is only applicable when SAML auth is required."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO supports GDPR through federated identity management and audit trails but is compatible with both GDPR and non-GDPR applications."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO supports HIPAA compliance through secure authentication and audit logging but works for both HIPAA and non-HIPAA applications."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO supports CCPA through centralized identity management and user attribute control but is compatible with both CCPA and non-CCPA applications."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO supports SOX compliance through centralized authentication and audit trails but works for both SOX and non-SOX applications."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "SAML SSO is a protocol-level standard that works across all cloud providers, on-premises, and hybrid environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala"
+      ],
+      "reason": "SAML SSO is supported by mature libraries in all major backend languages with XML processing capabilities."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop"
+      ],
+      "reason": "SAML SSO relies on browser-based redirect flows requiring a human user interaction via web browser or embedded webview."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO works independently of application caching strategies and is compatible with or without caching layers."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO is a synchronous authentication mechanism that works regardless of whether the application uses async messaging."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO provides authentication for any application type including those with AI inference workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO is commonly used in multi-tenant B2B SaaS where each customer uses their own IdP, but also works for single-tenant applications."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO is compatible with applications that include batch processing workloads alongside interactive user authentication."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO works independently of application transaction coordination requirements and is compatible with distributed transactions."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO provides authentication for applications regardless of whether they include real-time streaming features."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO authentication is independent of application data store capabilities including vector search functionality."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO works with applications using any data store type including document-oriented databases."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO is compatible with applications using key-value stores for session or data storage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO provides authentication independently of application database architecture including graph databases."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO works with applications using time-series databases as authentication is independent of data storage type."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO provides authentication for OLTP applications without impacting transactional workload characteristics."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SAML SSO is compatible with analytical workloads and provides authentication independently of OLAP query patterns."
+    }
+  ],
+  "defaultConfig": {
+    "flow_type": "sp_initiated",
+    "assertion_consumer_binding": "http_post",
+    "signature_algorithm": "rsa_sha256",
+    "attribute_mapping_strategy": "configurable",
+    "session_duration_minutes": 480,
+    "require_signed_assertions": true,
+    "require_encrypted_assertions": false,
+    "certificate_rotation_days": 365
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "flow_type": {
+        "type": "string",
+        "enum": [
+          "sp_initiated",
+          "idp_initiated",
+          "both"
+        ],
+        "description": "SAML flow support. sp_initiated (user starts at SP, redirected to IdP) is most secure, idp_initiated (user starts at IdP portal) is convenient but has security risks, both supports flexibility."
+      },
+      "assertion_consumer_binding": {
+        "type": "string",
+        "enum": [
+          "http_post",
+          "http_redirect"
+        ],
+        "description": "SAML binding for assertion delivery. http_post is standard and supports larger payloads, http_redirect has URL length limits but simpler."
+      },
+      "signature_algorithm": {
+        "type": "string",
+        "enum": [
+          "rsa_sha256",
+          "rsa_sha512",
+          "ecdsa_sha256"
+        ],
+        "description": "XML signature algorithm. rsa_sha256 is standard and widely supported, rsa_sha512 for higher security, ecdsa_sha256 for smaller signatures."
+      },
+      "attribute_mapping_strategy": {
+        "type": "string",
+        "enum": [
+          "configurable",
+          "standard_claims",
+          "custom_per_idp"
+        ],
+        "description": "How to map SAML assertion attributes to user profile. configurable allows admin control, standard_claims uses common names (email, firstName, etc.), custom_per_idp handles IdP-specific attributes."
+      },
+      "session_duration_minutes": {
+        "type": "integer",
+        "enum": [
+          60,
+          240,
+          480,
+          1440
+        ],
+        "description": "Application session duration after SAML authentication. Shorter (60-240 min) improves security, longer (480-1440 min) reduces re-authentication frequency. 480 min (8 hours) is common for business apps."
+      },
+      "require_signed_assertions": {
+        "type": "boolean",
+        "description": "Require SAML assertions to be digitally signed by IdP. Strongly recommended for security - prevents assertion tampering."
+      },
+      "require_encrypted_assertions": {
+        "type": "boolean",
+        "description": "Require SAML assertions to be encrypted. Adds security for sensitive attributes but increases complexity. Optional - assertions are typically sent over HTTPS."
+      },
+      "certificate_rotation_days": {
+        "type": "integer",
+        "enum": [
+          90,
+          180,
+          365,
+          730
+        ],
+        "description": "SP certificate rotation frequency. Shorter intervals (90-180 days) improve security but require coordination with IdPs. 365 days (1 year) is common balance."
+      }
+    }
+  },
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "SAML SSO availability is limited to 99.9% due to dependency on external IdP availability and network connectivity."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "SAML SSO adds minimum 200ms p95 latency due to XML signature verification, IdP roundtrip, and assertion processing."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "P99 latency accounts for full SAML flow including IdP interaction, occasional certificate validation delays, and network variability."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "SAML SSO recovery requires IdP availability verification, metadata synchronization, and certificate validation restart."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 1000000,
+      "reason": "Pattern supports up to 1M authentications/hour due to XML processing overhead, signature verification CPU cost, and IdP rate limits."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "SAML SSO in enterprise contexts typically requires comprehensive audit logging for compliance, security monitoring, and forensic analysis. Without audit logging, organizations lose visibility into authentication events."
+    }
+  ],
+  "requires_constraints": [],
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<",
+      "value": 0.99,
+      "reason": "SAML SSO is a critical authentication gateway for enterprise applications. Availability targets below 99% indicate tolerance for significant downtime which conflicts with enterprise authentication expectations.",
+      "message": "sec-auth-saml-sso: availability target is {actual} (<99%). SAML SSO is a critical authentication dependency; low availability targets may impact user access during IdP outages."
+    }
+  ]
+}

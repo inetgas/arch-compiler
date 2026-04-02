@@ -1,0 +1,376 @@
+{
+  "id": "db-managed-postgres--render",
+  "version": "1.0.0",
+  "title": "Managed Database on Render (Free PostgreSQL)",
+  "description": "Managed PostgreSQL on Render with point-in-time recovery on paid tiers and straightforward Git-integrated deployment. Free tier imposes a 90-day database expiration and lacks automated backups \u2014 suitable for prototypes only; upgrade to a paid tier for production use.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "render"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: PostgreSQL (90-day expiration), Redis (25MB). Production use requires Starter plan ($7/month for PostgreSQL).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "This pattern explicitly uses Render's free tier managed database for prototypes/MVPs. Min $0 represents staying within free tier limits (PostgreSQL with 90-day expiration, 25MB Redis). Max $0 reflects that this pattern is specifically designed for free-tier usage. Once requirements exceed free tier (production workloads, persistent databases beyond 90 days), users would transition to Render's paid plans ($7/month PostgreSQL Starter) or adopt a different pattern.",
+      "adoptionCost": "Low adoption cost due to Render's simple database provisioning model requiring minimal configuration. Developers need 4-8 hours to: understand free tier limitations (90-day DB expiration, no automated backups), configure database connection strings, and test database connectivity. With AI coding assistants providing Render configuration templates, implementation time is reduced.",
+      "licenseCost": "Render is a commercial PaaS with a generous free tier that includes PostgreSQL and Redis at $0 cost. No licensing fees or upfront costs required to use the platform. Free tier is available indefinitely for qualifying usage (within resource limits and time constraints like 90-day database expiration). Paid plans are usage-based with no license purchase required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-postgres",
+      "confidence": "medium",
+      "reasoning": "Render provides managed PostgreSQL with 90-day expiration on free tier. Suitable for prototypes; paid tiers remove the expiration and add point-in-time recovery."
+    },
+    {
+      "capability": "managed-redis",
+      "confidence": "low",
+      "reasoning": "Render provides managed Redis with 25MB storage on free tier, suitable for caching or session management in small-scale applications."
+    },
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "Render-hosted PostgreSQL is standard Postgres; native RLS via CREATE POLICY is fully supported."
+    },
+    {
+      "capability": "xa-protocol",
+      "confidence": "medium",
+      "reasoning": "Render managed PostgreSQL runs standard Postgres with no proxy limitations, supporting PREPARE TRANSACTION for XA/2PC distributed transactions."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Render deploys from Git repositories (GitHub/GitLab). Source code must be in version control to use this hosting pattern.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-managed-postgres",
+      "db-managed-postgres--supabase",
+      "db-managed-postgres--railway",
+      "db-managed-postgres--neon",
+      "db-managed-mysql--planetscale",
+      "arch-microservices",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "free-tier",
+    "render",
+    "paas",
+    "mvp",
+    "database"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Render is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.95,
+      "reason": "Free tier managed database lacks redundancy and has 90-day expiration, limiting availability guarantees to 95%."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1440,
+      "reason": "Render free PostgreSQL has no automated backups; RPO is effectively 24 hours (1440 minutes). Manual backups required for any data recovery."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 0.25,
+      "reason": "Minimum RTO of 15 seconds (0.25 minutes) required for database instance startup."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600,
+      "reason": "Free tier database compute constraints support maximum ~1 job/second or 3600 jobs/hour ceiling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50,
+      "reason": "Free tier is optimized for low-traffic prototypes/MVPs. At >50 QPS, consider paid plans for better performance."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50,
+      "reason": "Free tier shared PostgreSQL constraints limit write query throughput to 50 QPS ceiling."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "All tenant isolation strategies are supported through PostgreSQL and application-level implementation."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": false,
+      "reason": "PII handling in free tier may lack compliance agreements, requiring careful evaluation."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "==",
+      "value": false,
+      "reason": "GDPR compliance may require paid plans with formal compliance agreements beyond free tier capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "HIPAA compliance typically requires paid plans with BAAs not available on free tier."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "==",
+      "value": false,
+      "reason": "CCPA compliance may require paid plans with formal compliance agreements beyond free tier capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "==",
+      "value": false,
+      "reason": "SOX compliance typically requires paid plans with audit trails and compliance certifications."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL on Render supports read-your-writes consistency for single-instance deployments."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier PostgreSQL has 90-day expiration policy and no automated backups, making strict long-term durability guarantees impossible."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Render is a cloud-agnostic PaaS that abstracts underlying infrastructure provider details."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Render managed database supports all major backend languages through standard database drivers."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Render managed database can serve as the data backend for any platform type."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "render"
+      ],
+      "reason": "Pattern specifically requires Render as the database provider"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Render provides free Redis (25MB) for optional caching though capacity is limited."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis can be used for basic message queues within 25MB limit for optional async messaging."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is supported at small scale on free tier with PostgreSQL row-level security."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single PostgreSQL instance supports transactions but distributed coordination requires external tooling."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming can be implemented through Redis pub/sub within free tier constraints."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL with pgvector extension can support vector search though performance may be limited on free tier."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL JSONB columns can serve as document store for optional document-oriented data models."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Free Redis (25MB) provides key-value store capability for optional fast lookups."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph queries can be implemented in PostgreSQL though native graph databases are not provided."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL can handle time-series data though specialized time-series extensions may be limited on free tier."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Free PostgreSQL supports OLTP workloads within 90-day expiration and capacity constraints."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Free-tier database has limited storage and compute unsuitable for analytical OLAP workloads."
+    }
+  ],
+  "defaultConfig": {
+    "database_enabled": true,
+    "redis_enabled": false,
+    "ssl_mode": "require"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "database_enabled": {
+        "type": "boolean",
+        "description": "Enable free PostgreSQL database (90-day expiration, no automated backups). Suitable for prototypes but not production."
+      },
+      "redis_enabled": {
+        "type": "boolean",
+        "description": "Enable free Redis instance (25MB limit). Useful for caching, sessions, or job queues in MVP stage."
+      },
+      "ssl_mode": {
+        "type": "string",
+        "enum": [
+          "require",
+          "verify-full"
+        ],
+        "description": "Render PostgreSQL enforces SSL. Use 'verify-full' for production workloads requiring certificate validation."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,295 @@
+{
+  "id": "ui-spa",
+  "version": "1.0.0",
+  "title": "Single Page Application (SPA)",
+  "description": "Client-rendered app; high interactivity; SEO/first-load performance needs care.",
+  "types": [
+    "design",
+    "build",
+    "test"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 5.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "SPAs are static assets served via CDN/storage. Min ($5): Small app on AWS S3 + CloudFront with <10GB transfer, ~1M requests/month. Max ($500): High-traffic SPA with 500GB+ CDN transfer, global distribution, custom domain SSL, WAF, and API Gateway backend (if counted as part of SPA infrastructure). Does not include backend API costs which vary widely. Most production SPAs run $20-150/month for hosting alone.",
+      "adoptionCost": "Medium-high complexity. Requires: (1) Framework expertise (React/Vue/Angular - 40-80 hours learning curve for team), (2) Build tooling setup (Webpack/Vite, ~20 hours), (3) State management architecture (Redux/Vuex, ~30 hours), (4) Client-side routing implementation (~15 hours), (5) SEO optimization (SSR/pre-rendering setup, ~40 hours), (6) Performance optimization (code splitting, lazy loading, ~30 hours), (7) Testing infrastructure (Jest, Cypress, ~40 hours). Total ~200-250 hours at blended rate of $50-75/hour with modern AI coding assistants reducing traditional 400+ hour implementations.",
+      "licenseCost": "All major SPA frameworks (React, Vue, Angular, Svelte) are open source with MIT or similar permissive licenses. Build tools (Webpack, Vite, Rollup) are also free. Optional commercial tools like monitoring (Sentry free tier sufficient for most), but baseline SPA development requires zero licensing costs. Commercial UI libraries exist but free alternatives (Material-UI, Ant Design) are production-ready.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "rich-client-ui",
+      "confidence": "high",
+      "reasoning": "SPAs provide highly interactive client-side user interfaces with dynamic content updates without full page reloads, making 'rich-client-ui' an appropriate capability"
+    }
+  ],
+  "requires": [
+    {
+      "capability": "rest-api",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "SPAs are client-rendered applications that require backend APIs to fetch data and perform server-side operations, as they separate presentation from business logic"
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "ui-ssr"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ui",
+    "frontend"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Client-side application availability limited by browser compatibility issues and network conditions."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can be compliant with GDPR through backend controls and cookie consent mechanisms."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can support HIPAA compliance through secure backend API integration and client-side encryption."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can implement CCPA compliance via backend data controls and user consent flows."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can support SOX compliance through audit trails and access controls in backend systems."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "SPAs can be deployed to any cloud provider or on-premises via static hosting or CDN."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "==",
+      "value": "web",
+      "reason": "SPAs run exclusively in web browsers as client-side rendered web applications."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs may optionally use async messaging for real-time features like WebSockets or Server-Sent Events."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can optionally integrate AI inference via backend APIs or client-side ML models."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can support multi-tenancy through backend API design and client-side routing logic."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "SPAs are client-side UI applications and do not directly implement batch processing workflows."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "SPAs are client-side applications and do not manage distributed transactions directly."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs may optionally include real-time streaming features but not required for basic functionality."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can optionally integrate vector search via backend APIs for AI-powered features."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs may interact with document stores via backend APIs but do not require them."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs may use key-value stores for session data via backend APIs or client-side storage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can optionally interact with graph databases through backend API integration."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs may visualize time-series data from backend APIs but do not directly manage time-series databases."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SPAs can support OLTP workloads through backend API integration for transactional operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "SPAs are front-end applications and do not directly handle OLAP workloads or analytical processing."
+    }
+  ],
+  "defaultConfig": {
+    "framework": "react",
+    "rendering_strategy": "csr",
+    "routing": "client-side",
+    "state_management": "context",
+    "build_tool": "vite"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "framework": {
+        "type": "string",
+        "enum": [
+          "react",
+          "vue",
+          "angular",
+          "svelte"
+        ],
+        "description": "SPA framework choice. React: largest ecosystem, component-based. Vue: progressive, gentle learning curve. Angular: full-featured, opinionated. Svelte: compile-time, minimal runtime overhead."
+      },
+      "rendering_strategy": {
+        "type": "string",
+        "enum": [
+          "csr",
+          "csr-with-prerendering",
+          "hybrid"
+        ],
+        "description": "Client-side rendering (CSR): full interactivity, poor initial SEO. CSR with prerendering: static HTML shell for crawlers. Hybrid: selective SSR for critical pages while maintaining SPA benefits."
+      },
+      "routing": {
+        "type": "string",
+        "enum": [
+          "client-side",
+          "hash-based"
+        ],
+        "description": "Client-side (HTML5 History API): clean URLs, requires server config for deep links. Hash-based: works without server config, URLs contain #, legacy approach."
+      },
+      "state_management": {
+        "type": "string",
+        "enum": [
+          "context",
+          "redux",
+          "mobx",
+          "zustand"
+        ],
+        "description": "State management approach. Context: built-in, simple. Redux: predictable, time-travel debugging, verbose. MobX: reactive, less boilerplate. Zustand: minimal, hooks-based."
+      },
+      "build_tool": {
+        "type": "string",
+        "enum": [
+          "vite",
+          "webpack",
+          "parcel",
+          "esbuild"
+        ],
+        "description": "Build tooling. Vite: fast HMR, modern defaults. Webpack: mature, highly configurable. Parcel: zero-config. esbuild: extremely fast, minimal config."
+      }
+    }
+  },
+  "warn_nfr": []
+}

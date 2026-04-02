@@ -1,0 +1,39 @@
+# Integration test fixture: == activation gate + multiple patterns violating same field
+#
+# Purpose:
+#   - Both compliance-gdpr-basic and compliance-hipaa activate (gdpr==true, hipaa==true)
+#   - Both violate because audit_logging == false (both require audit_logging=true)
+#   - compliance-hipaa also violates because cloud is not a HIPAA-eligible provider
+#
+# Expected compiler behaviour:
+#   - rc=1 (violations)
+#   - "audit_logging: false  # ❌ compliance-gdpr-basic, compliance-hipaa" in stdout
+#     (multiple pids sorted alphabetically)
+#   - gdpr: true line annotated with compliance-gdpr-basic (== gate on non-violation path)
+#   - 💡 Suggestions block shows "/nfr/data/compliance/gdpr = true"
+
+project:
+  name: GDPR and HIPAA Violation Test
+  domain: test
+
+functional:
+  summary: App handling both GDPR and HIPAA data but missing audit logging
+
+constraints:
+  platform: api
+  cloud: agnostic
+  language: python
+  features:
+    caching: false
+
+nfr:
+  data:
+    pii: true
+    compliance:
+      gdpr: true
+      hipaa: true
+  security:
+    auth: jwt
+    audit_logging: false
+  availability:
+    target: 0.99

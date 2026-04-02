@@ -1,0 +1,426 @@
+{
+  "id": "cache-aside",
+  "version": "1.0.0",
+  "title": "Cache-Aside",
+  "description": "Application reads cache then DB on miss; writes update DB then invalidates/updates cache explicitly.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 15.0,
+      "max": 2500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 50,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Cache-Aside requires cache infrastructure (e.g., Redis/Memcached) plus existing database. Min represents smallest production cache: AWS ElastiCache cache.t3.micro (~$13/month) or Azure Cache for Redis Basic C0 (~$16/month) plus minimal database costs (~$7). Max represents production scenario with multi-AZ Redis cluster (cache.r6g.xlarge ~$400/month), read replicas (~$300), plus moderate database tier (~$500), data transfer (~$300), and monitoring (~$1000). The pattern itself adds 15-30% overhead to base database costs due to cache infrastructure. Highly scalable workloads may exceed this range.",
+      "adoptionCost": "Medium-high complexity pattern requiring: (1) Cache infrastructure setup and configuration (4-8 hours), (2) Application code changes to implement read-through/write-invalidation logic across multiple endpoints (8-16 hours), (3) Cache key strategy design and TTL tuning (4-6 hours), (4) Error handling for cache failures and fallback logic (4-6 hours), (5) Testing cache consistency and staleness scenarios (6-10 hours), (6) Monitoring/alerting setup for cache hit rates and performance (4-6 hours). Total 30-52 developer hours at $50-75/hour blended rate. Requires understanding of consistency tradeoffs, cache invalidation patterns, and distributed systems concepts. With AI coding assistants reducing implementation time by 30-40%, estimate settles at $1500.",
+      "licenseCost": "Open source solutions dominate: Redis (BSD license), Memcached (BSD license), AWS ElastiCache, Azure Cache, GCP Memorystore are pay-per-use with no license fees. Pattern implementation uses standard application code with no proprietary frameworks required. Redis Enterprise has commercial tiers but base pattern works fully on open source versions. Some organizations may purchase caching libraries or APM tools ($500-2000/year), but these are optional enhancements, not requirements.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "read-latency-reduction",
+      "confidence": "high",
+      "reasoning": "Cache-aside pattern directly reduces read latency by serving cached data when available, avoiding slower database queries. This is the primary benefit of this pattern."
+    },
+    {
+      "capability": "database-load-reduction",
+      "confidence": "high",
+      "reasoning": "Successful cache hits reduce database query volume by serving frequently accessed data from cache, thereby decreasing load on the primary database."
+    },
+    {
+      "capability": "cache-invalidation",
+      "confidence": "high",
+      "reasoning": "Cache-aside pattern explicitly manages cache consistency through invalidation or updates after write operations, ensuring stale data is removed or refreshed."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "medium",
+      "reasoning": "There is a brief window during write operations where cache and database may be inconsistent, as the pattern updates the database first and then invalidates or updates the cache."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "key-value-store",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Cache-aside pattern fundamentally requires a cache store (e.g., Redis, Memcached) to temporarily hold frequently accessed data. Without a cache store, the pattern cannot function."
+    },
+    {
+      "capability": "external-data-persistence",
+      "confidence": "high",
+      "reasoning": "Cache-aside requires a persistent data store (database) as the source of truth. The pattern explicitly involves reading from and writing to the database on cache misses and updates.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "cache-aside--redis",
+      "write-back-cache",
+      "write-through-cache"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cache",
+    "performance"
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "Cache-aside uses eventual consistency; read-your-writes requires synchronous cache invalidation which adds latency and complexity.",
+      "message": "cache-aside: spec requires needsReadYourWrites=true but cache-aside is eventually consistent. Ensure your invalidation strategy is synchronous or use a read-through cache instead."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "Cache-aside adds infrastructure complexity (cache store, invalidation logic, serialization). At <10 read req/s the overhead rarely justifies the benefit.",
+      "message": "cache-aside: peak read QPS is {actual} req/s (<10 req/s). Caching overhead (infrastructure, invalidation, serialization) may outweigh benefit at this scale. Consider simplifying to direct DB access."
+    }
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "defaultConfig": {
+    "invalidation_strategy": "ttl",
+    "ttl_seconds": 3600,
+    "max_memory_mb": 512,
+    "cache_backend": "redis",
+    "write_strategy": "write-through",
+    "serialization_format": "json"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "invalidation_strategy": {
+        "type": "string",
+        "enum": [
+          "ttl",
+          "event-based",
+          "manual",
+          "lru"
+        ],
+        "description": "Cache invalidation strategy: ttl=time-based expiration (simple, may serve stale data), event-based=invalidate on DB writes (consistent, requires event system), manual=application-controlled (flexible, complex), lru=least-recently-used eviction (memory-efficient)"
+      },
+      "ttl_seconds": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 86400,
+        "description": "Time-to-live in seconds for cached items. Lower values increase consistency but reduce cache hit rate; higher values improve performance but risk stale data"
+      },
+      "max_memory_mb": {
+        "type": "integer",
+        "minimum": 128,
+        "maximum": 16384,
+        "description": "Maximum memory allocation for cache in MB. Higher values allow more cached data but increase costs; tune based on working set size"
+      },
+      "cache_backend": {
+        "type": "string",
+        "enum": [
+          "redis",
+          "memcached",
+          "in-memory",
+          "hazelcast"
+        ],
+        "description": "Cache storage backend: redis=feature-rich with persistence (most versatile), memcached=simple and fast (best for pure caching), in-memory=process-local (lowest latency, no sharing), hazelcast=distributed with compute (complex workloads)"
+      },
+      "write_strategy": {
+        "type": "string",
+        "enum": [
+          "write-through",
+          "write-behind",
+          "invalidate-only"
+        ],
+        "description": "How writes are handled: write-through=update cache immediately after DB (consistent, slower writes), write-behind=async cache update (faster writes, eventual consistency), invalidate-only=remove from cache on write (simplest, cache miss on next read)"
+      },
+      "serialization_format": {
+        "type": "string",
+        "enum": [
+          "json",
+          "msgpack",
+          "protobuf",
+          "pickle"
+        ],
+        "description": "Data serialization format: json=human-readable and portable, msgpack=compact binary format, protobuf=schema-based and efficient, pickle=Python-specific with object support"
+      }
+    }
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Cache-aside typically achieves 99.99% availability when both cache and database layers are available."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Cache-aside achieves sub-millisecond p95 latency on cache hits with in-memory stores like Redis."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Cache-aside p99 latency floor accounts for cache misses requiring database fallback."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Cache-aside supports any tenant isolation strategy by including tenant context in cache keys."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can handle PII data with appropriate cache encryption and expiration policies."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside is compatible with GDPR through cache key design and right-to-be-forgotten invalidation."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside supports HIPAA compliance when cache stores use encryption at rest and in transit."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside is compatible with CCPA requirements through explicit cache invalidation on data deletion."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside supports SOX compliance as database remains authoritative system of record."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside maintains durability guarantees through database-first writes; cache is ephemeral."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Cache-aside is a cloud-agnostic pattern that can be implemented on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Cache-aside is a language-agnostic design pattern that can be implemented in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "agnostic",
+        "n/a"
+      ],
+      "reason": "Cache-aside is applicable to any platform that performs data access operations."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "==",
+      "value": true,
+      "reason": "Cache-aside pattern requires caching capability as its core architectural component."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can be used to cache AI inference results but does not require AI capabilities."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside supports multi-tenant applications through tenant-scoped cache keys but works for single-tenant too."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can improve batch processing performance but is not limited to batch workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside is neutral to distributed transactions; cache invalidation is handled separately."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can complement real-time streaming but does not require streaming infrastructure."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache vector search results but does not require vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside works with document stores as the backing database but does not require them."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside commonly uses key-value stores for caching but can work with other cache implementations."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache graph query results but does not require graph database infrastructure."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can cache time-series queries but does not require time-series database capabilities."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside is particularly beneficial for OLTP workloads but works with any data access pattern."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cache-aside can reduce OLAP query latency by caching analytical results but is not OLAP-specific."
+    }
+  ]
+}

@@ -1,0 +1,372 @@
+{
+  "id": "arch-cold-archive-tiering",
+  "version": "1.0.0",
+  "title": "Cold/Archive Storage Tiering",
+  "description": "Move older or infrequently accessed data to cold/archive tiers to reduce storage cost; accept retrieval latency/cost.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 150.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 200,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "This is a storage optimization pattern that reduces ongoing costs rather than adding them. Min=0 represents small-scale usage where cold/archive storage costs are negligible (<1TB of rarely accessed data, ~$1-4/TB/month for archive tier vs ~$20-23/TB/month for hot tier, resulting in net savings). Max=$150 represents moderate usage scenarios with retrieval costs: 10TB archived data (~$10-40/month storage) plus occasional retrievals (archive retrieval fees of $0.01-0.02/GB for standard retrieval, early deletion fees if data moved too soon, and data transfer costs). The pattern itself reduces costs, but we account for retrieval operations and potential early deletion penalties that organizations should budget for. Heavy users with 50TB+ would see different economics but should analyze their specific access patterns.",
+      "adoptionCost": "Medium complexity implementation. Requires: (1) Data access pattern analysis to identify cold data candidates (8-16 hours of analysis), (2) Implementation of lifecycle policies across storage services (4-8 hours for policy configuration and testing), (3) Development of retrieval procedures and documentation for accessing archived data (4-6 hours), (4) Modification of applications to handle potential retrieval latency gracefully (8-12 hours depending on application complexity), (5) Testing of failover/recovery scenarios with archived data (4-6 hours), (6) Training team on new procedures (2-4 hours). Total: 30-52 hours at $40-80/hour blended rate (DevOps + development time) with AI coding assistance reducing implementation time by ~30%. Organizations with existing cloud FinOps practices can adopt faster; those new to storage tiering will need more discovery time.",
+      "licenseCost": "Storage tiering is a native cloud platform feature included with object storage services (S3, Azure Blob Storage, Google Cloud Storage). No additional license fees required. Costs are usage-based (per-GB storage and per-request retrieval fees) which are captured in the monthly operational costs. Some organizations may use third-party cloud cost optimization tools (CloudHealth, CloudCheckr, Spot.io) to automate lifecycle policy recommendations, but these are optional and this pattern can be implemented using native cloud console/APIs at no license cost.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cost-optimized-storage",
+      "confidence": "high",
+      "reasoning": "This pattern directly reduces storage costs by moving data to cheaper cold/archive tiers, which is the primary benefit and purpose of implementing tiering strategies."
+    },
+    {
+      "capability": "storage-lifecycle-management",
+      "confidence": "high",
+      "reasoning": "The pattern implements automated lifecycle policies that transition data between storage tiers based on age or access patterns, providing systematic storage tier management without manual intervention."
+    },
+    {
+      "capability": "long-term-data-retention",
+      "confidence": "high",
+      "reasoning": "Archive storage tiers are specifically designed for long-term retention of infrequently accessed data, making this a key use case and capability provided by the pattern."
+    },
+    {
+      "capability": "retrieval-latency-tolerance",
+      "confidence": "high",
+      "reasoning": "This pattern inherently accepts and provides the characteristic of higher retrieval latency as a trade-off for cost savings, which is a fundamental aspect of cold/archive tier design."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "object-storage",
+      "confidence": "high",
+      "reasoning": "Cold/archive tiering is typically implemented on object storage platforms like S3, Azure Blob, or GCS that natively support multiple storage classes and tier transitions.",
+      "optional": false
+    },
+    {
+      "capability": "data-classification",
+      "confidence": "medium",
+      "reasoning": "Effective tiering requires identifying which data is infrequently accessed versus frequently accessed through access pattern analysis or metadata-based classification to determine appropriate tier placement.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "cost",
+    "storage",
+    "tiering",
+    "archive",
+    "retention"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Archive storage tiers provide high durability but retrieval operations can experience delays, supporting up to four nines availability."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 60,
+      "reason": "Restoring data from archive tiers for disaster recovery requires significant time to rehydrate objects from cold storage."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold/archive tiering can store both PII and non-PII data with appropriate encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Archive storage can be configured to meet GDPR requirements with proper data residency, encryption, and deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud archive tiers can be HIPAA-compliant when configured with encryption at rest, audit logging, and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Archive tiering supports CCPA compliance with proper data management, access logging, and deletion workflows."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Long-term archive storage is compatible with SOX data retention and audit requirements for financial records."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Archive tier writes followed by immediate reads require waiting for tier transition to complete; read-your-writes consistency expectations conflict with tiering delays."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Archive tiers typically provide high durability (11 nines) but pattern supports various durability levels based on provider."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Cold/archive storage tiering requires cloud provider storage services (S3 Glacier, Azure Archive, GCS Archive) or on-prem equivalents."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Archive tiering is an infrastructure storage pattern independent of application programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "web",
+        "mobile",
+        "iot"
+      ],
+      "reason": "Storage tiering applies to backend and data platforms that generate and store data requiring long-term retention."
+    },
+    {
+      "path": "/constraints/features/cold_archive_tiering",
+      "op": "==",
+      "value": true,
+      "reason": "Cold/archive storage tiering is an explicit opt-in cost optimization. Only activate when the spec declares cold_archive_tiering: true."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Archive tiering applies to any workload generating data, including AI inference logs and model artifacts."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold storage tiering works for both single-tenant and multi-tenant data architectures with appropriate access controls."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "While batch workloads commonly benefit from tiering, the pattern applies broadly to any data storage scenario."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Archive tiering is orthogonal to transactional coordination requirements and applies to completed transaction data."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming data can be archived after initial processing and aging based on retention policies."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector embeddings and search indexes can be archived when no longer actively queried or used for inference."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document store data can benefit from archive tiering for older documents with infrequent access patterns."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value data can be tiered to cold storage based on access patterns and age for cost optimization."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph data and historical relationship data can be archived when infrequently accessed or for compliance retention."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "While time-series data commonly benefits from tiering, the pattern applies to various data types and storage models."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads can archive historical transaction data that is no longer actively queried but must be retained."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workloads commonly archive older analytical data but pattern applies broadly to any workload with aging data."
+    }
+  ],
+  "defaultConfig": {
+    "cold_tier_after_days": 90,
+    "archive_tier_after_days": 365,
+    "transition_strategy": "age-based",
+    "retrieval_priority": "standard",
+    "enable_intelligent_tiering": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "cold_tier_after_days": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 730,
+        "description": "Days before moving data to cold storage tier. Shorter periods save more cost but may impact frequently accessed data. Common values: 30-90 days."
+      },
+      "archive_tier_after_days": {
+        "type": "integer",
+        "minimum": 90,
+        "maximum": 3650,
+        "description": "Days before moving data to archive tier. Archive has lowest cost but highest retrieval time (hours). Common values: 180-365 days."
+      },
+      "transition_strategy": {
+        "type": "string",
+        "enum": [
+          "age-based",
+          "access-based",
+          "hybrid"
+        ],
+        "description": "How to determine tiering: age-based (time since creation), access-based (last access time), or hybrid (combines both). Access-based requires tracking metadata."
+      },
+      "retrieval_priority": {
+        "type": "string",
+        "enum": [
+          "expedited",
+          "standard",
+          "bulk"
+        ],
+        "description": "Archive retrieval speed/cost trade-off: expedited (minutes, highest cost), standard (hours, moderate cost), bulk (12+ hours, lowest cost)."
+      },
+      "enable_intelligent_tiering": {
+        "type": "boolean",
+        "description": "Use cloud provider's automatic tiering based on access patterns. Adds small monitoring fee but optimizes transitions automatically without manual rules."
+      }
+    }
+  },
+  "warn_nfr": []
+}

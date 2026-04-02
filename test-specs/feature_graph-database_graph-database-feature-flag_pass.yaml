@@ -1,0 +1,35 @@
+# Feature - Graph Database Feature Flag
+#
+# A social network API on AWS with TypeScript and graph_database: true feature
+# flag. The use case requires modeling complex relationships between users,
+# posts, and connections. The graph_database feature activates graph database
+# patterns (generic and provider-specific variants like Neo4j, Neptune).
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - graph database patterns are selected
+#   - relationship modeling infrastructure patterns are included
+
+project:
+  name: Social Network Graph API
+  domain: social
+functional:
+  summary: Social graph API for user connections and recommendations
+constraints:
+  platform: api
+  cloud: aws
+  language: typescript
+  features:
+    graph_database: true
+nfr:
+  data:
+    pii: true
+  security:
+    audit_logging: true
+  availability:
+    target: 0.99
+  latency:
+    p95Milliseconds: 150
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

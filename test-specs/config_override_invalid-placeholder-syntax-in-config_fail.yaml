@@ -1,0 +1,24 @@
+# Config Override - Invalid Placeholder Syntax in Config
+#
+# A spec where all sections use "...": null as placeholder values, representing
+# an incomplete spec where the user skipped refinement. The "..." key is not
+# a valid field in any section of the canonical schema, so this fails schema
+# validation as the entire spec is filled with invalid placeholder syntax.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: "..." is not a valid field key in any section
+#   - compiler rejects at schema validation stage
+
+project:
+  '...': null
+functional:
+  '...': null
+constraints:
+  '...': null
+nfr:
+  '...': null
+cost:
+  '...': null
+operating_model:
+  '...': null

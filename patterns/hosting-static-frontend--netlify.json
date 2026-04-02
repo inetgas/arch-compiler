@@ -1,0 +1,360 @@
+{
+  "id": "hosting-static-frontend--netlify",
+  "version": "1.0.0",
+  "title": "Static Frontend Hosting on Netlify",
+  "description": "Host static frontends and JAMstack sites on Netlify with Git-driven deployments, serverless functions, form handling, and identity management built in. Deploy previews per branch enable frontend review workflows without separate infrastructure.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 250.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "netlify"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 100GB bandwidth/month, 300 build minutes, unlimited sites, serverless functions (125K requests/month). Ideal for JAMstack/static sites; Pro plan ($19/month) for increased limits.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "This pattern explicitly targets Netlify's free tier, which provides 100GB bandwidth/month, 300 build minutes/month, 125K serverless function requests/month, and unlimited sites at $0/month. The min=0 represents staying within free tier limits (suitable for MVPs, personal projects, and low-traffic sites with <100K monthly visitors). The max=0 reflects that this pattern is specifically designed to remain free-tier eligible. If usage exceeds free tier limits, users would transition to Netlify Pro ($19/month) or Business ($99/month), but that would represent a different pattern (cost-paid-saas-tier). This pattern is only applicable when traffic, builds, and function calls remain within free tier boundaries.",
+      "adoptionCost": "Very low adoption cost due to Netlify's streamlined deployment model. Implementation involves: (1) Structuring application as JAMstack architecture (1-3 hours for developers familiar with static site generators), (2) Configuring Git-based deployment via netlify.toml or UI (30 minutes), (3) Setting up serverless functions if needed (1-2 hours for basic CRUD operations), (4) Configuring forms/identity if needed (1 hour). Total: 4-7 hours at $50/hour blended rate with AI coding assistants = $200-$350. AI tools like GitHub Copilot significantly reduce boilerplate for serverless functions and configuration. The pattern is well-documented with abundant examples, making it accessible even to junior developers. No infrastructure provisioning, Docker setup, or complex CI/CD configuration required.",
+      "licenseCost": "Netlify's free tier requires no license fees or upfront payments. The service operates on a freemium SaaS model where the free tier is permanently available (not a trial). No commercial licenses, enterprise agreements, or per-seat costs. Organizations can use the free tier indefinitely as long as usage remains within limits. The only potential cost would be optional add-ons (analytics, background functions) or exceeding free tier limits, but the core hosting, functions, forms, and identity features are genuinely free. This represents true $0 licensing cost for the pattern as designed.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "static-hosting",
+      "confidence": "high",
+      "reasoning": "Netlify's core offering is hosting static sites built with JAMstack, making this a primary capability of the pattern."
+    },
+    {
+      "capability": "serverless-functions",
+      "confidence": "high",
+      "reasoning": "Netlify Functions (AWS Lambda wrapper) allows backend logic execution without server management, essential for JAMstack backends."
+    },
+    {
+      "capability": "cdn-distribution",
+      "confidence": "high",
+      "reasoning": "Netlify includes global CDN for content delivery with the free tier's 100GB bandwidth, core to its hosting architecture."
+    },
+    {
+      "capability": "form-handling",
+      "confidence": "medium",
+      "reasoning": "Netlify Forms provides built-in form submission handling without backend code, allowing JAMstack sites to capture user input and integrate with third-party services."
+    },
+    {
+      "capability": "identity-management",
+      "confidence": "medium",
+      "reasoning": "Netlify Identity provides authentication and user management features including sign-ups, logins, password recovery, and user database management on the free tier."
+    },
+    {
+      "capability": "build-automation",
+      "confidence": "high",
+      "reasoning": "The 300 build minutes allocation provides CI/CD pipeline capability for automated deployments triggered by Git commits."
+    },
+    {
+      "capability": "git-based-deployment",
+      "confidence": "high",
+      "reasoning": "Netlify's deployment model is fundamentally Git-based with GitHub/GitLab integration, enabling continuous deployment from repository changes."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "static-site-hosting",
+      "confidence": "high",
+      "reasoning": "JAMstack architecture requires a tool to build static HTML/CSS/JS (e.g., Next.js, Hugo, Gatsby) before deployment to Netlify.",
+      "optional": true
+    },
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Netlify's continuous deployment model requires source code to be in a Git repository for automatic builds and deployments.",
+      "optional": true
+    },
+    {
+      "capability": "frontend-framework",
+      "confidence": "medium",
+      "reasoning": "JAMstack prototypes/MVPs typically need React/Vue/Svelte or similar framework to build the static site content and interactive features.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "hosting-static-frontend",
+      "hosting-static-frontend--vercel",
+      "hosting-static-frontend--cloudflare-pages",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "free-tier",
+    "netlify",
+    "jamstack",
+    "static-hosting",
+    "mvp"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Netlify is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Free tier lacks enterprise SLA, multi-region redundancy, and priority support needed for high availability targets."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Free-tier shared infrastructure and serverless function cold starts introduce minimum p95 latency of 100ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Free-tier resource contention and cold start variability result in p99 latency floor of 200ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Instant rollback to previous deployments via dashboard or API enables RTO as low as 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000,
+      "reason": "Free tier bandwidth limit of 100GB/month and function execution limits cap peak throughput to 36000 jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 100,
+      "reason": "Free tier bandwidth and serverless function concurrency limits constrain read QPS to 100 maximum."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50,
+      "reason": "Free tier function execution limits and form submission quotas cap write QPS at 50 maximum."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify does not offer a HIPAA BAA on standard plans; not suitable for applications processing PHI."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Netlify is a cloud-agnostic SaaS platform that abstracts underlying infrastructure from users."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Netlify supports static site generators and serverless functions in multiple languages including JavaScript, TypeScript, Python, and Go."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api"
+      ],
+      "reason": "Netlify is specifically designed for web hosting and JAMstack applications with API serverless functions."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "netlify"
+      ],
+      "reason": "Pattern specifically requires Netlify as the hosting provider"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Netlify CDN provides built-in edge caching, but pattern works with or without application-level caching."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is supported at small scale with external free-tier databases, but not a pattern requirement."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify serverless functions have execution time limits (10s free tier) that preclude batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify serverless architecture and free tier limitations do not support complex distributed transaction coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify free tier does not include WebSocket or real-time streaming capabilities for live data."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Free tiers of external vector databases (Pinecone, Supabase) can be integrated for limited vector search in prototypes."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify does not provide database services; document storage requires external services outside this pattern."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify does not provide persistent key-value storage; requires external services like Redis Cloud."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify does not provide database services; graph database requirements need external providers."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify is not designed for time-series data storage; requires external time-series database services."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Free-tier external databases can support OLTP workloads at small scale, but pattern works for both OLTP and non-OLTP."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Netlify is not designed for analytical processing workloads; optimized for static sites and lightweight serverless functions."
+    }
+  ],
+  "defaultConfig": {
+    "hosting_provider": "netlify",
+    "function_runtime": "nodejs",
+    "enable_forms": true,
+    "enable_identity": false,
+    "enable_split_testing": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "hosting_provider": {
+        "type": "string",
+        "enum": [
+          "netlify",
+          "vercel",
+          "cloudflare-pages"
+        ],
+        "description": "JAMstack hosting provider. Netlify offers 100GB bandwidth and forms/identity. Vercel has better Next.js integration. Cloudflare Pages offers unlimited bandwidth but fewer built-in features."
+      },
+      "function_runtime": {
+        "type": "string",
+        "enum": [
+          "nodejs",
+          "go"
+        ],
+        "description": "Serverless function runtime. Node.js has broader ecosystem and faster cold starts. Go offers better performance for compute-intensive tasks."
+      },
+      "enable_forms": {
+        "type": "boolean",
+        "description": "Enable Netlify Forms for contact/submission forms without backend code. Free tier includes 100 submissions/month."
+      },
+      "enable_identity": {
+        "type": "boolean",
+        "description": "Enable Netlify Identity for user authentication and gated content. Free tier includes 1,000 active users. Adds complexity but eliminates need for separate auth service."
+      },
+      "enable_split_testing": {
+        "type": "boolean",
+        "description": "Enable A/B testing by splitting traffic between git branches. Useful for testing features but consumes bandwidth quota faster."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 50,
+      "reason": "Free tier bandwidth limit of 100GB/month can be exhausted quickly at sustained high QPS, leading to service interruption.",
+      "message": "hosting-static-frontend--netlify: peak read QPS is {actual} req/s (>50). Free tier 100GB/month bandwidth may be exhausted quickly, causing service interruption mid-month."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 25,
+      "reason": "Free tier serverless function execution limits and form submission quotas can be exhausted at sustained high write QPS.",
+      "message": "hosting-static-frontend--netlify: peak write QPS is {actual} req/s (>25). Free tier function execution limits may be exhausted, causing throttling or service interruption."
+    }
+  ]
+}

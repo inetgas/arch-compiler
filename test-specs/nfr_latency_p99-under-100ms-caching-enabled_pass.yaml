@@ -1,0 +1,33 @@
+# NFR Latency - P99 Under 100ms With Caching Enabled
+#
+# API with a tight p99 latency target of 50ms and caching explicitly enabled.
+# caching-required-low-latency activates at p99 <= 100ms and requires
+# caching == true — both conditions are satisfied here.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - caching-required-low-latency IS selected (p99 <= 100ms, caching == true)
+
+project:
+  name: Real-Time Pricing API
+  domain: fintech
+functional:
+  summary: Stock pricing API with p99 < 50ms latency target and cache enabled
+constraints:
+  platform: api
+  cloud: aws
+  language: go
+  features:
+    caching: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 20
+    p99Milliseconds: 50
+  throughput:
+    peak_query_per_second_read: 150
+    peak_query_per_second_write: 10
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

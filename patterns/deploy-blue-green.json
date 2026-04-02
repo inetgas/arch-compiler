@@ -1,0 +1,386 @@
+{
+  "id": "deploy-blue-green",
+  "version": "1.0.0",
+  "title": "Blue/Green Deployment",
+  "description": "Two environments; switch traffic; fast rollback; higher infra cost.",
+  "types": [
+    "deploy",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 6000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Blue/Green deployment requires running TWO complete production environments simultaneously. Min ($100) represents a small application with 2x t3.small instances ($15/mo each), 2x small databases ($30/mo each), and basic load balancer ($20/mo). Max ($6000) represents production workload with 2x multi-instance clusters (20 instances @ $100/mo = $2000 per environment), 2x managed database clusters ($800/mo each), 2x load balancers with high traffic ($200/mo each), and increased data transfer/storage costs. The 2x multiplier is fundamental to this pattern - you're paying for duplicate infrastructure. During transition periods, both environments are active. Cost can be optimized by using scaled-down blue environment between deployments, but true blue/green maintains parity.",
+      "adoptionCost": "Medium-high complexity deployment pattern. Requires: (1) Infrastructure-as-Code templates for duplicate environments (8-16 hours), (2) Automated traffic switching mechanism with load balancer/DNS configuration (8-12 hours), (3) Health check and validation automation (4-8 hours), (4) Rollback procedures and runbooks (4-6 hours), (5) Database migration strategy for stateful components (8-12 hours - complex consideration), (6) Monitoring and alerting for both environments (4-8 hours), (7) CI/CD pipeline integration (8-12 hours). Total 44-74 engineering hours at $100-150/hour blended rate. Requires understanding of infrastructure orchestration, networking, and deployment automation. Lower than microservices complexity but higher than simple deployment patterns due to dual-environment coordination and state management challenges.",
+      "licenseCost": "Blue/Green deployment is a methodology, not a licensed product. Can be implemented using free/open-source tools: AWS Elastic Load Balancer (usage-based, included in runtime costs), Kubernetes with native deployment strategies (free), Terraform/CloudFormation (free), Jenkins/GitLab CI (free/open-source editions), or cloud-native deployment services (AWS CodeDeploy, Azure Deployment Slots - free services with usage-based pricing). Commercial CI/CD platforms (Harness, Spinnaker Enterprise) that simplify blue/green cost $10k-50k/year but aren't required. Setting to $0 as pattern is achievable with OSS tooling.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "zero-downtime-deployment",
+      "confidence": "high",
+      "reasoning": "Blue/Green deployment enables switching traffic between environments without downtime, which is the primary benefit of this pattern."
+    },
+    {
+      "capability": "fast-rollback",
+      "confidence": "high",
+      "reasoning": "Rolling back is instantaneous by switching traffic back to the previous environment, which is a core advantage of maintaining two environments."
+    },
+    {
+      "capability": "safe-release",
+      "confidence": "high",
+      "reasoning": "Testing in production-like environment before switching traffic reduces release risk, making deployments safer."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "traffic-switching",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "The pattern fundamentally depends on the ability to route traffic between blue and green environments, typically via load balancer or DNS."
+    },
+    {
+      "capability": "environment-isolation",
+      "confidence": "high",
+      "reasoning": "Blue and green environments must be isolated to prevent interference, requiring infrastructure that can maintain separate identical environments.",
+      "optional": true
+    },
+    {
+      "capability": "non-blocking-schema-migrations",
+      "confidence": "medium",
+      "reasoning": "Managing database changes across environments is a critical consideration for stateful applications, requiring backward-compatible schemas or sophisticated migration approaches.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "deploy-rolling",
+      "deploy-canary"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "deploy",
+    "release",
+    "rollback"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.99,
+      "reason": "Blue/green deployment is only required when availability target is up to 99%."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Blue/green deployment achieves up to 99.99% availability through zero-downtime traffic switching."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Fast rollback by switching traffic back to blue environment typically completes in 2+ minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 1800,
+      "reason": "Blue/green requires full environment provisioning per deployment. At >1800 deploys/hour (>0.5/minute), environment switching overhead becomes a bottleneck."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Blue/green deployment is a universal deployment strategy implementable across all cloud providers and on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Blue/green deployment is an infrastructure pattern independent of application programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Blue/green deployment applies to server-side platforms where traffic can be routed between environments."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment works with or without caching layers, though cache warming may be required."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment is compatible with synchronous and asynchronous messaging architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment supports AI inference workloads and non-AI workloads equally."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment is compatible with single-tenant and multi-tenant applications."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment supports batch processing workloads with appropriate job coordination during cutover."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment does not constrain distributed transaction patterns, though shared backend data stores are required."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment supports real-time streaming applications with appropriate connection management during cutover."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment is compatible with applications using vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment works with document stores and other database types equivalently."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment is compatible with key-value stores and other persistence mechanisms."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment supports applications using graph databases without constraint."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment is compatible with time-series databases and other data stores."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment supports OLTP workloads with shared database backend across environments."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Blue/green deployment is compatible with OLAP workloads and analytical processing applications."
+    }
+  ],
+  "defaultConfig": {
+    "traffic_switch_strategy": "instant",
+    "health_check_required": true,
+    "rollback_strategy": "automatic",
+    "environment_parity": "full",
+    "warm_up_period_minutes": 5
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "traffic_switch_strategy": {
+        "type": "string",
+        "enum": [
+          "instant",
+          "gradual",
+          "canary"
+        ],
+        "description": "How traffic shifts from blue to green. Instant: immediate 100% switch (fastest, higher risk). Gradual: percentage-based rollout (balanced). Canary: small test group first (safest, slowest)."
+      },
+      "health_check_required": {
+        "type": "boolean",
+        "description": "Whether green environment must pass health checks before traffic switch. True: safer but slower deployment. False: faster but riskier."
+      },
+      "rollback_strategy": {
+        "type": "string",
+        "enum": [
+          "automatic",
+          "manual",
+          "disabled"
+        ],
+        "description": "How to handle failures. Automatic: instant rollback on errors (safest). Manual: requires human approval (controlled). Disabled: no rollback capability (not recommended)."
+      },
+      "environment_parity": {
+        "type": "string",
+        "enum": [
+          "full",
+          "scaled-down",
+          "minimal"
+        ],
+        "description": "Green environment sizing. Full: identical to blue (highest cost, zero performance impact). Scaled-down: reduced capacity (medium cost, may need warm-up). Minimal: basic validation only (lowest cost, requires scaling before switch)."
+      },
+      "warm_up_period_minutes": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 60,
+        "description": "Time to warm up green environment (cache priming, connection pools, JIT compilation) before switching traffic. 0 for instant switch, 5-15 typical for most apps."
+      }
+    }
+  },
+  "warn_nfr": []
+}

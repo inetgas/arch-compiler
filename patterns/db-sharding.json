@@ -1,0 +1,480 @@
+{
+  "id": "db-sharding",
+  "version": "1.0.0",
+  "title": "Database Sharding",
+  "description": "Partition data across shards; improves scale; increases complexity of cross-shard queries/transactions.",
+  "types": [
+    "design",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 15000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 2000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Database sharding requires multiple database instances (shards) plus orchestration. Minimum assumes 2-3 small shards (e.g., AWS RDS t3.small instances at ~$60/month each = $180, plus minimal routing/proxy layer ~$20). Maximum represents production scenarios with 10+ shards using larger instances (r5.2xlarge at ~$800/month = $8000), read replicas for each shard (~$4000), plus sophisticated routing infrastructure like Vitess or ProxySQL (~$1000), connection pooling, monitoring, and backup storage (~$2000). Costs scale linearly with shard count and instance size. Cross-region sharding can add 50-100% more due to data transfer costs.",
+      "adoptionCost": "Very high complexity implementation. Requires: (1) Designing sharding strategy (hash-based, range-based, geographic) - significant architectural decision with long-term implications (~40 hours), (2) Implementing shard key selection and routing logic (~60 hours), (3) Data migration from single database to shards with zero-downtime strategy (~80 hours), (4) Refactoring application code to handle cross-shard queries and distributed transactions (~100 hours), (5) Setting up monitoring, rebalancing mechanisms, and operational procedures (~40 hours), (6) Testing edge cases like shard failures, rebalancing, and consistency scenarios (~40 hours). Total ~360 hours at $200/hour blended rate (senior engineers/architects needed) = ~$72,000 traditional estimate. With AI coding assistants reducing implementation time by 60-70% for routing logic, migration scripts, and boilerplate, but still requiring substantial architectural design and testing by senior staff: ~$8,000. Requires deep database expertise and distributed systems knowledge.",
+      "licenseCost": "Database sharding is an architectural pattern implementable with open-source tools. Most databases (PostgreSQL, MySQL, MongoDB) support sharding natively or via free tools like Vitess (MySQL sharding), Citus (PostgreSQL), or application-level routing libraries (all open-source). Commercial database offerings (Oracle RAC, SQL Server) may have enterprise licensing, but sharding itself doesn't require additional licenses. Organizations can implement using existing database licenses plus free orchestration tools. Cost is $0 for the pattern itself, though underlying database licenses vary by vendor choice.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "horizontal-scaling",
+      "confidence": "high",
+      "reasoning": "Database sharding directly enables horizontal scaling by distributing data across multiple database instances, allowing the system to handle increased load by adding more shards."
+    },
+    {
+      "capability": "data-partitioning",
+      "confidence": "high",
+      "reasoning": "Sharding is fundamentally a data partitioning strategy that divides datasets into smaller, manageable pieces distributed across different physical or logical locations."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "database",
+      "confidence": "high",
+      "reasoning": "Sharding requires underlying database systems to be present, as it is a pattern applied on top of database infrastructure.",
+      "optional": true
+    },
+    {
+      "capability": "gateway-based-routing",
+      "confidence": "high",
+      "reasoning": "Sharding requires intelligent routing to direct queries to the correct shard based on the sharding key, which is essential for the pattern to function.",
+      "optional": true
+    },
+    {
+      "capability": "distributed-transaction-management",
+      "confidence": "high",
+      "reasoning": "Cross-shard queries and transactions require distributed transaction coordination capabilities, as mentioned in the pattern description about increased complexity.",
+      "optional": false
+    },
+    {
+      "capability": "cluster-management",
+      "confidence": "high",
+      "reasoning": "Managing multiple database shards requires orchestration tools to handle shard lifecycle, rebalancing, and operational tasks across the distributed system.",
+      "optional": true
+    },
+    {
+      "capability": "connection-pooling",
+      "confidence": "medium",
+      "reasoning": "Sharded databases typically need connection management across multiple database instances to efficiently handle connections to each shard and prevent resource exhaustion.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "curated"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Sharding with multi-region replication can achieve up to four nines availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Sharded relational databases introduce routing overhead with a floor of 5ms p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Cross-shard query coordination and tail latencies require at least 20ms p99."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Shard-level failover with hot standbys enables recovery in at least 5 minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Sharding enables horizontal scaling to support up to 360M transactions per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 5000,
+      "reason": "Sharding is a scalability tool justified at extreme read scale of 5000+ QPS."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">=",
+      "value": 5000,
+      "reason": "Sharding overhead is justified at extreme write scale of 5000+ write QPS."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding supports audit logging per shard but does not require it."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Sharding can be combined with any tenant isolation strategy including shard-per-tenant."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can support GDPR compliance with appropriate data locality and deletion per shard."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can support HIPAA compliance with encryption and access controls per shard."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can support CCPA compliance with data deletion and access capabilities per shard."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can support SOX compliance with audit trails and immutability per shard."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding supports read-your-writes consistency within a single shard through shard-local routing."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Each shard can implement strict durability with synchronous writes to replicas as needed."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Database sharding is a cloud-agnostic architectural pattern deployable on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Sharding is a database architecture pattern that can be implemented with any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot"
+      ],
+      "reason": "Database sharding is a backend data architecture pattern that supports any platform type."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can be combined with caching layers but does not require them."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding is compatible with both synchronous and asynchronous messaging patterns."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can support AI inference workloads requiring high-scale data access."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding supports both single-tenant and multi-tenant architectures with tenant-based partitioning."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can support batch processing workloads across multiple shards in parallel."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can handle distributed transactions across shards though single-shard transactions are preferred."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can support real-time streaming workloads with high-throughput data ingestion per shard."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can be applied to vector databases for scaling embedding search workloads."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding applies to document-oriented NoSQL databases like MongoDB for horizontal scaling."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding is commonly used with key-value stores for partitioning data by key range or hash."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can be applied to graph databases though cross-shard relationships are complex."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding is commonly used with time-series databases for partitioning by time range."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding is typically used for high-volume OLTP workloads but can support other workload types."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Sharding can support OLAP workloads though cross-shard analytics queries are more complex."
+    }
+  ],
+  "defaultConfig": {
+    "sharding_strategy": "hash",
+    "shard_key_type": "single_field",
+    "num_shards": 4,
+    "cross_shard_queries": "application_layer",
+    "rebalancing_strategy": "manual"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "sharding_strategy": {
+        "type": "string",
+        "enum": [
+          "hash",
+          "range",
+          "geographic",
+          "directory"
+        ],
+        "description": "How data is distributed across shards. Hash provides even distribution, range enables range queries within shards, geographic optimizes for locality, directory offers flexible mapping but adds lookup overhead."
+      },
+      "shard_key_type": {
+        "type": "string",
+        "enum": [
+          "single_field",
+          "composite",
+          "hashed_composite"
+        ],
+        "description": "Complexity of the shard key. Single field is simplest, composite allows multi-tenant or hierarchical sharding, hashed composite prevents hotspots in composite keys."
+      },
+      "num_shards": {
+        "type": "integer",
+        "minimum": 2,
+        "maximum": 1024,
+        "description": "Initial number of shards. More shards enable finer-grained scaling but increase operational complexity. Choose based on expected data volume and growth rate."
+      },
+      "cross_shard_queries": {
+        "type": "string",
+        "enum": [
+          "application_layer",
+          "proxy_layer",
+          "avoided_by_design"
+        ],
+        "description": "How to handle queries spanning multiple shards. Application layer gives control but adds complexity, proxy layer centralizes logic, avoiding them entirely through denormalization simplifies architecture."
+      },
+      "rebalancing_strategy": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "automatic",
+          "consistent_hashing"
+        ],
+        "description": "How to redistribute data when adding/removing shards. Manual provides control but requires downtime, automatic simplifies operations, consistent hashing minimizes data movement but requires upfront design."
+      }
+    }
+  },
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Sharding with multi-region replication can achieve up to four nines availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Sharded relational databases introduce routing overhead with a floor of 5ms p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Cross-shard query coordination and tail latencies require at least 20ms p99."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Shard-level failover with hot standbys enables recovery in at least 5 minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Synchronous replication per shard can achieve near-zero RPO for all data."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Sharding enables horizontal scaling to support up to 360M transactions per hour."
+    }
+  ],
+  "warn_nfr": []
+}

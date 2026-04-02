@@ -1,0 +1,504 @@
+{
+  "id": "data-batch-processing--cluster",
+  "version": "1.0.0",
+  "title": "Batch Processing: Cluster-Scheduled (EMR / Dataproc / Spark)",
+  "description": "Batch job execution on long-running compute clusters using cluster schedulers (Amazon EMR, Google Dataproc, Apache Spark on Kubernetes, Databricks Jobs, Apache Slurm, Hadoop YARN). Jobs are queued in the cluster scheduler and start when cluster resources become available. Job start P95 is 5-15 minutes due to resource allocation, job container staging, YARN/Kubernetes pod scheduling, and JVM startup overhead for Spark/Hadoop. Highest throughput for large-scale analytical workloads \u2014 PB-scale ETL, distributed ML training, graph analytics at billion-edge scale \u2014 but inappropriate for latency-sensitive batch needs. Best when job execution time (hours) dominates over start time (minutes).",
+  "types": [
+    "design",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 4000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 300.0,
+      "max": 15000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 10000,
+    "costNotes": "Cluster batch has the highest base cost due to always-on or frequently-provisioned cluster infrastructure. Min ($300): small EMR/Dataproc cluster (4 core nodes, on-demand hours). Max ($15000): production Databricks or EMR cluster with 20+ workers running 8+ hours/day, S3/GCS data storage, and data egress costs.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Cluster batch costs are dominated by long-running cluster infrastructure. Min ($300): EMR on-demand cluster (1 master + 3 core m5.xlarge, 4hr/day = ~$12/day, ~$300/mo). Max ($15000): production Databricks cluster with 20x c5.4xlarge workers ($0.68/hr each) running 10hr/day = $4000/mo compute + Databricks DBU charges ($2000-4000/mo) + S3 data storage ($500-1000/mo) + egress.",
+      "adoptionCost": "Cluster batch has highest adoption complexity: cluster provisioning/autoscaling config, distributed framework setup (Spark/YARN), job packaging, dependency management, performance tuning, and monitoring. Teams need distributed computing expertise. Estimate 20-25 developer days at ~$160/day = $4000.",
+      "licenseCost": "Open-source cluster frameworks (Spark, Hadoop) have no license costs. Commercial platforms (Databricks, Cloudera) have significant licensing. This estimate assumes managed OSS services (EMR, Dataproc). Enterprise Databricks licensing adds $2000-20000/mo depending on scale.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "batch-processing",
+      "confidence": "high",
+      "reasoning": "Provides cluster-scale batch processing capability \u2014 distributed execution across many nodes for PB-scale ETL and analytics workloads."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Primary use case: large-scale ETL transformations using Spark, Hive, or Presto on multi-node clusters for data warehouse loading."
+    },
+    {
+      "capability": "high-throughput-processing",
+      "confidence": "high",
+      "reasoning": "Cluster batch achieves the highest throughput of all batch variants through distributed computing across dozens to thousands of cores."
+    },
+    {
+      "capability": "job-orchestration",
+      "confidence": "high",
+      "reasoning": "Cluster-based batch processing manages job scheduling, dependency resolution, and lifecycle across distributed worker nodes (YARN, Kubernetes, Dataproc)."
+    },
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "reasoning": "Large-scale ETL on clusters IS a data pipeline \u2014 it ingests, transforms, and outputs structured data at batch cadences."
+    },
+    {
+      "capability": "scheduler",
+      "confidence": "high",
+      "reasoning": "Cluster-based batch processing includes a job scheduler (Spark, Hadoop YARN, etc.) for orchestrating batch jobs."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "scheduler",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Cluster batch fundamentally requires a cluster scheduler (YARN, Kubernetes, Slurm) to allocate resources across cluster nodes for job execution."
+    },
+    {
+      "capability": "job-orchestration",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Cluster orchestration required (Airflow, Oozie, Databricks Workflows) to manage job dependencies, cluster provisioning, and multi-step pipelines."
+    },
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Cluster batch requires distributed storage (S3, HDFS, GCS) optimized for parallel reads/writes across many cluster nodes."
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Cluster batch requires retry at both the task level (Spark task retries) and job level (re-submission on cluster failure) for fault tolerance."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-stream-processing",
+      "data-batch-processing--serverless",
+      "data-batch-processing--warm-pool",
+      "data-batch-processing--cold-start"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "batch",
+    "cluster",
+    "spark",
+    "emr",
+    "dataproc",
+    "distributed"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Cluster batch is compatible with any auth mechanism; cluster access controlled via Kerberos, IAM roles, or service accounts."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster frameworks (Spark, YARN) provide detailed job and task execution logs; compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Cluster batch supports tenant isolation through dedicated clusters per tenant or namespace-based resource queues in shared clusters."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Cluster batch can achieve up to 99.99% availability with cluster HA configurations; five-nine requires active-active multi-cluster topology."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 300,
+      "reason": "Cluster-scheduled batch achieves P95 job start in 5-15 minutes (300-900 seconds) due to YARN/Kubernetes resource allocation, Spark application startup, JVM initialization, and executor provisioning. Cannot guarantee sub-5-minute P95 without dedicated reserved capacity."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 600,
+      "reason": "P99 job start for cluster-scheduled batch is 10-30 minutes (600-1800 seconds), accounting for cluster resource contention during peak load, slow container pulls for large Spark images, and GC pauses during JVM warm-up."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Cluster batch RTO is 15-60 minutes: failure detection + job re-queuing + cluster resource re-allocation + Spark application restart from last checkpoint. Long-running Spark jobs may require substantial re-processing time."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "RPO of 5+ minutes for cluster batch; checkpointing frequency and batch window size determine actual RPO."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Cluster batch handles the full throughput range; individual job throughput is the highest of all variants, processing TBs to PBs per job."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 10,
+      "reason": "Cluster batch has 5-15 min startup overhead (resource allocation, Spark JVM init, executor provisioning). At <10 jobs/hour, simpler serverless or single-node batch is more cost-effective."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is compatible with PII workloads with cluster-level encryption, Kerberos auth, and data masking in Spark transformations."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is compatible with GDPR through Spark-based data deletion workflows and configurable retention in distributed storage."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch supports HIPAA compliance with cluster-level encryption, Kerberos authentication, and BAA coverage for managed services."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is compatible with CCPA when Spark jobs support consumer data deletion and audit trail generation."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch supports SOX compliance through detailed Spark/YARN job execution logs providing an immutable audit trail."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is inherently eventually consistent due to batch windowing. Read-your-writes requires compensating patterns on top."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strict durability achievable with Spark checkpointing to HDFS/S3 and transactional writes to Delta Lake or Apache Iceberg tables."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Cluster batch runs on all major clouds (EMR, Dataproc, Azure HDInsight) and on-prem (Hadoop, Slurm, Spark on bare-metal)."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Cluster batch primarily uses Python (PySpark), Scala, Java for Spark jobs; SQL via Spark SQL/Hive; all languages available via containerized cluster jobs."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Cluster batch targets data pipeline and ML training platforms; api platform excluded as cluster batch is not a request-response architecture."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch leverages in-memory caching (Spark RDD/DataFrame caching) as a core performance optimization for iterative jobs."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch can be triggered via message queues or direct job submission; messaging often used to signal completion to downstream systems."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is the primary choice for large-scale batch ML inference and distributed model training (Spark MLlib, distributed PyTorch/TensorFlow)."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch supports multi-tenancy through YARN resource queues, Kubernetes namespaces, or dedicated per-tenant clusters."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires batch_processing feature flag \u2014 this is the cluster-scheduled variant of the batch processing implementation pattern."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch supports distributed transactions via Delta Lake ACID transactions or Apache Iceberg; Spark natively supports transactional writes."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is the historical batch layer in lambda architectures; combines with Spark Streaming or Kafka for real-time serving."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is ideal for large-scale offline vector index building (billion+ vectors) using distributed embedding generation on Spark."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch handles bulk reads/writes from document stores via Spark connectors (MongoDB Spark Connector, Elasticsearch-Hadoop)."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch can bulk-load key-value stores (Redis CLUSTER IMPORT, DynamoDB batch write) as a common ETL sink."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is well-suited for large-scale graph analytics (GraphX, graph algorithms on billions of edges) and bulk graph loading."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch handles PB-scale time-series aggregation and historical recomputation using Spark on distributed storage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch executes bulk OLTP operations \u2014 mass data migrations, historical backfills, and schema migrations \u2014 at scale not achievable by single-node batch."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cluster batch is the canonical choice for OLAP: Spark SQL, Hive, Presto on distributed storage for petabyte-scale analytical queries."
+    }
+  ],
+  "defaultConfig": {
+    "worker_type": "cluster",
+    "schedule_type": "cron",
+    "retry_strategy": "exponential_backoff",
+    "parallelism": "distributed",
+    "failure_handling": "fail_job"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "worker_type": {
+        "type": "string",
+        "enum": [
+          "cluster"
+        ],
+        "description": "Execution environment. Cluster: long-running compute cluster with cluster scheduler (Amazon EMR, Google Dataproc, Apache Spark on Kubernetes, Databricks Jobs, Slurm, YARN)."
+      },
+      "schedule_type": {
+        "type": "string",
+        "enum": [
+          "cron",
+          "interval",
+          "event_driven",
+          "manual"
+        ],
+        "description": "How batches are triggered. Cron is most common for cluster batch with fixed daily or weekly schedules matching cluster availability windows."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "immediate",
+          "exponential_backoff",
+          "fixed_delay"
+        ],
+        "description": "How failed jobs are retried. Exponential_backoff recommended with longer delays to account for cluster resource re-allocation and JVM restart overhead."
+      },
+      "parallelism": {
+        "type": "string",
+        "enum": [
+          "single",
+          "partitioned",
+          "distributed"
+        ],
+        "description": "Execution model. Distributed required for cluster batch: data is partitioned across cluster nodes using Spark partitioning or YARN containers for parallel processing."
+      },
+      "failure_handling": {
+        "type": "string",
+        "enum": [
+          "fail_job",
+          "skip_and_continue",
+          "dead_letter_queue",
+          "partial_commit"
+        ],
+        "description": "What happens when individual records fail. Fail_job recommended for cluster ETL requiring idempotent full re-runs; partial_commit for large jobs using Delta Lake ACID writes."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<",
+      "value": 0.95,
+      "reason": "Cluster-Scheduled batch with availability target <95% indicates non-critical workload; simpler cron-based solutions may be more cost-effective than managed batch infrastructure.",
+      "message": "data-batch-processing--cluster: availability target is {actual} (<95%). For non-critical batch jobs, simpler cron-based execution may reduce operational overhead."
+    }
+  ]
+}

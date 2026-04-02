@@ -1,0 +1,445 @@
+{
+  "id": "hosting-managed-paas--railway",
+  "version": "1.0.0",
+  "title": "Managed Web/API Hosting on Railway",
+  "description": "Deploy APIs and background workers on Railway\u2019s usage-based PaaS with automatic Git-driven deployments, instant rollbacks, and integrated database provisioning. Suited to small teams prioritizing fast iteration over fine-grained infrastructure control.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 50.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "railway"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "$5 free credit per month on Hobby plan. Usage-based pricing means costs scale with actual usage; set spend limits to control costs.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents very light usage (dev/staging environments, hobby projects) fully covered by the $5/month free credit on Hobby plan. A simple API with minimal traffic (~100MB RAM, low CPU) stays within free tier. Max $50 represents a small production API with moderate traffic: ~512MB RAM constant usage ($0.000231/GB-hour \u00d7 0.5GB \u00d7 730 hours = $84.27) + light CPU usage ($0.10/vCPU-hour \u00d7 0.1 vCPU \u00d7 730 hours = $7.30) minus $5 credit \u2248 $45-50/month. This excludes databases; includes only the application hosting. Larger workloads would exceed this range significantly.",
+      "adoptionCost": "Low complexity adoption. Railway autodetects languages and provides zero-config deployments from Git. Initial setup requires: connecting Git repo (30 min), configuring environment variables (30 min), testing deployments (1-2 hours), setting up custom domains and basic monitoring (1 hour). Total ~3-4 hours at $100/hour developer rate = $300-400. No infrastructure knowledge required (no Docker, Kubernetes, or IaC). Significantly lower than traditional cloud platforms (AWS/GCP) which require 10-20 hours for equivalent setup. Learning curve is minimal with good documentation.",
+      "licenseCost": "No platform fees or licenses required. Railway uses pure usage-based pricing with no upfront costs, subscription fees, or enterprise licenses. The $5/month credit on Hobby plan is provided automatically. Only costs are resource consumption (RAM, CPU, network). No vendor lock-in fees or exit costs. Open platform that works with any language/framework without proprietary tooling.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "Railway provides a PaaS platform specifically for deploying web APIs and services with automatic infrastructure management, which directly matches this capability."
+    },
+    {
+      "capability": "reduced-ops",
+      "confidence": "high",
+      "reasoning": "Railway abstracts away server management, scaling, and deployment infrastructure, significantly reducing operational overhead compared to self-managed solutions."
+    },
+    {
+      "capability": "instant-rollback",
+      "confidence": "high",
+      "reasoning": "Railway's deployment system includes built-in rollback functionality allowing quick reversion to previous deployments, which is a specific operational capability this pattern provides."
+    },
+    {
+      "capability": "continuous-deployment",
+      "confidence": "high",
+      "reasoning": "Railway provides automatic deployments from Git repositories, triggering new deployments on every push, which is the core of continuous deployment capability."
+    },
+    {
+      "capability": "background-job-processing",
+      "confidence": "high",
+      "reasoning": "Railway explicitly supports deploying background workers alongside APIs, providing the infrastructure to run long-running background tasks and job processing."
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "high",
+      "reasoning": "Railway provides integrated managed databases (PostgreSQL, MySQL, Redis, MongoDB) as part of the platform, handling provisioning, backups, and maintenance."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "medium",
+      "reasoning": "Railway's PaaS infrastructure includes automatic horizontal scaling capabilities based on resource usage, though specific scaling configuration options may vary by plan."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Railway deploys from Git repositories (GitHub, GitLab, etc.) with automatic deployments, so applications must be in a Git repository to use this pattern.",
+      "optional": true
+    },
+    {
+      "capability": "containerized-application",
+      "confidence": "high",
+      "reasoning": "Railway uses Docker-based deployments (or Nixpacks), requiring applications to be containerizable or compatible with Railway's build system.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "railway",
+    "api-hosting"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Railway is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Railway Hobby/Pro tier lacks multi-region failover and HA guarantees needed for higher availability targets."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Railway's containerized deployment adds minimal overhead suitable for applications requiring 50ms+ p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Railway handles p99 latencies of 100ms+ adequately with automatic scaling and resource allocation."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Railway's instant rollback feature and automated health checks enable 1-5 minute recovery time objectives."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Resource limits on hobby/pro tiers and usage-based pricing constraints make very high job throughput costly."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Railway's managed PaaS tier limits and pricing model caps practical read QPS for cost-effective operation."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Railway's hobby/pro tier write throughput is constrained by single-instance database limits and pricing."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can host HIPAA-compliant applications with appropriate configuration; compliance is an application-level concern not blocked by the platform."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compliance is achievable at the application level; Railway hosting does not constrain or enforce compliance."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance is achievable through appropriate audit logging and access controls at the application level; Railway hosting does not block this."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Railway is a cloud-agnostic PaaS that abstracts underlying infrastructure across multiple cloud providers."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Railway supports deploying applications in any language through Docker containers or native buildpacks."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Railway hosts backend services including APIs, web applications, background workers, and batch jobs."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "railway"
+      ],
+      "reason": "Pattern specifically requires railway as the backend provider"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway supports Redis and other caching solutions through integrated database services or containerized deployments."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can host message queue applications through add-ons or containerized queue services."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can host AI inference services as containerized applications with GPU support on higher-tier plans."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway supports multi-tenant applications with tenant isolation implemented at the application level."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway supports batch jobs through worker services, though not optimized for large-scale batch processing."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can host applications implementing distributed transactions, though coordination logic is application-managed."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can host real-time streaming applications through containerized streaming services or WebSocket APIs."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can host vector databases or applications with vector search through containerized services."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway supports MongoDB and other document stores through integrated database services."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway supports Redis and other key-value stores through integrated database services."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can host graph databases through containerized database services or external connections."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can host time-series databases through containerized services or PostgreSQL with TimescaleDB extension."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway supports PostgreSQL and MySQL for transactional OLTP workloads through integrated database services."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Railway can support lightweight OLAP workloads but is not optimized for large-scale analytical processing."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "railway",
+    "plan_tier": "hobby",
+    "deployment_strategy": "git-push",
+    "auto_scaling": false,
+    "health_check_enabled": true,
+    "database_included": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "railway"
+        ],
+        "description": "PaaS provider for managed hosting"
+      },
+      "plan_tier": {
+        "type": "string",
+        "enum": [
+          "hobby",
+          "pro",
+          "team"
+        ],
+        "description": "Railway plan tier: hobby ($5 free credit/month, usage-based), pro (higher limits, priority support), team (collaboration features)"
+      },
+      "deployment_strategy": {
+        "type": "string",
+        "enum": [
+          "git-push",
+          "cli",
+          "docker-image"
+        ],
+        "description": "Deployment method: git-push (automatic from GitHub/GitLab), cli (manual via Railway CLI), docker-image (pre-built containers)"
+      },
+      "auto_scaling": {
+        "type": "boolean",
+        "description": "Enable automatic horizontal scaling based on traffic (Pro plan feature, increases costs)"
+      },
+      "health_check_enabled": {
+        "type": "boolean",
+        "description": "Enable health check endpoints for automatic restart on failures"
+      },
+      "database_included": {
+        "type": "boolean",
+        "description": "Provision integrated database (PostgreSQL, MySQL, MongoDB, Redis) within Railway project"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 500,
+      "reason": "Railway's usage-based pricing and resource limits make high QPS (>500 req/s) expensive; consider dedicated infrastructure for cost efficiency.",
+      "message": "hosting-managed-paas--railway: peak read QPS is {actual} req/s (>500). Usage-based pricing may become costly at high throughput; consider dedicated infrastructure."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">",
+      "value": 10000,
+      "reason": "Railway's resource limits and usage-based pricing make high job throughput (>10k/hr) expensive; batch-optimized platforms may be more cost-effective.",
+      "message": "hosting-managed-paas--railway: peak jobs per hour is {actual} (>10,000). Railway's pricing model may be costly for high-throughput batch processing; consider batch-optimized platforms."
+    }
+  ]
+}

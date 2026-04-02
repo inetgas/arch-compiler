@@ -1,0 +1,36 @@
+# NFR Throughput - Read and Write QPS 5000 Triggers DB Sharding
+#
+# High-scale API with 5000 peak read and write QPS, both above the db-sharding
+# activation threshold. At this scale vertical scaling and read replicas alone
+# are insufficient; horizontal sharding across multiple database nodes is required.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - db-sharding IS selected (peak_query_per_second_read >= 5000 AND write >= 5000)
+#   - db-read-replicas IS also selected (read QPS >= 500)
+#   - caching-required-high-read-throughput IS also selected (read QPS >= 200)
+
+project:
+  name: Hyperscale Platform API
+  domain: fintech
+functional:
+  summary: Payment processing API handling 5000 read and write QPS at peak
+constraints:
+  platform: api
+  cloud: aws
+  language: go
+  features:
+    caching: true
+    oltp_workload: true
+nfr:
+  availability:
+    target: 0.9999
+  latency:
+    p95Milliseconds: 20
+    p99Milliseconds: 80
+  throughput:
+    peak_query_per_second_read: 5000
+    peak_query_per_second_write: 5000
+cost:
+  ceilings:
+    monthly_operational_usd: 20000

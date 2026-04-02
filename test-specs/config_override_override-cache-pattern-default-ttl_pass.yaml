@@ -1,0 +1,30 @@
+# Config Override - Override Cache Pattern Default TTL
+#
+# An API spec with caching: true and a patterns block that overrides the
+# cache-aside pattern defaults with custom values: event-based invalidation,
+# 2GB memory, 7200s TTL, Redis backend, write-behind strategy, and JSON
+# serialization. This tests that pattern defaultConfig overrides are accepted.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - cache-aside pattern is selected (caching: true)
+#   - custom config values override the pattern defaults in compiled output
+
+constraints:
+  platform: api
+  features:
+    caching: true
+patterns:
+  cache-aside:
+    invalidation_strategy: event-based
+    max_memory_mb: 2048
+    ttl_seconds: 7200
+    cache_backend: redis
+    write_strategy: write-behind
+    serialization_format: json
+project:
+  name: Override Pattern Defaults
+  domain: test
+functional:
+  summary: 'Test scenario: Override Pattern Defaults'
+nfr: {}

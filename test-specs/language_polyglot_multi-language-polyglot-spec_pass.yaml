@@ -1,0 +1,22 @@
+# Language - Multi-Language Polyglot Spec
+#
+# A spec with both cloud and language set to agnostic, representing a polyglot
+# project that uses multiple programming languages. This tests that the compiler
+# selects language-agnostic patterns that are not tied to a specific language
+# runtime, supporting teams with mixed-language microservices.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - language-agnostic patterns are selected
+#   - language-specific patterns (python-only, java-only, etc.) are not selected
+
+project:
+  name: Multi-Language (Polyglot)
+  domain: test
+functional:
+  summary: 'Test scenario: Multi-Language (Polyglot)'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic
+nfr: {}

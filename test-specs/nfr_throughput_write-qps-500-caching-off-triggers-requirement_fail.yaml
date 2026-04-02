@@ -1,0 +1,35 @@
+# NFR Throughput - Write QPS 500 Without Caching Triggers Unmet Requirement
+#
+# API with 500 peak write QPS activates caching-required-high-write-throughput,
+# but caching is explicitly disabled. The pattern activates via supports_nfr
+# (write QPS >= 500) but its requires rule (caching == true) is not satisfied,
+# causing the compiler to exit with an error.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - caching-required-high-write-throughput IS activated (write QPS >= 500 threshold)
+#   - requires rule FAILS because constraints.features.caching == false
+
+project:
+  name: High-Write API
+  domain: iot
+functional:
+  summary: Telemetry ingestion API with 500 write QPS but caching disabled
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+  features:
+    caching: false
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 200
+    p99Milliseconds: 500
+  throughput:
+    peak_query_per_second_read: 50
+    peak_query_per_second_write: 500
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

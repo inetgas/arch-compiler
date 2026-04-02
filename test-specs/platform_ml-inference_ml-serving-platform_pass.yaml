@@ -1,0 +1,23 @@
+# Platform - ML Inference Serving Platform
+#
+# An ML inference platform spec on AWS with the ai_inference feature flag
+# enabled. This tests that the compiler selects ML-serving-specific patterns
+# (model serving, GPU infrastructure, inference APIs) and that the ai_inference
+# feature correctly activates genai/ML patterns.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - ml-inference platform patterns are selected
+#   - genai/AI inference patterns are selected due to ai_inference feature flag
+
+constraints:
+  platform: ml-inference
+  cloud: aws
+  features:
+    ai_inference: true
+project:
+  name: ML Inference Platform
+  domain: test
+functional:
+  summary: 'Test scenario: ML Inference Platform'
+nfr: {}

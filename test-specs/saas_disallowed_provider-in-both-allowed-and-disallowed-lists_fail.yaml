@@ -1,0 +1,26 @@
+# SaaS Disallowed - Provider in Both Allowed and Disallowed Lists
+#
+# An API spec that lists "render" in both saas-providers (allowed) and
+# disallowed-saas-providers. Having the same provider in both lists is a
+# logical contradiction: the user cannot both request and prohibit the same
+# provider. The compiler detects this conflict and rejects the spec.
+#
+# Expected outcome:
+#   - compilation FAILS (provider in both lists is a logical contradiction)
+#   - error: render appears in both saas-providers and disallowed-saas-providers
+#   - db-managed-postgres--render and hosting-managed-paas--render are not selected
+
+project:
+  name: Disallowed Blocks Render
+  domain: test
+functional:
+  summary: API with render listed in both allowed and disallowed providers
+constraints:
+  cloud: agnostic
+  language: python
+  platform: api
+  saas-providers:
+    - render
+  disallowed-saas-providers:
+    - render
+nfr: {}

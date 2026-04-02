@@ -1,0 +1,29 @@
+# Input Validation - Extreme Out-of-Range Values
+#
+# An API spec with nfr.availability.target set to 1.0 (which equals exactly 1,
+# meaning 100% availability - an impossible SLA that is out of the valid range
+# which must be < 1), alongside an extremely high cost ceiling and tight latency.
+# The availability value of 1.0 triggers a schema range violation.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: availability target 1.0 is out of valid range (must be < 1)
+#   - compiler rejects before pattern selection
+
+nfr:
+  availability:
+    target: 1.0
+  latency:
+    p95Milliseconds: 1
+cost:
+  ceilings:
+    monthly_operational_usd: 1000000
+project:
+  name: Extreme Values
+  domain: test
+functional:
+  summary: 'Test scenario: Extreme Values'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

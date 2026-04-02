@@ -1,0 +1,27 @@
+# Cost Ceiling - Zero Monthly Budget (Free Tier Only)
+#
+# An AWS JavaScript API spec with a monthly budget of $0 and
+# prefer_free_tier_if_possible: true. This exercises the compiler's handling
+# of zero-budget constraints and verifies that free-tier hosting patterns
+# are selected while paid infrastructure patterns are noted as out of budget.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - free-tier hosting patterns are eligible for selection
+#   - cost ceiling of $0 is recorded in the compiled output
+
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+cost:
+  ceilings:
+    monthly_operational_usd: 0
+  preferences:
+    prefer_free_tier_if_possible: true
+project:
+  name: Zero Budget (Free Tier Only)
+  domain: test
+functional:
+  summary: 'Test scenario: Zero Budget (Free Tier Only)'
+nfr: {}

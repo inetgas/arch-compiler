@@ -1,0 +1,437 @@
+{
+  "id": "api-rest-resource-oriented",
+  "version": "1.0.0",
+  "title": "REST Resource-Oriented API",
+  "description": "REST API designed around resources (nouns) manipulated via standard HTTP verbs (GET, POST, PUT, DELETE, PATCH). Resources are identified by stable URLs, responses are cacheable by default, and pagination/filtering are expressed as query parameters. Simpler tooling and stronger HTTP cache semantics than GraphQL; well-suited to public APIs and CRUD-heavy domains.",
+  "types": [
+    "design",
+    "build",
+    "ops",
+    "test"
+  ],
+  "cost": {
+    "adoptionCost": 750.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "REST Resource-Oriented API is an architectural design pattern, not an infrastructure component. It defines how to structure API endpoints around resources (nouns) using standard HTTP methods (GET, POST, PUT, DELETE). The pattern itself has no direct monthly cost - it's implemented on top of existing infrastructure (API Gateway, load balancers, compute instances). The actual hosting costs depend on the chosen infrastructure (serverless, containers, VMs) which are separate pattern decisions. Min represents design-only cost; max remains 0 as infrastructure is accounted for separately in deployment patterns.",
+      "adoptionCost": "Medium complexity implementation. Requires: (1) API design following REST principles and resource modeling (8-16 hours), (2) implementing pagination, filtering, and sorting patterns (8-12 hours), (3) proper HTTP status code usage and error handling (4-8 hours), (4) documentation with OpenAPI/Swagger (4-6 hours), (5) cache header configuration for cache-friendliness (2-4 hours). Total ~26-46 hours. With AI coding assistants reducing implementation time by 40-50%, this drops to ~15-25 hours. At $50/hour blended rate = $750-$1,250, mid-point $750. Lower than microservices patterns due to simpler tooling and well-established conventions, but higher than basic design patterns due to cross-cutting concerns (caching, pagination, filtering standards).",
+      "licenseCost": "REST is an open architectural style with no licensing fees. Implementation uses standard HTTP protocols and methods. Common tooling is open source: OpenAPI Specification (Apache 2.0), Swagger UI (Apache 2.0), frameworks like Spring Boot/Express.js/FastAPI (all free/Apache/MIT licenses). Optional commercial API management tools (Postman Pro, Stoplight) exist but aren't required for implementation. Pattern itself requires zero licensing cost.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "rest-api",
+      "confidence": "high",
+      "reasoning": "This pattern is fundamentally built around exposing resources through RESTful endpoints with resource-oriented URLs, HTTP methods, and stateless communication. REST API is the core capability provided by this architectural pattern."
+    },
+    {
+      "capability": "http-caching",
+      "confidence": "high",
+      "reasoning": "The pattern description explicitly highlights 'strong cache friendliness' as a key benefit, utilizing HTTP cache headers like ETag and Cache-Control to enable efficient caching strategies."
+    },
+    {
+      "capability": "pagination",
+      "confidence": "high",
+      "reasoning": "Pagination is explicitly mentioned in the pattern description as a core feature for handling large resource collections efficiently in REST APIs."
+    },
+    {
+      "capability": "filtering",
+      "confidence": "high",
+      "reasoning": "Filtering is explicitly mentioned in the pattern description as a key capability for querying and narrowing down resource collections in RESTful endpoints."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "api-versioning",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "REST APIs need versioning strategies to manage backward compatibility and evolution over time, essential for maintaining stable contracts with clients while allowing the API to evolve."
+    },
+    {
+      "capability": "http-service",
+      "confidence": "high",
+      "reasoning": "REST APIs fundamentally require HTTP/HTTPS protocol support to handle requests, methods (GET, POST, PUT, DELETE), status codes, and headers. This is a foundational requirement for any REST API.",
+      "optional": true
+    },
+    {
+      "capability": "json-serialization",
+      "confidence": "high",
+      "reasoning": "REST APIs require data serialization capabilities to convert resources to/from JSON format, which is the most common data interchange format for RESTful services.",
+      "optional": true
+    },
+    {
+      "capability": "content-negotiation",
+      "confidence": "medium",
+      "reasoning": "REST APIs need content negotiation to handle different media types and allow clients to request resources in various formats (JSON, XML, etc.) based on Accept headers.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "api-graphql-schema-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "api",
+    "rest"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "REST APIs support all standard authentication mechanisms via HTTP headers, bearer tokens, or TLS client certificates."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Audit logging for REST APIs is implemented at the middleware, API gateway, or application layer as needed."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "REST APIs support all tenant isolation strategies through request context headers and resource path scoping."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs support GDPR compliance through dedicated endpoints for data access, deletion, and export."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can comply with HIPAA when combined with TLS encryption, authentication, and audit logging."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs support CCPA compliance through resource-oriented endpoints for data access and deletion requests."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs support SOX compliance through immutable audit logs at the API gateway or middleware layer."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Synchronous REST request-reply semantics support read-your-writes consistency when paired with appropriate data stores."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "REST API pattern is cloud-agnostic and works on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "REST API design pattern is language-agnostic and can be implemented in any language with HTTP support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "REST APIs serve as backends for any platform type \u2014 web, mobile, desktop, IoT clients, and background workers."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST pattern benefits from HTTP caching mechanisms (ETags, Cache-Control headers) but works without them."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can coexist with async messaging \u2014 synchronous REST endpoints can trigger asynchronous workflows."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST is database-agnostic and works equally well over document, relational, or key-value stores."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST is database-agnostic and works equally well over key-value stores or relational databases."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can expose graph database queries through resource-oriented endpoints with filtering."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs commonly expose time-series data through resource endpoints with timestamp-based filtering."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can expose vector search operations as standard resource endpoints with query parameters."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs commonly serve OLTP workloads with resource CRUD operations, but are not limited to transactional workloads."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can expose analytical query endpoints with filtering and aggregation, though not optimized for OLAP."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs support multi-tenancy through tenant-scoped URL paths, JWT claims, or request headers."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs can expose batch job submission and status endpoints alongside real-time request-reply operations."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs are neutral on distributed transactions \u2014 saga or 2PC coordination happens at the service layer."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST can support basic real-time scenarios via Server-Sent Events (SSE) or long-polling, but WebSocket is preferred."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "REST APIs are commonly used to expose AI/ML inference endpoints; model serving frameworks provide REST interfaces."
+    }
+  ],
+  "defaultConfig": {
+    "pagination_style": "offset",
+    "max_page_size": 100,
+    "versioning_strategy": "uri",
+    "filtering_style": "query_params",
+    "cache_strategy": "etag",
+    "id_format": "uuid",
+    "response_envelope": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "pagination_style": {
+        "type": "string",
+        "enum": [
+          "offset",
+          "cursor",
+          "page_number"
+        ],
+        "description": "Pagination approach: offset (limit/offset, simple but inconsistent with data changes), cursor (opaque token, consistent but complex), page_number (page/size, user-friendly but same issues as offset)"
+      },
+      "max_page_size": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 1000,
+        "description": "Maximum items per page to prevent performance issues and abuse"
+      },
+      "versioning_strategy": {
+        "type": "string",
+        "enum": [
+          "uri",
+          "header",
+          "query_param",
+          "none"
+        ],
+        "description": "API versioning: uri (/v1/resource, explicit and cacheable), header (Accept: application/vnd.api.v1, clean URLs), query_param (?version=1, flexible), none (breaking changes not supported)"
+      },
+      "filtering_style": {
+        "type": "string",
+        "enum": [
+          "query_params",
+          "json_body",
+          "graphql_like"
+        ],
+        "description": "Resource filtering: query_params (?status=active, simple and cacheable), json_body (complex queries, not cacheable), graphql_like (powerful but complex)"
+      },
+      "cache_strategy": {
+        "type": "string",
+        "enum": [
+          "etag",
+          "last_modified",
+          "cache_control",
+          "none"
+        ],
+        "description": "HTTP caching: etag (strong validation, best for REST), last_modified (timestamp-based), cache_control (time-based expiration), none (no caching)"
+      },
+      "id_format": {
+        "type": "string",
+        "enum": [
+          "uuid",
+          "integer",
+          "slug",
+          "composite"
+        ],
+        "description": "Resource identifier format: uuid (globally unique, non-sequential), integer (sequential, predictable), slug (human-readable URLs), composite (hierarchical resources)"
+      },
+      "response_envelope": {
+        "type": "boolean",
+        "description": "Wrap responses in envelope (e.g., {data: {...}, meta: {...}}). True adds metadata flexibility but reduces REST purity; false uses pure REST with HTTP headers for metadata"
+      }
+    }
+  },
+  "warn_nfr": []
+}

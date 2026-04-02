@@ -1,0 +1,387 @@
+{
+  "id": "idp-saml--auth0",
+  "version": "1.0.0",
+  "title": "Auth0 as SAML Identity Provider",
+  "description": "Use Auth0 as a SAML 2.0 Identity Provider for enterprise SSO federation. Auth0 issues signed SAML assertions to your application (acting as Service Provider), handling authentication against enterprise directories (Active Directory, LDAP), social connections, and Auth0 user pools. Requires paid plan \u2014 SAML is not available on Auth0's free tier. Best fit for B2B SaaS applications requiring enterprise customer SSO with minimal ops overhead.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 400.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 240.0,
+      "max": 800.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "auth0"
+    ],
+    "costCeilingCompatibleUsd": 240,
+    "costNotes": "SAML requires Auth0 Professional plan or higher (minimum ~$240/month for B2C, or B2B plan). No SAML on free tier. Pricing scales with MAU and feature tier. Enterprise plan for advanced features (custom domains, unlimited connections).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Auth0 Professional plan starts at ~$240/month covering up to 1,000 MAU with SAML support. B2B/Enterprise plans range $800+/month for larger user bases and additional enterprise connections. Min=240 reflects minimum paid plan with SAML; max=800 reflects moderate B2B usage.",
+      "adoptionCost": "SAML SP configuration is more complex than OAuth2: SP metadata exchange, certificate rotation, attribute mapping, NameID format negotiation, and enterprise directory testing. ~8 hours at $50/hour = $400 with AI tools. More complex than OAuth2 IdP setup due to XML-based protocol and enterprise IT coordination.",
+      "licenseCost": "Auth0 charges on a per-usage SaaS model; no separate license fee. The plan cost covers the SAML IdP service.",
+      "source": "LLM analysis (as of March 2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "identity-provider",
+      "confidence": "high",
+      "reasoning": "Auth0 acts as the SAML IdP, authenticating users and issuing signed SAML assertions to the application's SP."
+    },
+    {
+      "capability": "saml-identity-provider",
+      "confidence": "high",
+      "reasoning": "Auth0 implements the full SAML 2.0 IdP role: metadata endpoint, SSO endpoint, SLO endpoint, and signed assertion issuance."
+    },
+    {
+      "capability": "single-sign-on",
+      "confidence": "high",
+      "reasoning": "Auth0 SAML IdP enables SSO across all applications registered as Service Providers in the same Auth0 tenant."
+    },
+    {
+      "capability": "enterprise-federation",
+      "confidence": "high",
+      "reasoning": "Auth0 federates with enterprise directories (Active Directory via LDAP/ADFS, Google Workspace, Okta, PingFederate) as upstream identity sources."
+    },
+    {
+      "capability": "certificate-management",
+      "confidence": "high",
+      "reasoning": "Auth0 manages the X.509 signing certificates for SAML assertions, including certificate rotation. SPs configure trust via Auth0's metadata endpoint."
+    },
+    {
+      "capability": "mfa",
+      "confidence": "medium",
+      "reasoning": "Auth0 can enforce MFA (TOTP, SMS, push) before issuing SAML assertions, controlled via Auth0 Actions and policies."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Auth0 is a cloud SaaS; both the IdP and SP must reach Auth0 endpoints for SSO and metadata exchange."
+    },
+    {
+      "capability": "enterprise-directory",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Enterprise SSO typically federates against an upstream directory (AD, LDAP, Google Workspace). Auth0 also supports its own user pool without an external directory."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "idp-saml--okta"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "auth",
+    "saml",
+    "sso",
+    "enterprise",
+    "federation",
+    "auth0",
+    "identity",
+    "b2b"
+  ],
+  "availability": {
+    "tier": "pro",
+    "reason": "SAML requires Auth0 paid plan; not available on free tier"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "saml",
+      "reason": "Auth0 SAML IdP pattern is only applicable when SAML is the authentication mechanism. OAuth2/OIDC specs should use idp-oidc--auth0 instead."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Auth0 SLA is 99.99% uptime. Targets above this are not covered by Auth0's contractual guarantees."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "SAML SSO involves browser redirects to Auth0's SSO endpoint plus assertion signing \u2014 minimum p95 latency is ~200ms for the auth flow."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "SAML redirect-based flows and enterprise directory lookups can push p99 latency to 500ms+ under load or with slow upstream directories."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Auth0 is a managed SaaS; RTO depends on Auth0 service availability, not application deployment."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 supports HIPAA via BAA on Enterprise plans. SAML-based authentication workflows are covered."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 is GDPR-compliant with EU data residency options and DPA agreements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 supports CCPA compliance with data subject request handling."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 SOC 2 Type II certification supports SOX audit requirements for access control."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Auth0 is a cloud-agnostic SaaS IdP. SAML federation works regardless of where the Service Provider application is hosted."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "swift",
+        "dart",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "SAML 2.0 is an XML-based standard with SP libraries available in all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api"
+      ],
+      "reason": "SAML SSO is primarily browser-based (web), but mobile apps can use SAML via webview. API-to-API use cases typically prefer OAuth2 bearer tokens."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "auth0"
+      ],
+      "reason": "Pattern requires Auth0 as the SAML IdP. For Okta-based SAML, use idp-saml--okta."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Auth0 supports multi-tenant SAML with per-tenant enterprise connections, a common B2B SaaS pattern."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to caching requirements."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to async messaging requirements."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to AI inference requirements."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to batch processing requirements."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to distributed transaction requirements."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to real-time streaming requirements."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to vector search requirements."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to document store requirements."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to key-value store requirements."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to graph database requirements."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to time-series database requirements."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to OLTP workload requirements."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to OLAP workload requirements."
+    }
+  ],
+  "defaultConfig": {
+    "saml_binding": "post",
+    "name_id_format": "email",
+    "sign_assertions": true,
+    "session_lifetime_hours": 8
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "saml_binding": {
+        "type": "string",
+        "enum": [
+          "post",
+          "redirect"
+        ],
+        "description": "SAML binding for SSO requests. POST binding sends the SAML message in the HTTP body (more secure, no URL length limits). Redirect binding encodes the message in the query string (simpler but exposes assertion data in URLs and server logs). POST is recommended."
+      },
+      "name_id_format": {
+        "type": "string",
+        "enum": [
+          "email",
+          "persistent",
+          "transient",
+          "unspecified"
+        ],
+        "description": "NameID format sent in SAML assertions. email: user's email address (most common for B2B SaaS). persistent: opaque but stable identifier per user per SP. transient: anonymous per-session identifier. unspecified: SP accepts any format. Choose based on SP requirements and privacy considerations."
+      },
+      "sign_assertions": {
+        "type": "boolean",
+        "description": "Whether Auth0 signs individual SAML assertions in addition to the response envelope. Signing assertions provides stronger security guarantees. Required by some strict SPs. Auth0 always signs the response; this controls assertion-level signing."
+      },
+      "session_lifetime_hours": {
+        "type": "integer",
+        "description": "Auth0 session lifetime in hours before re-authentication is required. 8 hours aligns with a typical workday. Shorter sessions improve security; longer sessions reduce friction for enterprise users. Separate from the SP's own session management."
+      }
+    }
+  },
+  "warn_nfr": []
+}

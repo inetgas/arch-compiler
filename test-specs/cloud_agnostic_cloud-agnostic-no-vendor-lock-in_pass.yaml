@@ -1,0 +1,33 @@
+# Cloud - Cloud Agnostic, No Vendor Lock-In
+#
+# A cloud-agnostic TypeScript API spec with no specific cloud vendor. The
+# project has a policy of avoiding vendor lock-in and uses open-source or
+# portable infrastructure only. 99% availability with no SaaS providers.
+# This tests that only truly cloud-agnostic patterns are selected.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - only cloud-agnostic patterns are selected
+#   - no AWS/GCP/Azure-specific patterns are included
+#   - portable open-source infrastructure patterns are preferred
+
+project:
+  name: Cloud-Agnostic Microservice
+  domain: fintech
+functional:
+  summary: Portable microservice with no cloud vendor lock-in
+constraints:
+  platform: api
+  cloud: agnostic
+  language: typescript
+  saas-providers: []
+nfr:
+  availability:
+    target: 0.99
+  data:
+    pii: false
+  latency:
+    p95Milliseconds: 300
+cost:
+  ceilings:
+    monthly_operational_usd: 1000

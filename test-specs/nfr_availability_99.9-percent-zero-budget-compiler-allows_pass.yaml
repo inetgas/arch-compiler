@@ -1,0 +1,28 @@
+# NFR Availability - 99.9% Target with Zero Budget (Compiler Allows)
+#
+# An agnostic API spec combining a high 99.9% availability target with a $0
+# monthly budget. In reality these requirements are contradictory since high
+# availability requires paid infrastructure, but the compiler is intentionally
+# permissive - it does not enforce cost/nfr consistency. This tests that the
+# compiler succeeds and leaves the contradiction for human review.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - high-availability patterns are selected (compiler does not block on cost contradiction)
+#   - the tension between zero budget and high availability is visible in output
+
+nfr:
+  availability:
+    target: 0.999
+cost:
+  ceilings:
+    monthly_operational_usd: 0
+project:
+  name: High Availability + Zero Budget (IMPOSSIBLE)
+  domain: test
+functional:
+  summary: 'Test scenario: High Availability + Zero Budget (IMPOSSIBLE)'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

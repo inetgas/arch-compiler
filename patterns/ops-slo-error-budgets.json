@@ -1,0 +1,217 @@
+{
+  "id": "ops-slo-error-budgets",
+  "version": "1.0.0",
+  "title": "SLOs and Error Budgets",
+  "description": "Define SLOs and error budgets to balance reliability and velocity.",
+  "types": [
+    "ops",
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 4500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "SLO/Error Budget implementation requires monitoring infrastructure: Min ($100) covers basic setup with cloud-native monitoring (CloudWatch, Azure Monitor, or GCP Operations) for small deployments with basic SLI tracking, alerting, and dashboard costs. Max ($5000) represents enterprise-scale implementation with dedicated SLO platforms (Datadog SLO tracking, New Relic, Nobl9), high-volume metrics ingestion, long retention periods, complex multi-service SLO tracking across distributed systems, and potential third-party SLO management tools. Mid-range ($500-1500) typical for medium businesses using combination of open-source (Prometheus/Grafana) with managed services for alerting and visualization.",
+      "adoptionCost": "High complexity implementation: Requires organizational alignment on SLI/SLO definitions (1-2 weeks stakeholder workshops), establishing baseline metrics and historical analysis (2-3 weeks), implementing monitoring instrumentation and alerting infrastructure (3-4 weeks), building error budget policies and enforcement mechanisms (1-2 weeks), and creating runbooks/documentation (1 week). Total 8-12 weeks effort requiring SRE/operations expertise, developer training on SLO-aware development practices, and integration with incident management processes. Cultural shift from 100% uptime mindset to error budget management adds organizational change management overhead. With AI assistance reducing implementation time by 30-40%, estimated $4500 accounts for senior engineer/SRE time and tooling setup.",
+      "licenseCost": "Core pattern is methodology-based with open-source tooling options available (Prometheus, Grafana, OpenTelemetry). While commercial SLO platforms exist (Nobl9 $20k+/year, Datadog SLO features $15-31/host/month), organizations can implement fully with free tools. Cloud provider native monitoring (CloudWatch, Azure Monitor, GCP Operations) included in service costs. License cost $0 assumes open-source stack; organizations may optionally purchase commercial SLO platforms, but these are operational expenses (counted in monthly range) rather than one-time licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "reliability-governance",
+      "confidence": "high",
+      "reasoning": "SLOs and error budgets directly provide a governance framework for managing reliability by setting explicit targets and acceptable failure thresholds, enabling data-driven decisions about feature velocity vs. stability"
+    }
+  ],
+  "requires": [
+    {
+      "capability": "sli-definition",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Error budgets and SLOs are meaningless without defined Service Level Indicators (SLIs) to measure against. SLIs provide the quantitative metrics (latency, availability, error rate) that SLOs set targets for and error budgets track consumption of"
+    }
+  ],
+  "tags": [
+    "sre",
+    "governance"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.95,
+      "reason": "SLOs and error budgets provide most value when targeting high availability; below 95% availability, the overhead of formal SLO tracking may not justify the benefit."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "SLO and error budget tracking is a cloud-agnostic operational practice applicable to any deployment model."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "SLOs and error budgets are operational concepts that apply to systems in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Error budget management applies to any platform type from web services to batch jobs."
+    }
+  ],
+  "defaultConfig": {
+    "slo_target_percentage": 99.9,
+    "measurement_window_days": 30,
+    "error_budget_policy": "halt-deployments",
+    "sli_type": "availability",
+    "alerting_threshold_percentage": 80
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "slo_target_percentage": {
+        "type": "number",
+        "minimum": 90,
+        "maximum": 99.999,
+        "description": "Target SLO percentage (e.g., 99.9% = three nines). Higher targets mean smaller error budgets and stricter reliability requirements. Common values: 99% (consumer), 99.9% (business-critical), 99.95%+ (mission-critical)"
+      },
+      "measurement_window_days": {
+        "type": "integer",
+        "enum": [
+          7,
+          28,
+          30,
+          90
+        ],
+        "description": "Rolling window for SLO measurement. Shorter windows (7 days) react faster to issues but are more volatile. Longer windows (30-90 days) provide stability but slower feedback. 28-30 days is standard practice."
+      },
+      "error_budget_policy": {
+        "type": "string",
+        "enum": [
+          "halt-deployments",
+          "alert-only",
+          "slow-rollouts",
+          "require-approval"
+        ],
+        "description": "Action when error budget is exhausted. halt-deployments: Stop all releases. alert-only: Notify but allow deploys. slow-rollouts: Reduce deployment velocity. require-approval: Manual review for changes."
+      },
+      "sli_type": {
+        "type": "string",
+        "enum": [
+          "availability",
+          "latency",
+          "throughput",
+          "correctness",
+          "composite"
+        ],
+        "description": "Primary Service Level Indicator to measure. availability: Uptime/success rate. latency: Response time percentiles. throughput: Request rate capacity. correctness: Data accuracy. composite: Multiple SLIs combined."
+      },
+      "alerting_threshold_percentage": {
+        "type": "integer",
+        "minimum": 50,
+        "maximum": 100,
+        "description": "Alert when this percentage of error budget is consumed (e.g., 80 = alert at 80% burn). Lower values (50-70%) provide early warning. Higher values (80-90%) reduce alert fatigue but leave less reaction time."
+      }
+    }
+  },
+  "warn_nfr": []
+}

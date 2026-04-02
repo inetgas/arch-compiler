@@ -1,0 +1,413 @@
+{
+  "id": "hosting-managed-paas--vercel",
+  "version": "1.0.0",
+  "title": "Managed Serverless API Hosting on Vercel",
+  "description": "Deploy APIs and serverless functions on Vercel\u2019s edge-distributed platform with zero-config deployments and automatic global CDN. Serverless-only model: no persistent processes; functions have a maximum execution duration per plan tier. First-class support for Next.js including API routes, Edge Functions, and ISR.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 80.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "vercel"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free Hobby tier: 100GB bandwidth/month, 100GB-hours serverless execution, unlimited deployments. Pro plan ($20/month per member) for teams, longer function timeouts (60s), and higher limits.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents Hobby tier usage adequate for low-traffic APIs. Max $80 represents a small team on Vercel Pro ($20/month per member) with moderate traffic.",
+      "adoptionCost": "Very low adoption cost. Vercel has zero-config deployments from Git. ~2 hours setup at $100/hour = $200.",
+      "licenseCost": "No platform fees for Hobby tier. Pro plan is $20/month per team member.",
+      "source": "Manual estimate 2026-03-20"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "Vercel Serverless Functions and Edge Functions provide managed execution of API logic without server management."
+    },
+    {
+      "capability": "serverless-functions",
+      "confidence": "high",
+      "reasoning": "Core Vercel offering: automatic scaling serverless functions invoked per request with no idle costs."
+    },
+    {
+      "capability": "edge-compute",
+      "confidence": "high",
+      "reasoning": "Vercel Edge Functions execute at the CDN edge with sub-millisecond cold starts for latency-sensitive logic."
+    },
+    {
+      "capability": "cdn-distribution",
+      "confidence": "high",
+      "reasoning": "Vercel's global edge network serves API responses from the closest point of presence."
+    },
+    {
+      "capability": "git-based-deployment",
+      "confidence": "high",
+      "reasoning": "Automatic deployments triggered by Git push with preview deployments per pull request."
+    },
+    {
+      "capability": "reduced-ops",
+      "confidence": "high",
+      "reasoning": "Zero server management, automatic TLS, built-in observability, and Git-based workflows eliminate most operational overhead."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Vercel's deployment model is fundamentally Git-based (GitHub/GitLab/Bitbucket).",
+      "optional": true
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Serverless functions are stateless and ephemeral; all persistent state must use external services.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "vercel",
+    "serverless",
+    "api-hosting",
+    "edge"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Vercel is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Vercel's serverless architecture with global edge replication can achieve 99.9% availability; Hobby/Pro tiers lack enterprise SLA for higher targets."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Serverless function cold starts introduce minimum 50ms p95 latency; Edge Functions are faster (~10ms) but have limited APIs."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Serverless cold start variability and resource contention result in p99 latency floor of ~100ms for Node.js functions."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Vercel supports instant rollback to previous deployments via dashboard or CLI, enabling RTO as low as 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Serverless auto-scaling handles high read QPS but Hobby tier bandwidth caps constrain cost-effective operation to ~1000 QPS."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Serverless function invocations for write operations scale automatically but function concurrency caps effective write QPS to ~500."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR-compliant deployments achievable via EU region selection and appropriate data handling; Vercel Pro/Enterprise supports data residency."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compliance is an application-level concern; Vercel hosting does not constrain it."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA BAA available on Vercel Enterprise; not available on Hobby/Pro. Applications on Enterprise can be HIPAA-eligible."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance achievable through appropriate audit logging and access controls at application level on Vercel."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Vercel is a cloud-agnostic SaaS platform abstracting underlying infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Vercel supports serverless functions in Node.js/TypeScript (first-class), Python, Go, and Ruby."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "api",
+        "mobile"
+      ],
+      "reason": "Vercel hosts web applications, API endpoints, and mobile app backends via serverless functions; not suitable for batch jobs, long-running workers, or desktop/IoT backends requiring persistent connections."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "vercel"
+      ],
+      "reason": "Pattern specifically requires Vercel as the API/compute hosting provider."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vercel supports edge caching and ISR for response caching, but pattern works with or without application-level caching."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is supported at application level; Vercel hosting is agnostic to single or multi-tenant architecture."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel serverless functions have strict execution time limits (10s Hobby, 60s Pro) incompatible with batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Serverless stateless execution model does not support distributed transaction coordination requiring persistent connections."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel serverless functions do not support persistent WebSocket connections or long-lived streaming on Hobby/Pro tiers."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vercel can host lightweight AI inference via serverless API routes calling external AI providers."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search via external providers (Pinecone, Supabase) can be called from Vercel API routes."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores are external services; Vercel API routes can connect to any external document database."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vercel KV (Upstash Redis) is available as an add-on; external Redis services also supported."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases are external services; Vercel serverless functions can connect to any external graph database."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases are external services callable from Vercel API routes."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads are supported via external transactional databases called from serverless functions."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Analytical workloads requiring long-running queries exceed serverless function timeout limits."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging via external queues can trigger Vercel serverless functions via webhooks or polling."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "vercel",
+    "plan_tier": "hobby",
+    "function_runtime": "nodejs",
+    "edge_functions": false,
+    "enable_preview_deployments": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "vercel"
+        ],
+        "description": "PaaS provider for managed serverless hosting"
+      },
+      "plan_tier": {
+        "type": "string",
+        "enum": [
+          "hobby",
+          "pro",
+          "enterprise"
+        ],
+        "description": "Vercel plan tier: hobby (free, 10s function timeout), pro ($20/member/month, 60s timeout), enterprise (custom, HIPAA BAA available)"
+      },
+      "function_runtime": {
+        "type": "string",
+        "enum": [
+          "nodejs",
+          "python",
+          "go",
+          "ruby",
+          "edge"
+        ],
+        "description": "Serverless function runtime. Node.js has first-class support. Edge runtime executes at CDN edge with faster cold starts but limited APIs."
+      },
+      "edge_functions": {
+        "type": "boolean",
+        "description": "Enable Edge Functions for middleware at CDN edge. Best for auth checks, redirects, A/B testing."
+      },
+      "enable_preview_deployments": {
+        "type": "boolean",
+        "description": "Create preview deployments for every pull request with unique URLs."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 500,
+      "reason": "Vercel Hobby tier bandwidth (100GB/month) and serverless execution limits may be exhausted at sustained high read QPS.",
+      "message": "hosting-managed-paas--vercel: peak read QPS is {actual} req/s (>500). Hobby tier resource limits may be exhausted mid-month; consider Vercel Pro or dedicated infrastructure."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 200,
+      "reason": "High write QPS via serverless functions is cost-inefficient due to per-invocation billing.",
+      "message": "hosting-managed-paas--vercel: peak write QPS is {actual} req/s (>200). Serverless per-invocation costs may exceed always-on PaaS at this write throughput."
+    }
+  ]
+}

@@ -1,0 +1,470 @@
+{
+  "id": "db-graph--generic",
+  "version": "1.0.0",
+  "title": "Graph Database (Generic)",
+  "description": "Graph database that models data as nodes and typed relationships, enabling efficient traversal of connected data at arbitrary depth. Use when relationship queries (friend-of-friend, fraud rings, dependency graphs, knowledge graphs) dominate over simple key or document lookups.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": []
+  },
+  "provides": [
+    {
+      "capability": "graph-database",
+      "confidence": "high",
+      "reasoning": "This pattern provides a complete graph database system capable of storing and querying data as nodes and relationships. This is more specific than generic storage and indicates the full database capabilities including query processing."
+    },
+    {
+      "capability": "graph-traversal",
+      "confidence": "high",
+      "reasoning": "Graph databases enable efficient navigation through connected data using path queries, shortest path algorithms, and other traversal operations. This is a core distinguishing capability that makes graph databases optimal for connected data."
+    },
+    {
+      "capability": "relationship-queries",
+      "confidence": "high",
+      "reasoning": "Graph databases excel at querying complex relationships between entities, including multi-hop connections and relationship properties. This capability differentiates graph databases from relational or document databases."
+    },
+    {
+      "capability": "pattern-matching",
+      "confidence": "medium",
+      "reasoning": "Graph databases commonly support pattern matching queries to find subgraph structures matching specific patterns. This is a standard feature in most graph database implementations like Neo4j's Cypher pattern matching."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "storage",
+      "confidence": "high",
+      "reasoning": "Graph databases require underlying persistent storage infrastructure to store nodes, edges, properties, and indexes. This is a fundamental requirement for any database system.",
+      "optional": true
+    },
+    {
+      "capability": "compute",
+      "confidence": "high",
+      "reasoning": "Graph traversal algorithms, relationship queries, and pattern matching operations require computational resources to execute. Complex graph queries especially need significant compute capacity for deep or wide searches.",
+      "optional": false
+    }
+  ],
+  "defaultConfig": {
+    "query_language": "cypher",
+    "max_traversal_depth": 5,
+    "index_relationships": true,
+    "consistency_model": "eventual",
+    "replication_factor": 3
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "query_language": {
+        "type": "string",
+        "enum": [
+          "cypher",
+          "gremlin",
+          "sparql"
+        ],
+        "description": "Graph query language: Cypher (Neo4j, declarative), Gremlin (Apache TinkerPop, imperative traversals), SPARQL (RDF/semantic web)"
+      },
+      "max_traversal_depth": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20,
+        "description": "Maximum depth for relationship traversals to prevent runaway queries that could impact performance"
+      },
+      "index_relationships": {
+        "type": "boolean",
+        "description": "Index relationships for faster traversals at the cost of increased storage and write overhead"
+      },
+      "consistency_model": {
+        "type": "string",
+        "enum": [
+          "strong",
+          "eventual",
+          "causal"
+        ],
+        "description": "Consistency model: strong (immediate consistency, lower availability), eventual (high availability, temporary inconsistency), causal (ordered consistency)"
+      },
+      "replication_factor": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5,
+        "description": "Number of data replicas for fault tolerance and read scalability (higher = more resilient but increased storage costs)"
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 5000.0
+    },
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Generic graph database costs vary significantly by implementation and scale. Min ($50): Small development/testing instance on managed services like Neo4j Aura free tier upgrade or AWS Neptune t3.medium ($48/month). Max ($5000): Production-grade cluster with high availability, multiple read replicas, and significant query volume. Enterprise deployments with TigerGraph or Neptune with 4+ r5.4xlarge instances ($1200+ each), storage costs ($0.10/GB-month for 5TB = $500), backup storage, and data transfer can easily reach $5000-10000/month. Mid-range production ($500-1000) covers a single r5.xlarge instance with moderate storage.",
+      "adoptionCost": "High complexity adoption due to paradigm shift from relational/document databases to graph thinking. Requires: (1) Team training on graph data modeling, Cypher/Gremlin query languages, and graph algorithms (40-60 hours, $2000-3000 value with AI assistance reducing from 80+ hours). (2) Data migration and schema design from existing systems (20-40 hours). (3) Query optimization and traversal pattern learning curve. (4) Integration with existing application architecture. AI coding assistants help with query syntax and common patterns but graph modeling expertise still requires human insight. Total: 60-100 developer hours at $50-80/hour blended rate with AI assistance = $3000-4000.",
+      "licenseCost": "Generic pattern can be implemented with open-source options. Neo4j Community Edition (GPLv3) is free for non-commercial use. JanusGraph and Apache TinkerPop are fully open-source (Apache 2.0). Commercial options exist: Neo4j Enterprise ($5000-100000+/year depending on cores/scale), TigerGraph Enterprise ($50000+/year), but free/open-source alternatives are production-viable. For cloud-managed services, costs are usage-based (included in monthly operational costs) rather than separate licenses. Setting base license cost to $0 as open-source options are available.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "graph",
+    "relationships",
+    "traversal"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Graph databases with multi-node clustering achieve up to 99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Complex graph traversals and relationship queries require at least 50ms p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Deep pattern matching queries with complex joins require at least 200ms p99 latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Clustered graph databases with automated failover achieve RTO of at least 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Graph databases like Neo4j handle 360M graph queries per hour at scale with proper indexing."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Graph databases support up to 5,000 read queries per second for complex traversals."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Graph databases support up to 10,000 write queries per second for node and edge mutations."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Graph databases support all tenant isolation strategies from labeled nodes to separate databases."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases can store any type of data including PII with appropriate access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support GDPR compliance through encryption, access controls, and data deletion."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support HIPAA compliance with encryption at rest/transit and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support CCPA compliance through data access controls and deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support SOX compliance with transaction logging and audit trails for financial data."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases provide read-your-writes consistency through session routing and causal consistency modes."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support both strict ACID durability and eventual consistency modes based on configuration."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": true,
+      "reason": "This pattern specifically requires graph database capability for storing and querying connected data."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Graph databases can be deployed on any cloud provider, on-premises, or as managed services."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Graph databases provide client libraries and drivers for all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Graph databases are backend data stores accessible from any application platform via network protocols."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases work with or without additional caching layers for query optimization."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases can be used in both synchronous query patterns and async event-driven architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support AI/ML workloads through relationship analysis and knowledge graph queries."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support multi-tenant architectures through labeled nodes, separate databases, or schema separation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support both real-time queries and batch processing for large-scale graph analytics."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases provide ACID transactions and can participate in distributed transaction coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases can ingest streaming data and support real-time graph traversal queries."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Some graph databases integrate vector search for embedding-based similarity queries alongside graph traversal."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases store properties on nodes which can include document-like nested JSON structures."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support key-value lookups by node ID alongside complex relationship queries."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases can model time-series relationships through temporal edges and time-stamped properties."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support OLTP workloads with transactional writes and real-time relationship queries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases support OLAP workloads through analytical graph algorithms and batch analytics queries."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Graph databases with multi-node clustering achieve up to 99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Complex graph traversals and relationship queries require at least 50ms p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Deep pattern matching queries with complex joins require at least 200ms p99 latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Clustered graph databases with automated failover achieve RTO of at least 1 minute."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Synchronous replication with quorum writes enables near-zero RPO for graph databases."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Graph databases like Neo4j handle 360M graph queries per hour at scale with proper indexing."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Graph databases support up to 5,000 read queries per second for complex traversals."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Graph databases support up to 10,000 write queries per second for node and edge mutations."
+    }
+  ],
+  "warn_nfr": []
+}

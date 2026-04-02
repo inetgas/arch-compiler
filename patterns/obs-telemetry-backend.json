@@ -1,0 +1,257 @@
+{
+  "id": "obs-telemetry-backend",
+  "version": "1.0.0",
+  "title": "Telemetry Backend",
+  "description": "Self-hosted observability backend combining Prometheus (metrics storage and alerting), Grafana (dashboards), and Loki (structured log aggregation). Provides the storage and query layer for traces, metrics, and logs; consumed by instrumentation and monitoring strategy patterns. Preferred when data residency, cost control, or customization requirements preclude a managed SaaS observability backend.",
+  "types": [
+    "ops",
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 30.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp",
+      "on-prem"
+    ],
+    "costCeilingCompatibleUsd": 500,
+    "costNotes": "Self-hosted OSS stack (Prometheus, Grafana, Loki). Min ($30): single-node on small VM. Max ($500): production HA cluster with persistent storage. Commercial SaaS alternatives (Datadog, Grafana Cloud, AWS CloudWatch) will have higher and consumption-based costs.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Self-hosted Prometheus+Grafana+Loki on cloud VMs. Small (1-2 services): t3.small or equivalent ~$15-20/month compute + ~$10/month storage (EBS/PD). Production HA (10-50 services): 2-3 nodes for Prometheus HA + Loki ingester/querier cluster, 50-100GB persistent storage, ~$200-500/month. Does not include data egress costs or commercial support.",
+      "adoptionCost": "Setup includes: (1) provisioning and configuring Prometheus scrape jobs (8-12 hours), (2) Loki + Promtail/OTEL log pipeline configuration (8-12 hours), (3) Grafana dashboard setup and alerting rules (8-16 hours), (4) persistent storage and retention configuration (4-8 hours). Total ~28-48 hours at $40-50/hour blended with AI assistance = ~$1400-2400.",
+      "licenseCost": "Prometheus (Apache 2.0), Grafana (AGPL for OSS edition), Loki (AGPL) \u2014 all free to self-host. No licensing costs for the open-source stack.",
+      "source": "LLM analysis (as of 25-Mar-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "telemetry-backend",
+      "confidence": "high",
+      "reasoning": "This pattern IS the telemetry backend \u2014 it provides the storage and query infrastructure that instrumentation layers export to. Prometheus stores metrics; Loki stores logs; Grafana provides query and visualization."
+    },
+    {
+      "capability": "structured-logging",
+      "confidence": "high",
+      "reasoning": "Loki (part of the Grafana stack) ingests and indexes structured logs shipped via Promtail or the OpenTelemetry Collector. This enables log querying by label and correlation with metrics/traces."
+    },
+    {
+      "capability": "timeseries-storage",
+      "confidence": "high",
+      "reasoning": "Prometheus stores all scraped and pushed metrics as time-series data with configurable retention. Supports PromQL queries over time windows for SLI/SLO calculations and alerting."
+    },
+    {
+      "capability": "event-tracking",
+      "confidence": "high",
+      "reasoning": "The telemetry backend captures and stores discrete events (counter increments, gauge changes, log entries) emitted by applications, providing event-tracking infrastructure for compliance, debugging, and observability purposes."
+    }
+  ],
+  "requires": [],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "obs-telemetry-backend--datadog",
+      "obs-telemetry-backend--grafana-cloud",
+      "obs-telemetry-backend--aws-cloudwatch"
+    ]
+  },
+  "tags": [
+    "observability",
+    "prometheus",
+    "grafana",
+    "loki",
+    "metrics",
+    "logging"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "OSS-only stack, no commercial dependency"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<",
+      "value": 0.9999,
+      "reason": "Self-hosted telemetry backend requires additional HA configuration for 4-nines availability targets. Consider managed observability SaaS at this tier."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.9,
+      "reason": "Telemetry backend is meaningful from 90% availability upward; below that, service reliability is the primary concern, not observability infrastructure."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Telemetry backend is compatible with or without formal audit logging requirements."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Self-hosted Prometheus+Loki restart and WAL replay typically takes 5-15 minutes; RTO targets of 15 minutes or greater are supported without HA mode."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 1000000,
+      "reason": "Prometheus handles millions of time-series samples per hour; Loki scales horizontally for high log ingestion rates."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Prometheus scrapes metrics asynchronously on a pull model; it does not add per-request overhead to application read paths."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Loki log ingestion and Prometheus remote-write are asynchronous background operations that do not constrain application write throughput."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Self-hosted telemetry backend supports GDPR compliance through on-premises data residency and configurable retention policies."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Self-hosted Prometheus+Grafana+Loki can be deployed in HIPAA-compliant environments with proper access controls and encryption."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "On-premises telemetry storage is compatible with CCPA requirements when metric labels and logs are configured to exclude personal data."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Self-hosted telemetry backend supports SOX audit requirements through configurable log retention and access logging."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Prometheus+Grafana+Loki runs on any cloud or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "The telemetry backend is language-agnostic; it receives telemetry from any language via standard protocols (OTLP, Prometheus scrape, Loki push API)."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "A telemetry backend is applicable to any platform type that emits metrics, logs, or traces."
+    }
+  ],
+  "defaultConfig": {
+    "metrics_retention_days": 15,
+    "log_retention_days": 7,
+    "backend_ha": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "metrics_retention_days": {
+        "type": "integer",
+        "enum": [
+          7,
+          15,
+          30,
+          90,
+          365
+        ],
+        "description": "How long Prometheus retains metrics data. Longer retention requires more disk. 15 days covers most incident lookback windows without excessive cost."
+      },
+      "log_retention_days": {
+        "type": "integer",
+        "enum": [
+          1,
+          3,
+          7,
+          14,
+          30
+        ],
+        "description": "How long Loki retains log data. Shorter retention reduces storage costs significantly; use tiering (ops-low-cost-observability) for longer compliance retention."
+      },
+      "backend_ha": {
+        "type": "boolean",
+        "description": "Deploy Prometheus and Loki in HA mode (multiple replicas). Increases cost and operational complexity but prevents observability blind spots during backend restarts."
+      }
+    }
+  },
+  "warn_nfr": []
+}

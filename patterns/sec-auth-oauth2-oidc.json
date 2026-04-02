@@ -1,0 +1,437 @@
+{
+  "id": "sec-auth-oauth2-oidc",
+  "version": "1.0.0",
+  "title": "OAuth2/OIDC for API Authorization",
+  "description": "Use OAuth2 flows with OIDC identity tokens; standardized claims; delegated auth support.",
+  "types": [
+    "ops",
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "OAuth2/OIDC implementation costs vary by approach. Min=$0 for self-hosted open-source solutions (Keycloak, ORY Hydra) on existing infrastructure or using managed identity providers with generous free tiers (Auth0: 7,000 MAU free, AWS Cognito: 50,000 MAU free, Azure AD B2C: 50,000 MAU free). Max=$2000 represents production scenarios: (1) Managed SaaS at scale - Auth0 Developer Pro ($240/mo) + 50K additional MAU (~$500/mo), Okta Workforce ($2-5 per user/mo for 100-500 users = $200-2500), or (2) Self-hosted with HA infrastructure - 3x t3.medium instances ($100/mo), RDS PostgreSQL multi-AZ ($150/mo), load balancer ($25/mo), monitoring/logging ($50/mo). Enterprise scenarios with 100K+ MAUs or advanced features (fraud detection, custom domains, premium support) can exceed $5000/mo but represent outlier cases.",
+      "adoptionCost": "Medium-high complexity implementation. OAuth2/OIDC requires: (1) Understanding multiple grant flows (authorization code, client credentials, PKCE, refresh tokens) - 20-40 hours learning/design, (2) Integration across frontend and backend services - token validation, claims parsing, scope enforcement - 40-80 hours development, (3) Security configuration - CORS, redirect URIs, token rotation, secure storage - 20-40 hours, (4) Provider setup and configuration (managed service or self-hosted deployment with HA, backups, SSL) - 20-40 hours, (5) Testing flows including edge cases and security scenarios - 20-30 hours, (6) Documentation and runbooks - 10-20 hours. Total: 130-250 developer hours at $150/hour blended rate = $19,500-37,500 for complete greenfield implementation. However, with AI coding assistants (GitHub Copilot, ChatGPT) reducing boilerplate by 40-60%, mature libraries (passport.js, Spring Security, MSAL), and reference implementations, realistic adoption cost is $3500-5000 for teams with moderate auth experience, representing 20-35 focused development hours plus integration/testing time.",
+      "licenseCost": "OAuth2 and OIDC are open standards (RFC 6749, RFC 6750, OpenID Connect Core 1.0) with no licensing fees. Implementation options are predominantly open-source: Keycloak (Apache 2.0), ORY Hydra (Apache 2.0), IdentityServer (Apache 2.0/.NET), Authelia (Apache 2.0), or cloud-native managed services with pay-per-use models (no upfront license). Commercial options like Auth0, Okta, Ping Identity use subscription models (counted in monthly costs, not one-time licenses). Enterprise support contracts for open-source solutions (Red Hat SSO for Keycloak: $50-100K/year) are optional operational costs, not mandatory licenses. Standard implementation requires no proprietary software licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "token-based-authentication",
+      "confidence": "high",
+      "reasoning": "OAuth2/OIDC provides authentication through standardized tokens (access tokens, ID tokens, refresh tokens) that verify user identity and session state. This is the core mechanism for establishing authenticated sessions."
+    },
+    {
+      "capability": "api-authorization",
+      "confidence": "high",
+      "reasoning": "OAuth2 explicitly handles API authorization through scopes and access tokens, enabling fine-grained access control to protected resources. This is a fundamental purpose of the OAuth2 protocol."
+    },
+    {
+      "capability": "delegated-authorization",
+      "confidence": "high",
+      "reasoning": "OAuth2 enables delegated authorization where resource owners grant third-party applications limited access to their resources without sharing credentials. This is the defining feature that distinguishes OAuth2 from simple authentication."
+    },
+    {
+      "capability": "single-sign-on",
+      "confidence": "high",
+      "reasoning": "OIDC provides single sign-on capability across multiple applications by allowing users to authenticate once with an identity provider and reuse that authentication session. The ID token and session management features enable seamless SSO experiences."
+    },
+    {
+      "capability": "user-identification",
+      "confidence": "high",
+      "reasoning": "OAuth2/OIDC resolves authenticated user identity through the ID token sub claim and UserInfo endpoint, providing a verified user identifier to the application."
+    },
+    {
+      "capability": "role-based-access-control",
+      "confidence": "high",
+      "reasoning": "OAuth2/OIDC carries role and scope claims in tokens that downstream services use to enforce role-based access control, making RBAC a direct output of this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "identity-provider",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "OAuth2/OIDC requires an authorization server (identity provider) to authenticate users, issue tokens, validate credentials, and manage the authorization flow. This is an essential architectural dependency."
+    },
+    {
+      "capability": "secure-token-storage",
+      "confidence": "high",
+      "reasoning": "Secure storage is critical for protecting access tokens, refresh tokens, and ID tokens from unauthorized access and theft. Improper token storage is a major security vulnerability in OAuth2 implementations.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "sec-auth-api-key",
+      "sec-auth-jwt-stateless",
+      "sec-auth-password",
+      "sec-auth-saml-sso",
+      "sec-auth-session-cookies",
+      "sec-auth-mtls-service-mesh"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "security",
+    "auth"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "oauth2_oidc",
+      "reason": "This pattern specifically implements OAuth2 flows with OIDC identity tokens for delegated authorization."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC is compatible with both audit logging enabled and disabled configurations for API authorization."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC is compatible with GDPR requirements when proper consent and token expiration policies are configured."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC supports HIPAA-compliant applications when combined with appropriate token encryption and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC works with CCPA requirements through proper token claim management and user consent flows."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC is compatible with SOX compliance when audit trails of authorization decisions are maintained."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "OAuth2/OIDC is a protocol-level standard that works across all cloud providers and on-premises environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "OAuth2/OIDC libraries and implementations are available in all major programming languages for token validation."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "cli",
+        "iot"
+      ],
+      "reason": "OAuth2/OIDC applies to any platform requiring user authentication or API authorization including web, mobile, and IoT."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC works with or without caching, though token caching improves performance by reducing IdP calls."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC authorization is compatible with both synchronous and asynchronous messaging patterns via bearer tokens."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC secures AI inference APIs and non-AI APIs equally through token-based authorization."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC is commonly used in multi-tenant applications via tenant claims but also works for single-tenant systems."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC supports batch job authorization through service account tokens and client credentials flow."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC authorization is independent of distributed transaction coordination for application data."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC secures real-time streaming endpoints through bearer tokens in WebSocket or SSE connections."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC authorizes vector search API requests independent of the search technology or embedding model."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC works with any database type including document stores for API authorization."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC is compatible with key-value store backends for application data access authorization."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC authorizes graph database queries through API tokens independent of the graph traversal logic."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC secures time-series database APIs through standard token-based authorization mechanisms."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC supports OLTP workloads by authorizing transactional API requests with low-latency token validation."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OAuth2/OIDC authorizes OLAP analytical queries through API tokens with appropriate scope and claim-based access control."
+    }
+  ],
+  "defaultConfig": {
+    "oauth_flow": "authorization_code",
+    "token_storage": "secure_storage",
+    "pkce_enabled": true,
+    "scope_strategy": "minimal",
+    "token_refresh": "automatic",
+    "id_token_validation": "strict"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "oauth_flow": {
+        "type": "string",
+        "enum": [
+          "authorization_code",
+          "client_credentials",
+          "device_code",
+          "implicit"
+        ],
+        "description": "OAuth2 flow type. authorization_code for user-facing apps with backend, client_credentials for service-to-service, device_code for input-constrained devices, implicit for legacy SPAs (not recommended)."
+      },
+      "token_storage": {
+        "type": "string",
+        "enum": [
+          "secure_storage",
+          "memory_only",
+          "encrypted_storage",
+          "httponly_cookie"
+        ],
+        "description": "Where to store access tokens. secure_storage uses platform keychain/keystore, memory_only for high-security short sessions, encrypted_storage for persistence, httponly_cookie for web apps to prevent XSS."
+      },
+      "pkce_enabled": {
+        "type": "boolean",
+        "description": "Enable Proof Key for Code Exchange. Required for mobile/desktop apps and SPAs to prevent authorization code interception attacks. Recommended for all public clients."
+      },
+      "scope_strategy": {
+        "type": "string",
+        "enum": [
+          "minimal",
+          "role_based",
+          "resource_specific"
+        ],
+        "description": "How to request OAuth scopes. minimal requests only necessary permissions, role_based maps to user roles, resource_specific requests granular resource access."
+      },
+      "token_refresh": {
+        "type": "string",
+        "enum": [
+          "automatic",
+          "manual",
+          "sliding_window"
+        ],
+        "description": "Token refresh strategy. automatic refreshes before expiry, manual requires explicit refresh calls, sliding_window extends session on activity."
+      },
+      "id_token_validation": {
+        "type": "string",
+        "enum": [
+          "strict",
+          "standard",
+          "relaxed"
+        ],
+        "description": "OIDC ID token validation level. strict validates all claims including nonce/at_hash, standard validates signature and standard claims, relaxed for testing only."
+      }
+    }
+  },
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "OAuth2/OIDC can support up to four nines availability when combined with token caching and IdP redundancy."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "OAuth2/OIDC adds at least 50ms p95 latency due to JWT signature verification and token validation overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "P99 latency includes occasional IdP network calls for token refresh or validation resulting in 100ms+ tail latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "OAuth2/OIDC enables fast recovery of 1-5 minutes as auth state is externalized in tokens and IdP can restart quickly."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 10000000,
+      "reason": "Pattern supports up to 10M jobs/hour when using local JWT validation with cached public keys for signature verification."
+    }
+  ],
+  "requires_constraints": [],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "OAuth2/OIDC adds token validation overhead (JWT signature verification, claim parsing). At very low QPS (<1 req/s), simpler auth mechanisms like basic auth or API keys may be more appropriate.",
+      "message": "sec-auth-oauth2-oidc: peak read QPS is {actual} req/s (<1). OAuth2/OIDC token validation overhead may be unnecessary; consider simpler auth like API keys for low-traffic APIs."
+    }
+  ]
+}

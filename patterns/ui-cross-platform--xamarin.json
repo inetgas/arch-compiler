@@ -1,0 +1,392 @@
+{
+  "id": "ui-cross-platform--xamarin",
+  "version": "1.0.0",
+  "title": "Xamarin/.NET MAUI: Cross-Platform UI Framework",
+  "description": "Build iOS, Android, and Windows apps using Xamarin (legacy) or .NET MAUI (modern) with C# and .NET ecosystem; strong for enterprises with .NET investments.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 100.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "xamarin"
+    ],
+    "costCeilingCompatibleUsd": 100,
+    "costNotes": "Primary costs are development labor. Good for enterprises already using .NET.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Client-side framework with no direct infrastructure costs. Min ($0) represents basic development with free Visual Studio Community and free app store accounts during development. Max ($100) represents production app store fees: Apple Developer Program ($99/year \u2248 $8/mo) + Google Play ($25 one-time, amortized \u2248 $2/mo) + optional Microsoft Partner Network benefits. Does not include optional Visual Studio Enterprise subscription ($250/mo per user) or CI/CD services (Azure DevOps free tier available, paid starts at $30-50/mo).",
+      "adoptionCost": "High complexity due to: (1) Learning curve for .NET MAUI's new architecture if coming from Xamarin ($1000 - significant API changes, new project structure, handler-based rendering); (2) Platform-specific customization knowledge required for iOS/Android native features ($800 - handlers, platform effects, native embedding); (3) Cross-platform UI paradigm requires understanding layout differences and responsive design across mobile/desktop ($600); (4) Tooling setup and configuration across Windows/Mac build environments ($400); (5) Migration effort for existing Xamarin projects ($200). Lower than pure native development ($8000+) but higher than web-based cross-platform solutions like React Native ($1500-2000) due to smaller community and fewer learning resources. AI coding assistants moderately helpful but .NET MAUI-specific examples are less common than React/Flutter.",
+      "licenseCost": "Framework is open source under MIT license with no licensing fees. Visual Studio Community edition is free for individuals and small teams (under 5 users, <$1M revenue). Apple/Google developer accounts ($99/year and $25 one-time respectively) are operational costs, not licenses. Optional Visual Studio Enterprise ($5,999/year per user) or Professional ($499/year per user) would add costs but are not required for .NET MAUI development. Core runtime and framework are completely free for commercial use.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cross-platform-ui",
+      "confidence": "strong",
+      "reasoning": "Core capability of Xamarin/.NET MAUI - enables single codebase to generate native UIs across iOS, Android, and Windows platforms."
+    },
+    {
+      "capability": "mobile-ui",
+      "confidence": "strong",
+      "reasoning": "Primary use case is building native mobile applications for iOS and Android with shared UI code."
+    },
+    {
+      "capability": "dotnet-ecosystem",
+      "confidence": "strong",
+      "reasoning": "Xamarin/.NET MAUI is built on .NET runtime and provides full access to .NET libraries, NuGet packages, and tooling ecosystem."
+    },
+    {
+      "capability": "windows-desktop",
+      "confidence": "medium",
+      "reasoning": ".NET MAUI explicitly supports Windows desktop applications as a target platform alongside mobile platforms."
+    },
+    {
+      "capability": "native-ui",
+      "confidence": "high",
+      "reasoning": "Xamarin/.NET MAUI compiles to native platform controls rather than web views, providing true native UI experiences and performance."
+    },
+    {
+      "capability": "platform-abstraction",
+      "confidence": "high",
+      "reasoning": "The framework abstracts platform-specific APIs through a unified interface, allowing developers to write cross-platform code while still accessing native features."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "csharp-expertise",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "C# is the primary development language for Xamarin/.NET MAUI applications; developers must be proficient in C# language features and idioms."
+    },
+    {
+      "capability": "dotnet-knowledge",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Understanding of .NET runtime, BCL (Base Class Library), project structure, and tooling is essential for effective development."
+    },
+    {
+      "capability": "xaml-skills",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "XAML is the declarative markup language used for defining UI layouts in Xamarin/.NET MAUI; developers need proficiency in XAML syntax and data binding."
+    },
+    {
+      "capability": "mobile-development-environment",
+      "confidence": "high",
+      "reasoning": "Developers need Visual Studio or VS Code with specific workloads, SDKs, and emulators installed to build and test Xamarin/.NET MAUI applications.",
+      "optional": true
+    },
+    {
+      "capability": "platform-sdk-knowledge",
+      "confidence": "medium",
+      "reasoning": "While the framework provides abstraction, developers often need understanding of iOS/Android platform concepts, permissions, and lifecycle for advanced scenarios and platform-specific features.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "ui-cross-platform",
+      "ui-cross-platform--flutter",
+      "ui-cross-platform--react-native"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ui",
+    "frontend",
+    "mobile",
+    "desktop",
+    "cross-platform",
+    "xamarin",
+    "dotnet-maui",
+    "csharp",
+    "dotnet"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Xamarin/.NET MAUI are open source; documentation freely available."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Client-side framework availability limited by device issues, OS fragmentation, and app crashes beyond framework control."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 60,
+      "reason": "Xamarin mobile apps require app store review for updates (iOS: 24-48hrs, Android: hours) constraining recovery time."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports GDPR compliance through data handling controls, encryption, and user consent management in mobile apps."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support HIPAA compliance with proper encryption, secure storage, and secure data transmission implementation."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports CCPA compliance through user consent management and data access controls in client applications."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support SOX compliance through audit trails and secure data handling in financial applications."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Xamarin/.NET MAUI is a client-side cross-platform UI framework that runs on devices independent of cloud infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "==",
+      "value": "csharp",
+      "reason": "Xamarin and .NET MAUI are C#-only frameworks built exclusively on the .NET ecosystem."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "mobile",
+        "desktop"
+      ],
+      "reason": "Xamarin/.NET MAUI targets iOS and Android mobile platforms, plus Windows and macOS desktop applications."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports local caching through .NET caching libraries and platform-specific cache mechanisms."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can integrate with async messaging through .NET client libraries for various message brokers and event systems."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports AI/ML inference on device through .NET libraries like ML.NET and platform-specific ML frameworks."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Client applications can support multi-tenancy through user authentication and data isolation at the application level."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can implement batch processing for local data operations and background tasks using platform background services."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Client applications can participate in distributed transactions through backend service orchestration and coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports real-time streaming through SignalR, WebSockets, and platform-specific push notification services."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can integrate vector search through .NET client libraries connecting to backend vector databases."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can use document stores through .NET client libraries for MongoDB, CosmosDB, and local document databases."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can use local key-value stores like SQLite or platform preferences for device-local data storage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can integrate graph databases through .NET client libraries for Neo4j and other graph database providers."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can integrate time-series databases through .NET client libraries for InfluxDB, TimescaleDB, and similar systems."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Client applications can support OLTP workloads through local database access and backend transactional service integration."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Client applications can support OLAP workloads through data visualization and backend analytics service integration."
+    }
+  ],
+  "defaultConfig": {
+    "framework_version": "dotnet-maui",
+    "ui_paradigm": "xaml",
+    "target_platforms": [
+      "ios",
+      "android"
+    ],
+    "native_interop": "bindings",
+    "architecture_pattern": "mvvm"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "framework_version": {
+        "type": "string",
+        "enum": [
+          "xamarin-forms",
+          "dotnet-maui"
+        ],
+        "description": "Xamarin.Forms is legacy (maintenance mode), .NET MAUI is the modern unified framework with better performance, hot reload, and single project structure. Choose Xamarin.Forms only for existing codebases."
+      },
+      "ui_paradigm": {
+        "type": "string",
+        "enum": [
+          "xaml",
+          "csharp-markup",
+          "blazor-hybrid"
+        ],
+        "description": "XAML is declarative UI markup (most common), C# Markup is fluent code-based UI, Blazor Hybrid embeds Blazor web components in native shell. XAML offers best tooling, Blazor enables web skill reuse."
+      },
+      "target_platforms": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "ios",
+            "android",
+            "windows",
+            "macos",
+            "tizen"
+          ]
+        },
+        "description": "Target deployment platforms. iOS/Android are primary mobile targets, Windows/macOS for desktop. More platforms increase testing complexity but maximize reach."
+      },
+      "native_interop": {
+        "type": "string",
+        "enum": [
+          "bindings",
+          "platform-specifics",
+          "dependency-service",
+          "custom-renderers"
+        ],
+        "description": "Strategy for accessing native APIs. Bindings wrap native libraries, Platform-specifics use conditional compilation, DependencyService uses DI for platform code, Custom Renderers override UI controls. Complexity increases left to right."
+      },
+      "architecture_pattern": {
+        "type": "string",
+        "enum": [
+          "mvvm",
+          "mvc",
+          "mvp",
+          "clean-architecture"
+        ],
+        "description": "Application architecture pattern. MVVM (Model-View-ViewModel) is recommended with data binding, MVC/MVP are alternatives, Clean Architecture adds layered separation for large apps with complex business logic."
+      }
+    }
+  },
+  "warn_nfr": []
+}

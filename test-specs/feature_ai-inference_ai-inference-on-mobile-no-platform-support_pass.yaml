@@ -1,0 +1,23 @@
+# Feature - AI Inference on API Platform with Caching (No Platform Support Issue)
+#
+# An API spec with both ai_inference and caching feature flags enabled. Neither
+# feature is inherently unsupported on the API platform, but this scenario
+# was originally labeled as testing a feature without platform support. The
+# compiler allows the combination and selects patterns for both features.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - AI inference and caching patterns are both selected for the API platform
+#   - no platform compatibility errors
+
+constraints:
+  platform: api
+  features:
+    ai_inference: true
+    caching: true
+project:
+  name: Feature Without Platform Support
+  domain: test
+functional:
+  summary: 'Test scenario: Feature Without Platform Support'
+nfr: {}

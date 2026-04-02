@@ -1,0 +1,279 @@
+{
+  "id": "policy-audit-export-mandatory",
+  "version": "1.0.0",
+  "title": "Policy: Mandatory audit export",
+  "description": "Policy pattern that activates when compliance audit export is required, enforcing that all architectural outputs include audit-friendly artifacts (ADRs, cost summaries, decision rationale) exportable in a machine-readable format. Ensures compiled outputs satisfy external audit or governance review requirements.",
+  "types": [
+    "ops"
+  ],
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 2000.0
+    },
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Enforced by policy.",
+    "adoptionCost": 3000.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "This policy mandates audit export infrastructure which requires storage and processing. Minimum ($50) assumes small-scale deployment with basic log storage (S3/Azure Blob ~$10), CloudWatch/Azure Monitor logs (~$20), and basic log aggregation (~$20). Maximum ($2000) represents enterprise-scale with high-volume audit logs requiring: dedicated log storage with retention policies ($200-500), enterprise SIEM or log management platform (Splunk Cloud, Datadog, Elastic Cloud $800-1200), cross-region replication for compliance ($100-200), and data transfer costs for exports ($100). The actual cost depends on: audit volume (events/day), retention period (90 days vs 7 years), compliance requirements (SOC2, HIPAA, PCI-DSS), and whether using cloud-native tools or third-party platforms.",
+      "adoptionCost": "Medium-high complexity adoption cost. Implementation requires: (1) Configuring audit logging across all services and infrastructure (4-8 hours, $400-800), (2) Setting up centralized log aggregation and export pipelines (8-16 hours, $800-1600), (3) Implementing retention policies and compliance controls (4-8 hours, $400-800), (4) Creating audit reports and dashboards for compliance teams (4-8 hours, $400-800), (5) Documentation and policy enforcement tooling (OPA, Sentinel) configuration (4-8 hours, $400-800). Total: 24-48 hours at $100/hour with AI assistance. Without AI, this would be $5000-8000. Complexity factors include: multiple cloud providers/services to instrument, regulatory requirements interpretation, integration with existing compliance workflows, and testing export formats for auditor requirements.",
+      "licenseCost": "Policy enforcement itself has no license cost as it's an organizational requirement using standard tooling. Most cloud providers include audit logging capabilities (AWS CloudTrail, Azure Activity Log, GCP Cloud Audit Logs) at no additional license cost. If using policy-as-code tools, open-source options exist (OPA, Cloud Custodian). However, note that enterprise SIEM/log management platforms often required for comprehensive audit export may have separate licensing ($10,000-50,000/year for enterprise), but those are captured in the monthly operational costs rather than one-time license fees. The policy itself is internal and requires no external licensing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "audit-export",
+      "confidence": "high",
+      "reasoning": "This pattern enforces organizational policy to generate and export audit-friendly artifacts for compliance purposes. The capability name clearly indicates the pattern's primary function of providing audit export functionality."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "structured-logging",
+      "confidence": "high",
+      "reasoning": "To export audit artifacts, the pattern needs access to system logs and audit trails. Without underlying logging capabilities, there would be no audit data to export.",
+      "optional": false
+    },
+    {
+      "capability": "event-tracking",
+      "confidence": "high",
+      "reasoning": "Audit exports typically require tracking of significant events and user actions. The pattern needs event tracking to capture the activities that must be included in compliance reports.",
+      "optional": true
+    },
+    {
+      "capability": "object-storage",
+      "confidence": "high",
+      "reasoning": "The pattern requires storage capabilities for the exported audit files. Object storage provides the necessary persistence layer for audit artifacts.",
+      "optional": false
+    },
+    {
+      "capability": "data-serialization",
+      "confidence": "high",
+      "reasoning": "Audit data must be formatted into compliance-friendly formats like JSON, CSV, or XML. Data serialization capability is essential to transform audit information into these standardized formats.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "policy",
+    "compliance",
+    "paid"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General organizational compliance pattern applicable to regulated systems"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Pattern supports up to four nines availability with audit export overhead for compliance operations."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires audit logging to be enabled as mandatory prerequisite for audit export functionality."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both PII and non-PII data through audit export compliance mechanisms."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports GDPR compliance through mandatory audit exports but does not require GDPR to be applicable."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports HIPAA compliance through mandatory audit exports but does not require HIPAA to be applicable."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports CCPA compliance through mandatory audit exports but does not require CCPA to be applicable."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports SOX compliance through mandatory audit exports but does not require SOX to be applicable."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both read-your-writes consistency models for audit export operations."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires strict durability for tamper-evident audit records and compliance-grade export integrity."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Audit export is a cross-cutting organizational policy applicable to any cloud environment with object storage."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "This is a policy pattern that enforces audit export requirements at the infrastructure layer independent of language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Audit export policies apply universally to all platform types requiring compliance and governance tracking."
+    }
+  ],
+  "defaultConfig": {
+    "export_format": "json",
+    "export_frequency": "daily",
+    "retention_period_days": 90,
+    "export_destination": "cloud-storage",
+    "include_resource_changes": true,
+    "include_access_logs": true,
+    "include_data_access": false,
+    "encryption_required": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "export_format": {
+        "type": "string",
+        "enum": [
+          "json",
+          "csv",
+          "parquet",
+          "syslog"
+        ],
+        "description": "Format for audit exports. JSON for flexibility, CSV for spreadsheets, Parquet for analytics, Syslog for SIEM integration"
+      },
+      "export_frequency": {
+        "type": "string",
+        "enum": [
+          "realtime",
+          "hourly",
+          "daily",
+          "weekly"
+        ],
+        "description": "How often audit logs are exported. Realtime for critical compliance, daily for standard requirements, weekly for archival"
+      },
+      "retention_period_days": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 2555,
+        "description": "Number of days to retain audit exports. Common: 90 days (standard), 365 days (annual), 2555 days (7 years for regulatory)"
+      },
+      "export_destination": {
+        "type": "string",
+        "enum": [
+          "cloud-storage",
+          "siem",
+          "data-warehouse",
+          "dedicated-bucket"
+        ],
+        "description": "Where audit exports are sent. Cloud storage for archival, SIEM for security monitoring, data warehouse for analytics"
+      },
+      "include_resource_changes": {
+        "type": "boolean",
+        "description": "Include infrastructure and resource configuration changes in audit exports"
+      },
+      "include_access_logs": {
+        "type": "boolean",
+        "description": "Include authentication and authorization events in audit exports"
+      },
+      "include_data_access": {
+        "type": "boolean",
+        "description": "Include data read/write operations in audit exports. Higher storage cost but required for data compliance (GDPR, HIPAA)"
+      },
+      "encryption_required": {
+        "type": "boolean",
+        "description": "Enforce encryption of audit exports at rest and in transit"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "At very low job volumes (<10/hour), the overhead of mandatory audit export infrastructure may outweigh compliance benefits for non-regulated workloads.",
+      "message": "policy-audit-export-mandatory: peak_jobs_per_hour is {actual} (<10/hour). Audit export overhead may be disproportionate for such low-volume workloads."
+    }
+  ]
+}

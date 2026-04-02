@@ -1,0 +1,313 @@
+{
+  "id": "genai-inference--huggingface",
+  "version": "1.0.0",
+  "title": "HuggingFace: GenAI Inference API",
+  "description": "Access 150k+ open-source AI models via HuggingFace Inference API; generous free tier; strong for NLP, embeddings, and text generation.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 750.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "huggingface"
+    ],
+    "costCeilingCompatibleUsd": 1000,
+    "costNotes": "Best value for prototyping with free tier. Production workloads benefit from dedicated Inference Endpoints for better performance and SLA.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($0): Free tier provides 1,000 requests/day on community models, suitable for prototyping and small-scale applications. Max ($2,000): Production scenarios with multiple dedicated Inference Endpoints. Typical breakdown: 1-2 small models at $9/mo each ($18), 2-3 medium models at $20-30/mo ($60-90), 1-2 large models at $60-100/mo ($120-200), plus high-volume API usage on serverless endpoints ($500-1,500 for millions of requests). Enterprise workloads with multiple production models, GPU-accelerated endpoints, and guaranteed uptime can reach $2,000+/mo. Mid-range usage (small startup with 2-3 dedicated endpoints) typically runs $100-300/mo.",
+      "adoptionCost": "Low-medium complexity integration. HuggingFace provides excellent documentation, simple REST API, and well-maintained Python/JavaScript SDKs. Basic integration (single model, API calls) takes 4-8 hours ($200-400). However, production readiness requires: selecting appropriate models for use cases (8-16 hours research/testing), implementing error handling and fallback strategies (4-8 hours), setting up monitoring and rate limiting (4-8 hours), and optimizing for cost/performance trade-offs (4-8 hours). Total: 20-40 hours at $25-50/hr blended rate. With AI coding assistants (Copilot, Cursor), implementation time reduces by 30-40%, but model selection and optimization still require domain expertise. Minimal DevOps overhead compared to self-hosted ML infrastructure.",
+      "licenseCost": "No license cost. HuggingFace operates on a consumption-based pricing model with a generous free tier. The platform itself is free to use, and individual models follow their respective open-source licenses (Apache 2.0, MIT, etc.). No upfront licenses, enterprise agreements, or minimum commitments required. Costs are purely usage-based (API calls, dedicated endpoint runtime). Even commercial use of community models on the free tier has no licensing fees, though rate limits apply. Paid tiers are subscription-based for compute resources, not software licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "genai-inference",
+      "confidence": "strong",
+      "reasoning": "Core capability - this pattern specifically provides generative AI inference through HuggingFace's API with access to 150k+ models."
+    },
+    {
+      "capability": "text-generation",
+      "confidence": "strong",
+      "reasoning": "HuggingFace supports text generation models including LLMs and GPT-style models accessible through the Inference API."
+    },
+    {
+      "capability": "text-embeddings",
+      "confidence": "high",
+      "reasoning": "HuggingFace hosts thousands of text embedding models (sentence-transformers, BERT variants) explicitly mentioned as a strength in the pattern description."
+    },
+    {
+      "capability": "nlp-tasks",
+      "confidence": "strong",
+      "reasoning": "HuggingFace excels at NLP tasks including sentiment analysis, NER, classification, and summarization as highlighted in the pattern description."
+    },
+    {
+      "capability": "image-generation",
+      "confidence": "medium",
+      "reasoning": "HuggingFace Inference API supports image generation models like Stable Diffusion and DALL-E variants."
+    },
+    {
+      "capability": "model-hosting",
+      "confidence": "high",
+      "reasoning": "This pattern provides hosted access to 150k+ open-source models through managed inference infrastructure, which is the core capability rather than diversity itself."
+    },
+    {
+      "capability": "embedding-generation",
+      "confidence": "high",
+      "reasoning": "HuggingFace hosts thousands of dedicated embedding models (sentence-transformers, BERT variants) and provides embedding generation as a first-class inference task through its API."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "http-client",
+      "confidence": "high",
+      "reasoning": "HuggingFace Inference API uses REST/HTTP endpoints, requiring an HTTP client to make API requests to remote inference services.",
+      "optional": true
+    },
+    {
+      "capability": "secrets-management",
+      "confidence": "strong",
+      "optional": false,
+      "reasoning": "Required to securely store and retrieve HuggingFace API tokens and authentication keys needed for API access."
+    },
+    {
+      "capability": "rate-limiting",
+      "confidence": "medium",
+      "reasoning": "The free tier imposes rate limits and quotas that applications must handle to avoid service disruptions and throttling.",
+      "optional": false
+    },
+    {
+      "capability": "error-handling",
+      "confidence": "high",
+      "reasoning": "Essential for production use to handle API errors, timeouts, model loading delays, and quota exceeded responses from the external service.",
+      "optional": true
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "medium",
+      "reasoning": "Required to handle transient failures and cold model starts common with serverless inference APIs, ensuring reliability.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "genai-inference--fal",
+      "genai-inference--openai",
+      "genai-inference--replicate",
+      "genai-inference--anthropic"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ai",
+    "genai",
+    "inference",
+    "nlp",
+    "embeddings",
+    "text-generation",
+    "huggingface",
+    "open-source",
+    "saas"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Pattern for public SaaS with free tier; documentation freely available."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "External SaaS API dependency limits maximum availability guarantee to 99%."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "GenAI model inference involves complex computations requiring minimum 500ms p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "P99 tail latencies for GenAI inference workloads typically require at least 1000ms due to model complexity."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Recovery from HuggingFace API outages requires service restoration time of at least 5 minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "HuggingFace enterprise tier supports maximum ~36M jobs/hour based on API rate limits."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Hugging Face Inference API does not offer a HIPAA BAA on standard tiers; PHI must not be sent to the API."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "==",
+      "value": false,
+      "reason": "Hugging Face standard tier lacks SOX audit trail and data governance controls."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "HuggingFace Inference API is cloud-agnostic SaaS accessible from any cloud provider or on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "HuggingFace provides official SDKs and REST API supporting all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Cloud-based SaaS API can be invoked from any platform type via HTTP requests."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "huggingface"
+      ],
+      "reason": "Pattern specifically requires Huggingface as the backend provider"
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically requires AI inference capability as its core purpose."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "huggingface",
+    "tier": "free",
+    "task_type": "text-generation",
+    "use_cache": true,
+    "wait_for_model": false,
+    "service_auth_method": "api_key"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "huggingface"
+        ],
+        "description": "Inference provider - HuggingFace Inference API for access to 150k+ open-source models"
+      },
+      "tier": {
+        "type": "string",
+        "enum": [
+          "free",
+          "pro",
+          "enterprise"
+        ],
+        "description": "HuggingFace tier: free (rate-limited, shared infra), pro (higher limits, faster), enterprise (dedicated endpoints, SLA)"
+      },
+      "task_type": {
+        "type": "string",
+        "enum": [
+          "text-generation",
+          "text-classification",
+          "embeddings",
+          "summarization",
+          "translation"
+        ],
+        "description": "Primary AI task type to optimize model selection and endpoint configuration for"
+      },
+      "use_cache": {
+        "type": "boolean",
+        "description": "Enable response caching for identical requests to reduce latency and costs; disable for real-time variability"
+      },
+      "wait_for_model": {
+        "type": "boolean",
+        "description": "Wait for cold-start model loading (slower first request) vs fail-fast on unavailable models"
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "api_key"
+        ],
+        "description": "Service credential method used to authenticate to the LLM provider API. Always api_key \u2014 stored in environment variable, never in code."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "At <10 jobs/hour, external API overhead and cold start delays outweigh benefits; simpler local inference or caching may be more efficient.",
+      "message": "genai-inference--huggingface: peak_jobs_per_hour is {actual} (<10). External API overhead may outweigh benefit for very low throughput use cases."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "Huggingface processes data on external servers. Sending PII to third-party APIs may violate compliance requirements (GDPR).",
+      "message": "genai-inference--huggingface: spec indicates PII handling, but Huggingface API processes data externally which may violate data residency or compliance requirements."
+    }
+  ]
+}

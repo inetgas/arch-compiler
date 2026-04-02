@@ -1,0 +1,21 @@
+# Platform - React Native / Flutter Mobile App
+#
+# A mobile platform spec using Dart as the language (Flutter framework), with
+# no specific cloud or nfr requirements set. This tests that mobile-specific
+# patterns (cross-platform UI, offline sync, push notifications) are selected
+# and web/API-only patterns are excluded.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - mobile/Flutter patterns compatible with dart language are selected
+#   - web and API-only patterns are not selected
+
+constraints:
+  platform: mobile
+  language: dart
+project:
+  name: Mobile Platform
+  domain: test
+functional:
+  summary: 'Test scenario: Mobile Platform'
+nfr: {}

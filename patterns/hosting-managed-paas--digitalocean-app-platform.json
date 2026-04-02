@@ -1,0 +1,477 @@
+{
+  "id": "hosting-managed-paas--digitalocean-app-platform",
+  "version": "1.0.0",
+  "title": "Managed Web/API Hosting on DigitalOcean App Platform",
+  "description": "Deploy APIs and background workers on DigitalOcean App Platform with automatic Git-driven deployments, managed database add-ons, and built-in monitoring. Predictable usage-based pricing; suited to teams wanting a simpler operational model than AWS/Azure without sacrificing managed infrastructure.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 5.0,
+      "max": 100.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "digitalocean-app-platform"
+    ],
+    "costCeilingCompatibleUsd": 5,
+    "costNotes": "No free tier; minimum $5/month for Basic tier (512MB RAM, 1 vCPU). Predictable fixed pricing makes budgeting straightforward.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $5/month represents the Basic tier (512MB RAM, 1 vCPU) suitable for prototypes, development environments, or low-traffic APIs. Max $100/month represents a typical production setup with 2-3 Professional tier apps ($12/month each) plus a managed database ($15-25/month for basic PostgreSQL) and potentially a static site component. For reference: Basic=$5, Professional=$12, Production=$50 per component. Unlike AWS/GCP with granular pricing, DigitalOcean uses fixed tiers making costs highly predictable but with no free tier option.",
+      "adoptionCost": "Low adoption cost due to straightforward implementation. Git-based deployment requires minimal configuration (app spec YAML file), automatic builds from GitHub/GitLab/Bitbucket, and managed infrastructure eliminates DevOps overhead. Estimated 4-8 hours for initial setup including: connecting repository, configuring environment variables, setting up build commands, and understanding deployment workflows. Simpler than Kubernetes ($3000+) or custom AWS ECS setups ($1500+), comparable to Heroku or Render. Main effort is in application preparation rather than platform learning.",
+      "licenseCost": "No platform licensing fees or subscription costs beyond usage-based pricing. DigitalOcean App Platform charges only for the compute/database tiers selected with no additional platform fees, enterprise minimums, or vendor lock-in costs. All platform features (Git integration, CI/CD, monitoring, autoscaling) are included in the tier pricing. No proprietary tooling required - standard Git workflows and open-source buildpacks.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "This pattern specifically provides managed hosting for APIs on DigitalOcean App Platform, handling infrastructure, deployments, and scaling automatically."
+    },
+    {
+      "capability": "built-in-monitoring",
+      "confidence": "medium",
+      "reasoning": "DigitalOcean App Platform includes monitoring capabilities out of the box, which is a concrete capability this pattern provides."
+    },
+    {
+      "capability": "automatic-deployment",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly mentions automatic deployments from Git, which is a key capability it provides."
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "high",
+      "reasoning": "The description specifically mentions managed databases as part of what this pattern provides through the DigitalOcean platform."
+    },
+    {
+      "capability": "background-worker-hosting",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly states it can deploy background workers, not just APIs, making this a distinct capability."
+    },
+    {
+      "capability": "git-based-deployment",
+      "confidence": "high",
+      "reasoning": "The pattern specifically provides Git-based deployment integration, which is a concrete workflow capability."
+    },
+    {
+      "capability": "platform-as-a-service",
+      "confidence": "high",
+      "reasoning": "DigitalOcean App Platform is fundamentally a PaaS offering that abstracts infrastructure management, which is the core capability pattern being used."
+    },
+    {
+      "capability": "predictable-pricing",
+      "confidence": "high",
+      "reasoning": "The pattern emphasizes a $5/month starter tier with predictable pricing as a key characteristic, making cost predictability a concrete capability it provides."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Since the pattern uses automatic deployments from Git, it requires the application code to be in a Git repository.",
+      "optional": true
+    },
+    {
+      "capability": "containerized-application",
+      "confidence": "high",
+      "reasoning": "DigitalOcean App Platform deploys applications as containers, so the application needs to be containerizable or conform to supported buildpacks.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "digitalocean",
+    "api-hosting"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "DigitalOcean App Platform is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "DigitalOcean App Platform on paid tiers provides up to 99.99% availability with managed infrastructure and load balancing."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Managed PaaS with container orchestration and platform routing introduces minimum 50ms p95 latency overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Platform overhead, autoscaling delays, and cold starts result in minimum 200ms p99 latency floor."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Git-based automatic deployments with health checks enable rapid rollbacks in 2-3 minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 500000,
+      "reason": "Platform scales to approximately 500K jobs/hour on higher tiers with multiple worker instances."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Managed PaaS platform with moderate scaling limits supports up to 1000 read QPS for cost-optimized hosting."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Write throughput limited to 500 QPS due to managed platform resource constraints and cost-optimized tier sizing."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "App Platform supports all standard authentication mechanisms through application code and reverse proxy configuration."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DigitalOcean provides GDPR-compliant infrastructure and data processing agreements with EU data residency options."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DigitalOcean offers HIPAA Business Associate Agreements for healthcare applications requiring compliance."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Platform supports CCPA compliance through data residency controls and application-level data management features."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance can be achieved through audit logging, access controls, and change management processes."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "DigitalOcean App Platform is a specific cloud provider but abstracts infrastructure details for cloud-agnostic deployments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "go",
+        "php",
+        "ruby",
+        "java",
+        "kotlin",
+        "scala",
+        "rust",
+        "csharp"
+      ],
+      "reason": "App Platform supports these languages natively through buildpacks and custom Dockerfiles for containerized workloads."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Platform hosts web applications, REST/GraphQL APIs, and background workers as long-running services."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "digitalocean-app-platform"
+      ],
+      "reason": "Pattern specifically requires digitalocean-app-platform as the backend provider"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Caching can be implemented using managed Redis add-ons or in-memory application caching as needed."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging can be integrated through managed message queues or third-party services connected to the platform."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AI inference workloads can run on App Platform workers or integrate with external AI services via API."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is implemented at application level with support for various isolation patterns through database design."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "App Platform is designed for long-running services and APIs, not ephemeral batch jobs or scheduled tasks."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Distributed transactions can be implemented using saga patterns or two-phase commit protocols at application level."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Platform is optimized for request-response patterns, not continuous real-time streaming or high-frequency data flows."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search can be integrated through managed Postgres with pgvector extension or external vector database services."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores like MongoDB can be used through managed database add-ons or external MongoDB Atlas integration."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value stores like Redis are available through managed database add-ons on App Platform or external services."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases can be integrated through external managed services or self-hosted instances connected to the platform."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases can be integrated through external services or Postgres with TimescaleDB extension support."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads are well-supported through managed PostgreSQL and MySQL databases with standard transactional guarantees."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workloads can be handled through read replicas or integration with external analytical database services."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "digitalocean-app-platform",
+    "instance_size": "basic",
+    "instance_count": 1,
+    "auto_scaling": false,
+    "database_type": "none",
+    "deployment_trigger": "git-push"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "digitalocean-app-platform"
+        ],
+        "description": "PaaS provider for managed hosting"
+      },
+      "instance_size": {
+        "type": "string",
+        "enum": [
+          "basic",
+          "professional",
+          "dedicated"
+        ],
+        "description": "Instance tier: basic ($5-12/mo, shared CPU), professional ($12-96/mo, dedicated CPU), dedicated (custom pricing, isolated resources)"
+      },
+      "instance_count": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20,
+        "description": "Number of instances to run. Multiple instances provide high availability and load distribution."
+      },
+      "auto_scaling": {
+        "type": "boolean",
+        "description": "Enable automatic horizontal scaling based on CPU/memory usage. Available on professional tier and above."
+      },
+      "database_type": {
+        "type": "string",
+        "enum": [
+          "none",
+          "postgresql",
+          "mysql",
+          "redis",
+          "mongodb"
+        ],
+        "description": "Managed database to provision: PostgreSQL/MySQL ($15+/mo), Redis ($15+/mo), MongoDB ($15+/mo), or none for external database"
+      },
+      "deployment_trigger": {
+        "type": "string",
+        "enum": [
+          "git-push",
+          "manual",
+          "api"
+        ],
+        "description": "Deployment method: automatic on git push, manual via dashboard, or programmatic via API"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At very low QPS (<1 req/s), managed PaaS overhead and $5/month cost may not be justified compared to simpler serverless options.",
+      "message": "hosting-managed-paas--digitalocean-app-platform: peak read QPS is {actual} req/s (<1). For such low traffic, serverless options may be more cost-effective than $5/month PaaS."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 800,
+      "reason": "Approaching the 1000 QPS upper limit where the platform may struggle to scale cost-effectively compared to dedicated infrastructure.",
+      "message": "hosting-managed-paas--digitalocean-app-platform: peak read QPS is {actual} req/s (>800). Approaching platform limits (1000 QPS); consider IaaS or higher-performance cloud for better cost/performance at scale."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">",
+      "value": 0.999,
+      "reason": "For availability targets above 99.9%, the cost-optimized PaaS tier may not provide adequate infrastructure redundancy without significant additional cost.",
+      "message": "hosting-managed-paas--digitalocean-app-platform: availability target is {actual} (>99.9%). Cost-optimized PaaS may require higher-tier plans or multi-region setup to reliably achieve this SLA."
+    }
+  ]
+}

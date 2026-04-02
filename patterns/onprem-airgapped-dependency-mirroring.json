@@ -1,0 +1,324 @@
+{
+  "id": "onprem-airgapped-dependency-mirroring",
+  "version": "1.0.1",
+  "title": "Air-gapped dependency mirroring and offline builds",
+  "description": "Mirrors upstream OS package repositories (apt, yum/dnf), language package registries (PyPI, npm, Maven Central), and container base images to internal infrastructure. Ensures offline, reproducible builds by eliminating runtime dependency on external network access \u2014 distinct from artifact promotion workflows handled by the registry pattern.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 2000.0,
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 5000.0
+    },
+    "preferredProviders": [
+      "n/a"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Generally not compatible with $0 opex unless org already has shared infra.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Minimum represents a small air-gapped environment with basic mirroring: storage for package mirrors (~500GB at $0.10/GB = $50), container registry storage (~200GB at $0.10/GB = $20), compute for 2-3 mirror servers (3x $40/month = $120), network infrastructure ($10). Maximum represents enterprise-scale deployment: multi-terabyte storage for comprehensive mirrors (5TB at $0.08/GB = $400), redundant mirror infrastructure across multiple sites (10 servers at $150/month = $1500), enterprise container registry cluster ($1000), high-performance NAS/SAN storage ($1500), backup systems ($400), monitoring and management tools ($200). Does not include bandwidth costs for initial synchronization or hardware depreciation in on-prem environments.",
+      "adoptionCost": "Very high complexity due to multiple specialized components. Initial setup requires: (1) Infrastructure planning and architecture design for mirror topology (40 hours at $150/hr = $6000) - determining what to mirror, sync schedules, storage sizing, network design; (2) Implementation of multiple mirror types: OS package mirrors (yum/apt), language-specific registries (npm, PyPI, Maven), container registries (Docker/OCI), git repository mirrors (20-30 hours at $150/hr = $3000-$4500); (3) CI/CD pipeline reconfiguration to use internal mirrors (10 hours = $1500); (4) Security hardening, access control, and audit logging setup (8 hours = $1200); (5) Documentation and runbooks for operations team (8 hours = $1200); (6) Training for development and operations teams on new workflows (4 hours = $600). Total ranges $7000-$9000. With AI coding assistant, can reduce scripting and configuration time by ~15%, bringing estimate to $8000. High complexity stems from need for deep understanding of multiple package ecosystems, air-gap security requirements, and operational procedures.",
+      "licenseCost": "Primarily open-source solutions available (Artifactory OSS, Nexus Repository OSS, Pulp, mirroring scripts) making core functionality $0. However, enterprise air-gapped environments typically require: (1) Commercial container registry with vulnerability scanning and security features (JFrog Artifactory Pro or Nexus Repository Pro: $1500-$3000/year for small team, $10000+ for enterprise); (2) Optional: Commercial mirror management tools for automation and monitoring ($500-$2000/year); (3) Backup and disaster recovery software licenses ($500-$1000). Estimate assumes mid-tier commercial registry license ($2000/year) to ensure security compliance and support requirements typical in air-gapped environments. Fully open-source approach possible but requires significantly more operational overhead. Enterprise deployments often exceed $10000/year in tooling costs.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "offline-builds",
+      "confidence": "high",
+      "reasoning": "This pattern directly enables building software without internet access by mirroring all required dependencies internally, which is the core purpose of air-gapped environments."
+    },
+    {
+      "capability": "dependency-mirroring",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly establishes internal mirrors for OS packages, language dependencies, and container images, making dependency-mirroring a fundamental capability it provides."
+    },
+    {
+      "capability": "reproducible-builds",
+      "confidence": "high",
+      "reasoning": "The pattern description explicitly mentions enabling reproducible builds by maintaining consistent internal mirrors of all dependencies, ensuring builds can be replicated deterministically."
+    },
+    {
+      "capability": "supply-chain-security",
+      "confidence": "medium",
+      "reasoning": "Controlling all dependencies through internal mirrors provides security benefits by allowing vetting and validation of dependencies before they enter the build environment, reducing supply chain risks."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "artifact-registry",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "An artifact registry is essential for storing and serving the mirrored dependencies, OS packages, and container images that enable the air-gapped builds. This is the infrastructure foundation this pattern depends on."
+    },
+    {
+      "capability": "persistent-storage",
+      "confidence": "high",
+      "reasoning": "Mirroring large quantities of dependencies, packages, and container images requires significant persistent storage infrastructure to maintain the complete mirror repositories.",
+      "optional": false
+    },
+    {
+      "capability": "network-isolation",
+      "confidence": "high",
+      "reasoning": "The air-gapped environment must be properly secured and isolated from external networks to ensure dependencies can only be sourced from internal mirrors and prevent unauthorized outbound access.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "on-prem",
+    "air-gapped",
+    "supply-chain",
+    "dependencies",
+    "offline"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Pattern achieves up to 99% availability but requires maintenance windows for mirror synchronization and updates."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 60,
+      "reason": "Recovery requires re-syncing mirror repositories and validating package integrity, taking at least 60 minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1440,
+      "reason": "Mirror synchronization typically runs daily, resulting in up to 24 hours of potential data loss for new packages."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both audited and non-audited mirror access depending on organizational security requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern provides eventual consistency for mirror synchronization and does not constrain application consistency requirements."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern ensures reproducible builds with versioned, immutable mirror snapshots supporting both strict and relaxed durability needs."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "on-prem",
+      "reason": "Air-gapped dependency mirroring is specifically designed for on-premises environments without outbound internet access."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Pattern provides language-agnostic infrastructure for mirroring dependencies across all programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Pattern provides platform-agnostic dependency mirroring infrastructure for build pipelines across all application platforms."
+    }
+  ],
+  "defaultConfig": {
+    "mirror_scope": "full",
+    "os_package_systems": [
+      "apt",
+      "yum"
+    ],
+    "language_registries": [
+      "npm",
+      "pypi",
+      "maven"
+    ],
+    "container_registry": "harbor",
+    "sync_strategy": "scheduled",
+    "vulnerability_scanning": true,
+    "retention_policy": "all-versions"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "mirror_scope": {
+        "type": "string",
+        "enum": [
+          "full",
+          "curated",
+          "on-demand"
+        ],
+        "description": "Full mirrors entire registries (high storage, complete coverage), curated mirrors only approved packages (security control, manual overhead), on-demand caches packages as requested (low storage, initial build delays)"
+      },
+      "os_package_systems": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "apt",
+            "yum",
+            "apk",
+            "zypper"
+          ]
+        },
+        "description": "Operating system package managers to mirror for base image and system dependency support"
+      },
+      "language_registries": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "npm",
+            "pypi",
+            "maven",
+            "nuget",
+            "rubygems",
+            "cargo",
+            "go-proxy"
+          ]
+        },
+        "description": "Language-specific package registries to mirror for application dependency resolution"
+      },
+      "container_registry": {
+        "type": "string",
+        "enum": [
+          "harbor",
+          "artifactory",
+          "nexus",
+          "gitlab-registry"
+        ],
+        "description": "Container registry solution for mirroring base images. Harbor is CNCF open-source with vulnerability scanning, Artifactory/Nexus are enterprise universal repositories, GitLab Registry integrates with CI/CD"
+      },
+      "sync_strategy": {
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "continuous",
+          "manual"
+        ],
+        "description": "Scheduled syncs at intervals (predictable, may lag upstream), continuous syncs in real-time (current packages, higher bandwidth), manual syncs on-demand (full control, operational overhead)"
+      },
+      "vulnerability_scanning": {
+        "type": "boolean",
+        "description": "Enable automated vulnerability scanning of mirrored packages and container images before making them available to developers"
+      },
+      "retention_policy": {
+        "type": "string",
+        "enum": [
+          "all-versions",
+          "latest-only",
+          "time-based",
+          "usage-based"
+        ],
+        "description": "All-versions keeps complete history (high storage, full reproducibility), latest-only saves space (forces upgrades), time-based retains packages for N days, usage-based keeps frequently accessed versions"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 1,
+      "reason": "At very low update rates (<1 write/s), the overhead of maintaining dependency mirrors, sync processes, and storage infrastructure may outweigh the benefits compared to simpler air-gapped solutions like manual package vetting.",
+      "message": "onprem-airgapped-dependency-mirroring: peak write QPS is {actual} req/s (<1). Mirror infrastructure overhead may not be justified at this low update rate; consider manual package vetting instead."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<",
+      "value": 0.9,
+      "reason": "Dependency mirroring infrastructure adds complexity (mirror sync, storage, registry services). For very low availability requirements (<90%), simpler air-gapped approaches like vendored dependencies may be more appropriate.",
+      "message": "onprem-airgapped-dependency-mirroring: availability target is {actual} (<90%). The complexity of mirror infrastructure may not be justified; consider simpler vendoring approaches."
+    }
+  ]
+}

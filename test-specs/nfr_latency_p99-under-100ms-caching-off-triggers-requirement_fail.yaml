@@ -1,0 +1,35 @@
+# NFR Latency - P99 Under 100ms Without Caching Triggers Unmet Requirement
+#
+# API with a very tight p99 latency target of 50ms activates
+# caching-required-low-latency (threshold: p99 <= 100ms), but caching is
+# disabled. The pattern activates via supports_nfr but its requires rule
+# (caching == true) fails, causing compilation to exit with an error.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - caching-required-low-latency IS activated (p99Milliseconds <= 100)
+#   - requires rule FAILS because constraints.features.caching == false
+
+project:
+  name: Ultra-Low Latency API
+  domain: gaming
+functional:
+  summary: Matchmaking API targeting p99 < 50ms but with caching disabled
+constraints:
+  platform: api
+  cloud: aws
+  language: go
+  features:
+    caching: false
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 20
+    p99Milliseconds: 50
+  throughput:
+    peak_query_per_second_read: 100
+    peak_query_per_second_write: 10
+cost:
+  ceilings:
+    monthly_operational_usd: 1000

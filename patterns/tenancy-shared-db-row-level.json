@@ -1,0 +1,507 @@
+{
+  "id": "tenancy-shared-db-row-level",
+  "version": "1.0.0",
+  "title": "Multi-Tenancy: Shared DB with Row-Level Isolation",
+  "description": "Single database; tenant_id + row-level security; simplest ops; hardest isolation guarantees.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 3000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Shared database multi-tenancy requires a single database instance serving all tenants. Min ($50) represents a small-scale deployment with t3.micro RDS PostgreSQL (~$15-20) + basic monitoring + minimal compute for 5-50 tenants. Max ($3000) represents production-grade setup: r5.xlarge RDS instance with Multi-AZ ($500-800), enhanced monitoring, automated backups, read replicas for query isolation ($300-500), additional IOPS for mixed tenant workloads ($200-400), connection pooling service like RDS Proxy ($50-100), and moderate compute tier ($1000-1300). Row-level security (RLS) adds query overhead requiring more powerful database instances than schema-per-tenant approaches. Costs scale with total data volume and query load, not tenant count, making this most economical at scale.",
+      "adoptionCost": "Medium-high complexity implementation. Core tasks include: (1) Database schema design with tenant_id columns across all tables (8-16 hours, $800-1600), (2) Implementing and testing row-level security policies or application-level filtering logic (16-24 hours, $1600-2400), (3) Building tenant context management and middleware to inject tenant_id into all queries (8-12 hours, $800-1200), (4) Creating data migration scripts and seeding strategies (4-8 hours, $400-800), (5) Implementing cross-tenant data leak prevention tests and audit logging (8-12 hours, $800-1200). Total: 44-72 hours. The 'hardest isolation guarantees' noted in description requires extensive testing for query injection vulnerabilities, ensuring tenant context never leaks, and validating RLS policies don't degrade. With AI coding assistants reducing boilerplate by 30-40%, estimate settles at $2500. Lower than database-per-tenant but higher than shared-everything due to security criticality.",
+      "licenseCost": "No licensing costs for the pattern itself. Row-level security is natively supported in open-source databases: PostgreSQL (RLS policies since 9.5), MySQL (views/stored procedures), and cloud-managed variants (RDS, Cloud SQL, Azure Database). Application-level row filtering requires no special licenses. Commercial database features like Oracle VPD (Virtual Private Database) could add $5000-50000+ but are unnecessary\u2014open-source solutions are production-ready and widely adopted. Pattern is agnostic to specific database vendor, defaulting to open-source tooling.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "multi-tenancy",
+      "confidence": "high",
+      "reasoning": "This pattern directly provides multi-tenancy functionality by isolating tenant data within a shared database using tenant_id columns."
+    },
+    {
+      "capability": "operational-simplicity",
+      "confidence": "high",
+      "reasoning": "Managing a single database for all tenants is operationally simpler than managing multiple databases or schemas, as explicitly stated in the pattern's 'simplest ops' characteristic."
+    },
+    {
+      "capability": "cost-efficiency",
+      "confidence": "high",
+      "reasoning": "Shared database resources across all tenants reduce infrastructure costs compared to database-per-tenant or schema-per-tenant patterns."
+    },
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "Row-level security is the defining mechanism of this pattern \u2014 every tenant's data is isolated within shared tables using PostgreSQL RLS policies keyed on a tenant_id column."
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "This pattern requires a tenant_id on every row and enforces tenant context via session variables or JWT claims \u2014 tenant identification is a core operational requirement of the pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "Row-level security mechanisms are essential to enforce tenant isolation and prevent cross-tenant data access when all tenants share the same tables in a single database.",
+      "optional": false
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "The pattern requires middleware or framework support to consistently inject and maintain tenant_id context throughout the application stack, ensuring all queries are properly filtered.",
+      "optional": true
+    },
+    {
+      "capability": "read-latency-reduction",
+      "confidence": "high",
+      "reasoning": "With all tenants sharing the same tables, careful index design and query optimization are required to maintain acceptable performance as tenant count and data volume grow.",
+      "optional": true
+    },
+    {
+      "capability": "careful-isolation-implementation",
+      "confidence": "high",
+      "reasoning": "This pattern has the hardest isolation guarantees as noted in the description, requiring meticulous implementation to prevent data leakage between tenants in the shared database environment.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "tenancy-schema-per-tenant",
+      "tenancy-database-per-tenant"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "tenancy",
+    "database",
+    "isolation"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "==",
+      "value": "shared-db-row-level",
+      "reason": "Pattern explicitly implements shared database with row-level security for tenant isolation as its core design."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Single shared database creates a single point of failure affecting all tenants, limiting availability to two nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Relational database with row-level security checks introduces minimum 5ms p95 latency for query policy evaluation."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Row-level security policy evaluation and tenant filtering under load creates p99 tail latency of at least 20ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Single database simplifies recovery operations with failover to read replica or backup restore taking at least 5 minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Single database enables synchronous replication and continuous WAL archiving with zero data loss capability."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Single database instance limits total throughput across all tenants due to shared connection pool and CPU resources."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Shared database with row-level filtering on every query limits read throughput to 10000 QPS across all tenants."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Single database write bottleneck with row-level security checks limits write throughput to 5000 QPS across all tenants."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports audit logging through database triggers or application layer regardless of requirement."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports PII data with row-level encryption and access controls when required by compliance."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can implement GDPR compliance through row-level policies for data access, deletion, and portability."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports HIPAA compliance with row-level security and audit trails when properly configured with encryption."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can implement CCPA data privacy controls through tenant-scoped row filtering and deletion policies."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports SOX compliance with row-level audit logging and immutable record tracking for financial data."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single database provides strong consistency and read-your-writes semantics; pattern is compatible regardless of whether the spec requires it."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single database supports configurable durability with synchronous commits and replication for strict requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Row-level security pattern works on any cloud provider or on-premises with modern relational database support."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Database architecture pattern can be implemented in any language with database client library support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Backend database architecture pattern supports any platform type accessing the shared database with row-level security."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with async messaging for background processing across tenants using tenant-scoped consumers."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports AI inference workloads with tenant-scoped training data and results stored with row-level isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports batch processing with tenant-scoped queries and row-level filtering for bulk operations."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Single database simplifies distributed transactions to local ACID transactions within the shared database instance."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports real-time streaming with database change data capture filtered by tenant_id for event publishing."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports vector search with tenant-scoped embedding queries using row-level security on vector columns."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can use JSONB columns in relational DB or document stores with row-level security on document collections."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports key-value access patterns with composite keys including tenant_id for row-level isolation."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can implement graph queries with tenant-scoped node and edge filtering using row-level security policies."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports time-series data with tenant_id partitioning and row-level security for temporal query isolation."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern efficiently handles OLTP workloads with indexed tenant_id for fast row-level filtering on transactional queries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports OLAP workloads but shared resources may impact analytical query performance across tenants."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern explicitly requires multi-tenancy support as it is designed specifically for multi-tenant database isolation."
+    }
+  ],
+  "defaultConfig": {
+    "isolation_mechanism": "application_layer",
+    "tenant_id_column": "tenant_id",
+    "enforce_rls": false,
+    "connection_pooling": "per_application",
+    "query_validation": "runtime"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "isolation_mechanism": {
+        "type": "string",
+        "enum": [
+          "application_layer",
+          "database_rls",
+          "hybrid"
+        ],
+        "description": "How tenant isolation is enforced. application_layer: App code adds WHERE tenant_id filters (simplest, most portable). database_rls: Database-native row-level security policies (stronger guarantees, DB-specific). hybrid: Both layers for defense-in-depth."
+      },
+      "tenant_id_column": {
+        "type": "string",
+        "enum": [
+          "tenant_id",
+          "organization_id",
+          "account_id",
+          "workspace_id"
+        ],
+        "description": "Name of the column used to identify tenant ownership. Choose based on your domain terminology for consistency across the application."
+      },
+      "enforce_rls": {
+        "type": "boolean",
+        "description": "Enable database-native row-level security policies (PostgreSQL RLS, etc.). Provides stronger isolation guarantees but requires database support and careful policy management."
+      },
+      "connection_pooling": {
+        "type": "string",
+        "enum": [
+          "per_application",
+          "per_tenant",
+          "hybrid"
+        ],
+        "description": "Connection pool strategy. per_application: Single shared pool (simplest, most efficient). per_tenant: Isolated pools per tenant (better noisy neighbor protection, more overhead). hybrid: Shared pool with tenant-aware routing."
+      },
+      "query_validation": {
+        "type": "string",
+        "enum": [
+          "runtime",
+          "orm_layer",
+          "prepared_statements"
+        ],
+        "description": "How tenant_id filtering is validated. runtime: Manual WHERE clauses (flexible, error-prone). orm_layer: ORM global filters/scopes (safer, framework-dependent). prepared_statements: Parameterized queries with tenant context (balanced approach)."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 100,
+      "reason": "At very low QPS, the complexity of row-level security and tenant context management outweighs the cost savings of a shared database; single-tenant or simpler isolation may be better.",
+      "message": "tenancy-shared-db-row-level: peak read QPS is {actual} req/s (<100). Row-level security overhead may not be justified at this scale; consider simpler architecture."
+    }
+  ]
+}

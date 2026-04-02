@@ -1,0 +1,442 @@
+{
+  "id": "data-stream-processing",
+  "version": "1.0.0",
+  "title": "Stream Processing",
+  "description": "Processes unbounded event streams continuously as data arrives, applying transformations, windowed aggregations, or stateful enrichments with latency in the millisecond-to-second range. Differs from batch processing in that results are produced incrementally rather than after a bounded job completes. Suited to real-time analytics, fraud detection, and live dashboards; demands expertise in state management, exactly-once semantics, and backpressure handling.",
+  "types": [
+    "design",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 4000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Stream processing requires continuous compute resources and message queuing infrastructure. Minimum ($100) represents a small-scale deployment with managed streaming services like AWS Kinesis (1-2 shards at ~$15-30/month), Apache Kafka on small EC2 instances (t3.medium ~$30/month), or Azure Event Hubs basic tier (~$10-20/month), plus compute for stream processors (1-2 small containers/VMs at $30-50/month). Maximum ($5000) represents production-scale deployment with high-throughput message brokers (10+ Kinesis shards at $500+/month or managed Kafka cluster at $500-1500/month), autoscaling stream processing workers (10-20 medium instances at $1500-2500/month), state stores (managed Redis/DynamoDB at $200-500/month), monitoring/observability tools ($200-300/month), and data egress costs for high-volume scenarios ($300-700/month). Stream processing inherently requires 24/7 infrastructure unlike batch processing.",
+      "adoptionCost": "Stream processing has high adoption complexity due to paradigm shift from batch/request-response to event-driven continuous processing. Implementation requires: (1) Learning streaming concepts - watermarks, windowing, event time vs processing time, exactly-once semantics (20-30 hours, $1000-1500 with senior engineer rates); (2) Selecting and configuring streaming platform (Kafka, Kinesis, Pulsar, Flink) with proper partitioning, retention, and fault tolerance (15-20 hours, $750-1000); (3) Implementing stream processing logic with stateful operations, joins, and aggregations (25-35 hours, $1250-1750); (4) Setting up monitoring for lag, throughput, error rates, and backpressure (10-15 hours, $500-750); (5) Testing edge cases like late arrivals, out-of-order events, and failover scenarios (10-15 hours, $500-750). Total assumes team has moderate distributed systems experience. Without it, costs could reach $6000-8000. With AI coding assistants helping with boilerplate and pattern implementation, realistic estimate is $4000.",
+      "licenseCost": "Stream processing can be implemented entirely with open-source tools: Apache Kafka, Apache Flink, Apache Spark Streaming, Apache Pulsar, and cloud-managed equivalents (AWS Kinesis, Azure Event Hubs, GCP Pub/Sub) charge only usage fees with no license costs. While commercial distributions exist (Confluent Platform, Cloudera), robust production deployments are achievable with community editions. Enterprise support contracts (e.g., Confluent at $50k-200k/year) are optional. Pattern assumes standard open-source tooling with pay-as-you-go cloud services.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "real-time-processing",
+      "confidence": "high",
+      "reasoning": "Stream processing patterns inherently provide the ability to process events and data in real-time with low latency, which is the core value proposition of this pattern."
+    },
+    {
+      "capability": "event-streaming",
+      "confidence": "high",
+      "reasoning": "Stream processing patterns provide continuous event flow capabilities that other patterns can consume, making this a fundamental characteristic of the pattern."
+    },
+    {
+      "capability": "stateful-processing",
+      "confidence": "medium",
+      "reasoning": "Many stream processing implementations offer stateful computation capabilities, allowing patterns to maintain and update state across event streams for complex processing scenarios."
+    },
+    {
+      "capability": "streaming-platform",
+      "confidence": "high",
+      "reasoning": "Stream processing requires and establishes a streaming platform (Kafka, Kinesis, Flink, etc.)."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "streaming-platform",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Stream processing requires an underlying streaming platform (like Kafka, Kinesis, or Pulsar) to handle event ingestion, distribution, and persistence."
+    },
+    {
+      "capability": "observability-baseline",
+      "confidence": "high",
+      "reasoning": "Given the higher complexity and operational demand noted in the description, stream processing patterns critically require monitoring, logging, and tracing capabilities to manage operational complexity.",
+      "optional": true
+    },
+    {
+      "capability": "distributed-system",
+      "confidence": "medium",
+      "reasoning": "Stream processing patterns require distributed system infrastructure to handle scalability, fault tolerance, and the operational complexity inherent in continuous event processing.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-batch-processing--serverless",
+      "data-batch-processing--warm-pool",
+      "data-batch-processing--cold-start",
+      "data-batch-processing--cluster"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "streaming"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Stream processing supports all tenant isolation strategies through topic partitioning, namespace separation, or dedicated pipelines."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is compatible with GDPR requirements when combined with appropriate data retention, encryption, and deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is compatible with HIPAA requirements when combined with encryption-at-rest, encryption-in-transit, and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is compatible with CCPA requirements when combined with data subject access request handling and deletion mechanisms."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is compatible with SOX requirements when combined with audit trails, immutable event logs, and access controls."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing supports both strict durability (via replicated logs with acks) and relaxed durability (fire-and-forget) depending on configuration."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Stream processing typically caps at 99.9% availability due to higher operational complexity and stateful recovery requirements."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Stream processing has minimum 100ms p95 latency floor due to event ingestion, partitioning, and processing overhead."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Stream processing is optimized for low-latency continuous processing. When p95 latency requirements exceed 5 seconds, simpler batch-oriented patterns may be more suitable and cost-effective."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Stream processing has 1000ms p99 latency floor due to backpressure handling, state checkpointing, and rebalancing operations."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Stream processing supports rapid recovery with RTO as low as 1 minute through checkpoint restoration and consumer group rebalancing."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Stream processing achieves zero RPO through exactly-once processing semantics and replicated commit logs."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Stream processing handles up to 360M events per hour (100K events/sec) as typical upper bound for single pipeline throughput."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 3600,
+      "reason": "Stream processing adds operational complexity and infrastructure overhead. Below 1 event/sec (3600/hour), simpler batch or scheduled job patterns are more appropriate."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Stream processing operates on event streams with eventual consistency; read-your-writes semantics are not natively supported in streaming paradigm."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Stream processing pattern is cloud-agnostic and can be implemented on any infrastructure with Kafka, Pulsar, or cloud-native streaming services."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Stream processing is a design/architectural pattern that can be implemented in any language with streaming client libraries."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Stream processing is backend data infrastructure consumable by any platform type."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": true,
+      "reason": "Stream processing pattern specifically requires real-time streaming capability for continuous event ingestion and processing."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing supports both multi-tenant (shared pipelines with topic partitioning) and single-tenant (isolated pipelines) deployments."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing and Stream processing are complementary; lambda architecture combines both."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is neutral to distributed transactions; can coordinate transactional outbox patterns or use idempotent processing."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging and real-time streaming are complementary: messaging delivers discrete events, streaming processes continuous data flows. Both can be enabled simultaneously."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is neutral to vector search; can enrich streams with vector lookups or operate without embedding search."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is neutral to document stores; can use them for state persistence or sink targets without requiring them."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is neutral to key-value stores; can use them for stateful operations like windowing or enrichment lookups."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is neutral to graph databases; can enrich streams with graph queries or operate without graph relationships."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is neutral to time-series databases; can output to TSDB sinks for metrics or operate with other storage backends."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is neutral to OLTP workloads; can process transactional events or operate on analytical/log data streams."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stream processing is neutral to OLAP workloads; can perform real-time analytics or simple event forwarding without aggregations."
+    }
+  ],
+  "requires_constraints": [],
+  "defaultConfig": {
+    "processing_model": "micro_batch",
+    "windowing_strategy": "tumbling",
+    "state_management": "in_memory",
+    "delivery_guarantee": "at_least_once",
+    "parallelism": "auto",
+    "backpressure_handling": "buffer"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "processing_model": {
+        "type": "string",
+        "enum": [
+          "micro_batch",
+          "true_streaming",
+          "hybrid"
+        ],
+        "description": "Processing approach: micro_batch (higher throughput, slight latency), true_streaming (lowest latency, higher complexity), hybrid (adaptive based on load)"
+      },
+      "windowing_strategy": {
+        "type": "string",
+        "enum": [
+          "tumbling",
+          "sliding",
+          "session",
+          "global"
+        ],
+        "description": "Time window type: tumbling (fixed non-overlapping), sliding (overlapping windows), session (gap-based), global (unbounded)"
+      },
+      "state_management": {
+        "type": "string",
+        "enum": [
+          "in_memory",
+          "distributed_cache",
+          "external_store"
+        ],
+        "description": "State storage: in_memory (fastest, not fault-tolerant), distributed_cache (balanced), external_store (durable, slower)"
+      },
+      "delivery_guarantee": {
+        "type": "string",
+        "enum": [
+          "at_most_once",
+          "at_least_once",
+          "exactly_once"
+        ],
+        "description": "Message delivery semantics: at_most_once (fastest, may lose data), at_least_once (reliable, may duplicate), exactly_once (strongest guarantee, highest overhead)"
+      },
+      "parallelism": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "fixed",
+          "dynamic"
+        ],
+        "description": "Scaling strategy: auto (framework-managed), fixed (manual partition count), dynamic (auto-scaling based on lag)"
+      },
+      "backpressure_handling": {
+        "type": "string",
+        "enum": [
+          "buffer",
+          "drop",
+          "block"
+        ],
+        "description": "Overload strategy: buffer (queue events, risk memory), drop (discard excess), block (slow down producers)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

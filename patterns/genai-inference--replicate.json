@@ -1,0 +1,294 @@
+{
+  "id": "genai-inference--replicate",
+  "version": "1.0.0",
+  "title": "Replicate: GenAI Inference API",
+  "description": "Access 1000+ open-source AI models via unified API; pay-per-second pricing; strong for prototyping and diverse model selection.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 5.0,
+      "max": 2000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "replicate"
+    ],
+    "costNotes": "Cost-effective for open-source models. Cold starts add latency but not cost.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Pay-per-second pricing ($0.00002-$0.01/sec) creates highly variable costs. Min ($5): Prototyping/testing with ~250-500 API calls using lightweight models like Whisper or small LLMs (5-10 seconds each). Max ($2000): Production use with 20,000-50,000 generations monthly using mid-range models (Stable Diffusion, SDXL, Llama 70B) averaging 10-20 seconds per request. Heavy enterprise usage with SOTA models could exceed $5000/mo. No cold start costs, only generation time charged.",
+      "adoptionCost": "Medium-low complexity. Simple REST API with Python/Node.js SDKs reduces integration effort (2-4 developer days). Key costs: (1) API integration and error handling: 1-2 days, (2) Model selection and testing across 1000+ options: 1-2 days, (3) Prompt engineering and output parsing for chosen models: 1 day. Straightforward documentation and standard HTTP patterns lower barrier. Complexity comes from choosing appropriate models and handling model-specific input/output formats rather than API mechanics.",
+      "licenseCost": "Pure pay-per-use consumption model with no upfront licensing, subscription fees, or minimum commitments. New users receive free credits ($10-50) for initial testing. No enterprise license required - costs scale linearly with usage. Open-source models accessible through platform avoid individual model licensing concerns. Only ongoing runtime costs apply, making this $0 for license/subscription category.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "genai-inference",
+      "confidence": "strong",
+      "reasoning": "Core capability - this pattern provides access to AI model inference through Replicate's API across multiple model types."
+    },
+    {
+      "capability": "image-generation",
+      "confidence": "strong",
+      "reasoning": "Replicate supports image generation models like Stable Diffusion and DALL-E variants for creating images from text prompts."
+    },
+    {
+      "capability": "text-generation",
+      "confidence": "strong",
+      "reasoning": "Replicate provides access to text and LLM models for generation tasks including chat, completion, and text transformation."
+    },
+    {
+      "capability": "audio-generation",
+      "confidence": "high",
+      "reasoning": "Replicate provides access to audio generation models for tasks like speech synthesis and music generation."
+    },
+    {
+      "capability": "video-generation",
+      "confidence": "high",
+      "reasoning": "Replicate supports video generation models for creating and manipulating video content through AI."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "http-client",
+      "confidence": "high",
+      "reasoning": "Replicate provides a unified REST API that requires HTTP client functionality to make requests to their endpoints for model inference.",
+      "optional": true
+    },
+    {
+      "capability": "secrets-management",
+      "confidence": "strong",
+      "optional": false,
+      "reasoning": "API key/token storage required to authenticate with Replicate's API securely."
+    },
+    {
+      "capability": "background-job-processing",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Replicate uses asynchronous processing for model inference - jobs are queued and polled for completion, requiring async workflow management."
+    },
+    {
+      "capability": "webhook-handling",
+      "confidence": "medium",
+      "reasoning": "Replicate supports webhook notifications for job completion as an alternative to polling, enabling event-driven workflows.",
+      "optional": true
+    },
+    {
+      "capability": "rate-limiting",
+      "confidence": "high",
+      "reasoning": "Replicate has usage limits and per-second billing that requires applications to implement rate limiting and quota management logic.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "genai-inference--fal",
+      "genai-inference--huggingface",
+      "genai-inference--openai",
+      "genai-inference--anthropic"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ai",
+    "genai",
+    "inference",
+    "replicate",
+    "open-source",
+    "saas"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Public SaaS pattern."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Replicate's shared multi-tenant SaaS infrastructure provides maximum availability of 99% (two nines)."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "GenAI inference involves complex model computation with minimum p95 latency of 500ms due to processing overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "P99 latencies for GenAI inference are typically 1000ms or higher due to cold starts and model loading."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Replicate's managed service with automatic failover and health monitoring supports RTO of 5 minutes or greater."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "Pattern maximum throughput is 36M jobs/hour (10K requests/second) based on enterprise tier rate limits."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Replicate does not offer a HIPAA BAA; models run on shared GPU infrastructure not suitable for PHI."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "==",
+      "value": false,
+      "reason": "Replicate lacks SOX-compliant audit and data residency controls."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "!=",
+      "value": "on-prem",
+      "reason": "Replicate is a cloud-based SaaS service and cannot be deployed on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Replicate provides REST API accessible from any language, with official SDKs for Python, TypeScript, and JavaScript."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Replicate API can be called from any platform type that supports HTTP REST clients including web, mobile, and backend services."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "replicate"
+      ],
+      "reason": "Pattern is specifically for Replicate service; only applicable when Replicate is listed in acceptable SaaS providers."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern is specifically designed for AI/ML inference workloads using Replicate's model serving platform."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "replicate",
+    "pricing_model": "pay_per_second",
+    "model_category": "text_generation",
+    "timeout_seconds": 300,
+    "webhook_enabled": false,
+    "service_auth_method": "api_key"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "replicate"
+        ],
+        "description": "GenAI inference provider - Replicate offers 1000+ open-source models with pay-per-second pricing"
+      },
+      "pricing_model": {
+        "type": "string",
+        "enum": [
+          "pay_per_second",
+          "dedicated_deployment"
+        ],
+        "description": "Pricing approach: pay-per-second for sporadic usage and prototyping, or dedicated deployments for consistent production workloads with reserved capacity"
+      },
+      "model_category": {
+        "type": "string",
+        "enum": [
+          "text_generation",
+          "image_generation",
+          "audio_generation",
+          "video_generation",
+          "embedding"
+        ],
+        "description": "Primary model category to use - determines which open-source models are available and pricing structure"
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 60,
+        "maximum": 3600,
+        "description": "Maximum time to wait for model inference completion before timing out (some models like video generation take longer)"
+      },
+      "webhook_enabled": {
+        "type": "boolean",
+        "description": "Enable webhooks for async predictions - recommended for long-running models to avoid blocking HTTP connections"
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "api_key"
+        ],
+        "description": "Service credential method used to authenticate to the LLM provider API. Always api_key \u2014 stored in environment variable, never in code."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "Replicate's pay-per-second SaaS pricing and API overhead make it suboptimal for very low-volume inference (<10 jobs/hour).",
+      "message": "genai-inference--replicate: peak throughput is {actual} jobs/hour (<10). Replicate's SaaS overhead and per-second billing may be inefficient for very low-volume workloads; consider local model hosting or batch processing."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "Replicate processes data on external servers. Sending PII to third-party APIs may violate compliance requirements (GDPR).",
+      "message": "genai-inference--replicate: spec indicates PII handling, but Replicate API processes data externally which may violate data residency or compliance requirements."
+    }
+  ]
+}

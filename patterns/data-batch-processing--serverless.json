@@ -1,0 +1,489 @@
+{
+  "id": "data-batch-processing--serverless",
+  "version": "1.0.0",
+  "title": "Batch Processing: Serverless / Pre-Warmed Workers",
+  "description": "Batch job execution using serverless functions or pre-warmed worker pools (AWS Lambda, Cloud Run Jobs, AWS Fargate). Achieves the fastest job start times (P95 \u2264 10s) by eliminating cold-start overhead through pre-provisioned execution environments. Best for latency-sensitive batch workloads, event-driven batch jobs, and workloads with unpredictable arrival patterns. Higher per-invocation cost compared to cluster-based batch, but eliminates idle infrastructure costs. Maximum job duration typically 15-60 minutes depending on provider.",
+  "types": [
+    "design",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 20.0,
+      "max": 3000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Serverless batch pricing is pure pay-per-invocation with no idle costs. Min ($20): low-volume batch jobs on Lambda or Cloud Run Jobs with free tier coverage. Max ($3000): high-frequency serverless batch with pre-warmed pools and significant data transfer.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Serverless/pre-warmed batch has no idle infrastructure cost but higher per-invocation cost. Min ($20): light batch workloads on Lambda free tier + S3 storage costs. Max ($3000): high-frequency pre-warmed Cloud Run Jobs or Fargate at ~$0.04/vCPU-hour with 100k+ monthly invocations and data egress.",
+      "adoptionCost": "Slightly higher than base batch due to serverless-specific considerations: function packaging limits, timeout constraints (Lambda 15min, Cloud Run Jobs 24hr), pre-warming configuration, and stateless execution design. Estimate 13-14 developer days at ~$180/day = $2500.",
+      "licenseCost": "No license cost. All major serverless batch platforms (Lambda, Cloud Run Jobs, Fargate) are usage-based with no upfront licensing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "batch-processing",
+      "confidence": "high",
+      "reasoning": "Provides batch processing capability via serverless execution \u2014 processing data in triggered invocations rather than long-running cluster processes."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Enables ETL batch workflows with fast job start and per-invocation billing suited to periodic data processing."
+    },
+    {
+      "capability": "high-throughput-processing",
+      "confidence": "high",
+      "reasoning": "Serverless batch achieves high throughput through massive horizontal scaling \u2014 thousands of concurrent function invocations with sub-second scheduling."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "scheduler",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Serverless batch jobs are typically triggered by event sources (S3 events, EventBridge schedules, SQS) acting as the scheduler."
+    },
+    {
+      "capability": "job-orchestration",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Orchestration required to coordinate multi-step serverless batch workflows (AWS Step Functions, Google Cloud Workflows)."
+    },
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Serverless functions must read input from and write output to persistent storage (S3, GCS, Blob Storage) due to stateless execution model."
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Serverless platforms provide built-in retry with configurable backoff for transient failures in batch invocations."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-stream-processing",
+      "data-batch-processing--warm-pool",
+      "data-batch-processing--cold-start",
+      "data-batch-processing--cluster"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "batch",
+    "serverless",
+    "pre-warmed"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Serverless batch is compatible with any auth mechanism; job-level auth is handled by IAM roles and execution credentials."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless function execution logs provide an audit trail; compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Serverless batch supports tenant isolation through separate function invocations per tenant with IAM-scoped execution roles."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Serverless batch can achieve up to 99.99% availability; five-nine availability requires active-active multi-region topology."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Serverless/pre-warmed workers achieve P95 job start in 1-10 seconds. Pre-warmed Lambda or Cloud Run Jobs eliminate cold-start overhead, enabling sub-10s P95 start times."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": "<=",
+      "value": 300,
+      "reason": "Serverless batch optimizes for fast job start (P95 5min). For jobs tolerating >5min start latency, cluster-based batch is more cost-effective."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 30,
+      "reason": "P99 job start for serverless/pre-warmed workers is 10-30 seconds, accounting for occasional cold starts under high concurrency or after idle periods."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Serverless batch RTO is 5-15 minutes: fast invocation restart but requires time to detect failure, re-queue, and re-invoke from last checkpoint."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Serverless batch RPO can be as low as 1 minute with fine-grained checkpointing to durable storage between function invocations."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Serverless batch can handle up to 360M jobs/hour through massive horizontal scaling of function invocations."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 10,
+      "reason": "At <10 jobs/hour, serverless per-invocation costs and orchestration overhead outweigh benefits compared to simpler cron-based execution."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch is compatible with PII workloads when execution environments are configured with appropriate encryption and IAM controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch is compatible with GDPR through proper data handling, deletion capabilities, and ephemeral execution environments."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch supports HIPAA compliance with encryption at rest/transit, BAA coverage, and appropriate access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch is compatible with CCPA when configured to support consumer data deletion within required timeframes."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch supports SOX compliance through function execution logs providing an immutable audit trail."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Serverless batch is stateless and eventually consistent across invocations. Read-your-writes requires compensating patterns and complicates job design."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strict durability achievable with idempotent invocations and checkpointing to durable storage between function executions."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Serverless batch is available on all major clouds (Lambda, Cloud Run Jobs, Azure Container Apps Jobs) and can be emulated on-prem with Knative."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Serverless batch supports all major languages via containerized functions or native runtimes."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Serverless batch targets scheduled job execution platforms; api platform excluded as batch is not a request-response architecture."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch works with or without caching; in-memory caching is limited by function lifetime but external caches work normally."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch commonly uses SQS/Pub-Sub as event sources but can also run on scheduled triggers without messaging."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch supports AI inference workloads within function timeout limits; suitable for embedding generation and batch predictions."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch supports multi-tenant workloads through per-tenant function invocations with separate IAM roles."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires batch_processing feature flag \u2014 this is the serverless variant of the batch processing implementation pattern."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch can coordinate distributed transactions using saga patterns but stateless execution complicates transaction management."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch is compatible with lambda architecture combining serverless batch and real-time streaming."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch can generate embeddings and build vector indexes in batch invocations."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch works with document stores for reading source data and writing batch results."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch can use key-value stores for job state and deduplication across invocations."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch supports graph analytics and bulk graph mutation jobs within function duration limits."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch handles time-series aggregation and historical rollup jobs."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch can execute bulk OLTP operations during off-peak windows."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless batch naturally supports scheduled OLAP aggregation jobs."
+    }
+  ],
+  "defaultConfig": {
+    "worker_type": "serverless",
+    "schedule_type": "event_driven",
+    "retry_strategy": "exponential_backoff",
+    "parallelism": "partitioned",
+    "failure_handling": "dead_letter_queue"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "worker_type": {
+        "type": "string",
+        "enum": [
+          "serverless"
+        ],
+        "description": "Execution environment. Serverless: AWS Lambda, Google Cloud Run Jobs, Azure Container Apps Jobs with pre-warmed execution environments."
+      },
+      "schedule_type": {
+        "type": "string",
+        "enum": [
+          "cron",
+          "interval",
+          "event_driven",
+          "manual"
+        ],
+        "description": "How batches are triggered. Event_driven is most common for serverless batch (SQS, S3 events, EventBridge)."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "immediate",
+          "exponential_backoff",
+          "fixed_delay"
+        ],
+        "description": "How failed invocations are retried. Exponential_backoff recommended for serverless to avoid thundering herd."
+      },
+      "parallelism": {
+        "type": "string",
+        "enum": [
+          "single",
+          "partitioned",
+          "distributed"
+        ],
+        "description": "Execution model. Partitioned recommended for serverless: split input into chunks, each chunk processed by separate function invocation."
+      },
+      "failure_handling": {
+        "type": "string",
+        "enum": [
+          "fail_job",
+          "skip_and_continue",
+          "dead_letter_queue",
+          "partial_commit"
+        ],
+        "description": "What happens when individual records fail. Dead_letter_queue recommended for serverless to capture failed invocations for reprocessing."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<",
+      "value": 0.95,
+      "reason": "Serverless batch with availability target <95% indicates non-critical workload; simpler cron-based solutions may be more cost-effective than managed batch infrastructure.",
+      "message": "data-batch-processing--serverless: availability target is {actual} (<95%). For non-critical batch jobs, simpler cron-based execution may reduce operational overhead."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# Config Override - Configure Non-Selected Pattern (Error)
+#
+# An API spec with caching: false but a patterns block that attempts to configure
+# the cache-aside pattern (ttl_seconds: 7200). Since caching is disabled, the
+# cache-aside pattern is not selected. Configuring a non-selected pattern is
+# an error that the compiler must detect and reject.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - error: patterns block references cache-aside which is not selected
+#   - compiler rejects because you cannot configure a pattern that was not selected
+
+constraints:
+  platform: api
+  features:
+    caching: false
+patterns:
+  cache-aside:
+    ttl_seconds: 7200
+project:
+  name: Configure Non-Selected Pattern (Error)
+  domain: test
+functional:
+  summary: 'Test scenario: Configure Non-Selected Pattern (Error)'
+nfr: {}

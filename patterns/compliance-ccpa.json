@@ -1,0 +1,289 @@
+{
+  "id": "compliance-ccpa",
+  "version": "1.0.0",
+  "title": "CCPA Compliance",
+  "description": "California Consumer Privacy Act compliance pattern. Implements consumer rights: right to know, right to delete, right to opt-out of sale, and right to non-discrimination. Includes privacy notices, data inventory, request handling workflows, and opt-out mechanisms. Required for businesses handling California residents' personal information.",
+  "types": [
+    "security",
+    "ops"
+  ],
+  "provides": [
+    {
+      "capability": "ccpa-compliance",
+      "description": "CCPA compliance framework",
+      "confidence": "medium",
+      "reasoning": "Directly provides CCPA (California Consumer Privacy Act) compliance implementation, which is the core purpose of this pattern."
+    },
+    {
+      "capability": "consumer-rights-management",
+      "confidence": "high",
+      "reasoning": "Implements consumer rights handling (right to know, delete, opt-out, non-discrimination) as specified in the pattern description with request handling workflows."
+    },
+    {
+      "capability": "data-sale-opt-out",
+      "confidence": "high",
+      "reasoning": "Provides the do-not-sell mechanism required by CCPA, including opt-out workflows to honor consumer requests to stop the sale of their data."
+    },
+    {
+      "capability": "privacy-request-handling",
+      "confidence": "high",
+      "reasoning": "Pattern implements request handling workflows for consumer privacy requests, which is a key component mentioned in the description for processing all CCPA rights."
+    },
+    {
+      "capability": "personal-data-inventory",
+      "confidence": "high",
+      "reasoning": "Pattern includes data inventory management as mentioned in the description, which is essential for CCPA compliance to track what personal information is collected."
+    },
+    {
+      "capability": "privacy-notice-management",
+      "confidence": "medium",
+      "reasoning": "Pattern includes privacy notices as mentioned in the description, which are required to inform consumers about their CCPA rights and data practices."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "audit-logging",
+      "description": "Audit logs for CCPA compliance verification",
+      "confidence": "medium",
+      "reasoning": "CCPA compliance requires maintaining records of consumer requests and actions taken. Audit logging is essential for demonstrating compliance and handling potential disputes."
+    },
+    {
+      "capability": "data-discovery",
+      "confidence": "high",
+      "reasoning": "To fulfill 'right to know' and 'right to delete' requests, the pattern needs to discover where consumer data exists across systems, which is critical for CCPA compliance.",
+      "optional": true
+    },
+    {
+      "capability": "user-identification",
+      "confidence": "high",
+      "reasoning": "Must be able to identify and verify consumers making privacy requests to ensure requests are processed for the correct individual, which is foundational for consumer rights management.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "retention_days": 730,
+    "response_deadline_days": 45,
+    "verification_method": "two-factor",
+    "do_not_sell_enabled": true,
+    "data_inventory_tracking": "automated",
+    "request_workflow": "centralized",
+    "opt_out_mechanism": "universal-toggle",
+    "privacy_notice_placement": "footer-and-collection-point"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3650,
+        "description": "Data retention period in days. Shorter retention reduces compliance burden but may impact business analytics. CCPA requires disclosure of retention periods."
+      },
+      "response_deadline_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 45,
+        "description": "Maximum days to respond to consumer requests. CCPA legally requires 45 days maximum, with possible 45-day extension if needed."
+      },
+      "verification_method": {
+        "type": "string",
+        "enum": [
+          "two-factor",
+          "three-factor",
+          "identity-verification-service"
+        ],
+        "description": "Method to verify consumer identity before responding to data requests. Higher verification prevents fraudulent requests but adds friction. CCPA requires reasonable verification."
+      },
+      "do_not_sell_enabled": {
+        "type": "boolean",
+        "description": "Enable 'Do Not Sell My Personal Information' link. Required if business sells personal information. Must be conspicuously posted."
+      },
+      "data_inventory_tracking": {
+        "type": "string",
+        "enum": [
+          "automated",
+          "manual",
+          "hybrid"
+        ],
+        "description": "How to track personal information categories and sources. Automated uses data discovery tools, manual requires documentation, hybrid combines both. Affects accuracy and maintenance burden."
+      },
+      "request_workflow": {
+        "type": "string",
+        "enum": [
+          "centralized",
+          "distributed",
+          "third-party-service"
+        ],
+        "description": "How consumer requests are processed. Centralized uses single intake system, distributed routes to data owners, third-party uses compliance service. Affects response time and coordination."
+      },
+      "opt_out_mechanism": {
+        "type": "string",
+        "enum": [
+          "universal-toggle",
+          "per-category",
+          "per-third-party"
+        ],
+        "description": "Granularity of opt-out controls. Universal is simplest for consumers, per-category offers more control, per-third-party provides maximum transparency but complexity."
+      },
+      "privacy_notice_placement": {
+        "type": "string",
+        "enum": [
+          "footer-only",
+          "footer-and-collection-point",
+          "modal-on-entry"
+        ],
+        "description": "Where privacy notices are displayed. Collection-point notices improve transparency, modal ensures visibility but may impact user experience. CCPA requires notice at or before collection."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 500.0,
+      "max": 8000.0
+    },
+    "adoptionCost": 15000.0,
+    "licenseCost": 8000.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "CCPA compliance requires ongoing operational costs including: (1) Privacy management platform/software for data mapping, consent management, and request handling ($200-$2000/month depending on data volume and users), (2) Secure data storage and encryption for personal information inventory ($100-$1500/month for databases with encryption at rest/transit), (3) Audit logging and monitoring systems ($50-$500/month), (4) Automated request fulfillment infrastructure ($50-$1000/month for API gateways, workflow automation), (5) Identity verification services for consumer requests ($50-$500/month based on request volume), and (6) Compliance monitoring and reporting tools ($50-$2500/month). Minimum represents small business with <10K California consumers using basic tools; maximum represents enterprise with millions of consumers requiring comprehensive privacy infrastructure, multiple data systems integration, and dedicated compliance platforms like OneTrust or TrustArc.",
+      "adoptionCost": "CCPA compliance is highly complex requiring: (1) Legal consultation to interpret requirements and create policies ($3000-$5000), (2) Comprehensive data inventory and mapping across all systems (40-80 hours at $150-$200/hour = $6000-$16000), (3) Implementation of privacy notices, cookie banners, and disclosure mechanisms (20-40 hours = $3000-$8000), (4) Building request handling workflows for know/delete/opt-out rights with verification processes (60-100 hours = $9000-$20000), (5) Staff training on consumer rights and request processing (10-20 hours = $1500-$4000), (6) Integration with existing systems for data retrieval and deletion (40-80 hours = $6000-$16000), and (7) Testing and documentation (20-40 hours = $3000-$8000). Total effort: 190-360 hours. Even with AI assistance reducing coding by 30%, legal complexity, cross-system integration, and business process changes remain substantial. Estimate assumes mid-size organization; enterprises may spend $50K-$200K.",
+      "licenseCost": "CCPA compliance typically requires: (1) Privacy management platform license with perpetual or annual costs - options include OneTrust ($5000-$15000 first year), BigID ($8000-$20000), or TrustArc ($6000-$25000) depending on data volumes and features needed, (2) Data discovery and classification tools if not included ($2000-$10000), (3) Consent management platform ($1000-$5000), and (4) Compliance monitoring tools ($1000-$5000). While open-source alternatives exist (Apache Atlas for data catalog, custom-built consent systems), production-grade CCPA compliance at scale typically requires commercial privacy platforms for comprehensive data mapping, automated request fulfillment, and audit trails. Estimate represents entry-level commercial solution; enterprises often spend $20K-$100K+ annually on privacy tech stack.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "compliance",
+    "ccpa",
+    "privacy",
+    "california"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "==",
+      "value": true,
+      "reason": "This pattern is only selected when CCPA compliance is explicitly required."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "CCPA compliance processes can support up to four nines availability as they involve workflow orchestration rather than real-time processing."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "CCPA request processing (deletion, export, opt-out) requires workflow orchestration and data discovery, establishing a minimum 100ms p95 latency floor."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "CCPA compliance workflows involve data discovery and batch processing across multiple data stores, establishing a 500ms p99 latency floor."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "CCPA compliance systems require coordination across data inventory and request handling workflows, establishing a 15-minute RTO floor."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "CCPA audit logs and request tracking require persistence with minimum 5-minute RPO to ensure consumer rights request durability."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000,
+      "reason": "CCPA request processing involves batch workflows and data discovery operations, limiting throughput to 360K jobs per hour (100 jobs/second)."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "CCPA mandates audit logging for all consumer rights requests and data processing activities to demonstrate compliance."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "CCPA by definition applies only to systems handling personal information of California residents."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "CCPA compliance requirements are cloud-agnostic and can be implemented on any infrastructure platform."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "CCPA compliance is a cross-cutting operational/security pattern that applies regardless of programming language choice."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "agnostic",
+        "n/a"
+      ],
+      "reason": "CCPA compliance applies to any platform that collects, processes, or stores personal information of California residents."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "CCPA requires asynchronous processing of data subject requests (deletion, data export, opt-out) through workflow orchestration."
+    }
+  ],
+  "warn_nfr": []
+}

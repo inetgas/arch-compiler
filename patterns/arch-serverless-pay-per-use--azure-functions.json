@@ -1,0 +1,445 @@
+{
+  "id": "arch-serverless-pay-per-use--azure-functions",
+  "version": "1.0.0",
+  "title": "Serverless Pay-Per-Use Compute with Azure Functions",
+  "description": "Cost optimisation pattern that eliminates idle infrastructure spend by running workloads on Azure Functions\u2019 per-invocation billing model. Well-suited to bursty or unpredictable workloads; accepts cold-start latency as the trade-off. Supports Consumption Plan (true scale-to-zero) and Premium Plan (pre-warmed instances).",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "azure-functions"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 1M executions/month, 400,000 GB-seconds.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents usage within Azure Functions free tier (1M executions/month + 400,000 GB-seconds), suitable for development, testing, or low-traffic applications processing ~33,000 requests/day. Max $500 represents moderate production workload (~5M executions/month at $0.20 per million executions = $1, plus ~2M GB-seconds beyond free tier at $0.000016/GB-second = $32, plus Premium plan EP1 instance at ~$150/month for enhanced performance and VNET integration, totaling ~$183-500 depending on configuration). Heavy production workloads with 50M+ executions could exceed $1000/month but typical SMB scenarios stay under $500.",
+      "adoptionCost": "Medium-high complexity adoption. Requires learning serverless paradigms (stateless design, cold start optimization, idempotency), understanding event triggers (HTTP, Queue, Timer, Event Grid), implementing proper error handling and retry logic, setting up monitoring with Application Insights, and refactoring existing code to fit function-based architecture. Team needs 2-3 weeks to learn patterns, implement CI/CD pipelines, establish testing strategies for serverless (integration testing, local debugging with Azure Functions Core Tools), and configure security (managed identities, key vault integration). With AI coding assistants reducing boilerplate by 30-40%, estimated effort is 60-80 developer hours at $25-30/hour blended rate, plus infrastructure setup time.",
+      "licenseCost": "Azure Functions is a fully managed PaaS service with no upfront licensing cost. Pay-per-use consumption model with generous free tier included. No additional software licenses required for runtime. Development tools (VS Code, Azure Functions Core Tools, Visual Studio) are free. Only pay for actual compute consumption and associated Azure storage costs (~$0.20/month for storage account). Enterprise support agreements are optional and separate from the service itself.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "Azure Functions automatically scales based on event triggers and workload demand, which is a core feature of the serverless model. This directly addresses variable workload patterns without manual intervention."
+    },
+    {
+      "capability": "reduced-idle-cost",
+      "confidence": "high",
+      "reasoning": "Pay-per-use pricing model means costs are only incurred during execution time, eliminating charges for idle compute resources. The 1M free requests/month and 400,000 GB-seconds free tier further reduces costs for low-volume workloads."
+    },
+    {
+      "capability": "event-driven-compute",
+      "confidence": "high",
+      "reasoning": "Azure Functions is fundamentally event-driven, responding to various triggers (HTTP, queue, timer, blob storage, etc.). This is a core capability central to the pattern's design."
+    },
+    {
+      "capability": "serverless-compute",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly provides serverless compute where infrastructure management is fully abstracted. This is the primary capability of the pattern."
+    },
+    {
+      "capability": "cold-start-latency",
+      "confidence": "high",
+      "reasoning": "Serverless functions can experience startup delays when scaling from zero, which impacts performance expectations. This is an inherent characteristic of the consumption-based serverless model."
+    },
+    {
+      "capability": "execution-time-limit",
+      "confidence": "high",
+      "reasoning": "Azure Functions has maximum execution duration constraints that must be considered in design. Default timeout is 5 minutes (configurable up to 10 minutes on Consumption plan)."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "Azure Functions requires an event source or trigger to execute (HTTP requests, queue messages, timers, blob changes, etc.). Without an event source, the function has nothing to respond to.",
+      "optional": false
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Serverless functions should be designed to be stateless or use external state management, as instances are ephemeral and can be created/destroyed based on scaling needs. This is a design requirement for effective use of the pattern.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-microservices",
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "serverless",
+    "azure",
+    "functions"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Azure Functions is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9995,
+      "reason": "Azure Functions Consumption plan delivers maximum ~99.95% availability SLA."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Azure Functions minimum p95 latency ~100ms due to HTTP trigger overhead and runtime initialization."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Azure Functions minimum p99 latency ~200ms accounting for cold start scenarios and trigger latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Azure Functions automatic recovery with new instance provisioning achieves RTO of ~1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 72000000,
+      "reason": "Pattern maximum throughput ~20K requests/second (72M jobs/hour) with Premium plan scaling limits."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Azure Functions serverless compute handles up to 50K read QPS with appropriate scaling configuration."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 20000,
+      "reason": "Azure Functions serverless compute handles up to 20K write QPS accounting for downstream resource limits."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions supports GDPR-compliant deployments through Azure compliance certifications and data residency options."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can be deployed in HIPAA-compliant configurations using Premium or Dedicated plans with BAA."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions supports CCPA compliance through Azure data governance and privacy controls."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions supports SOX compliance requirements through audit logging, access controls, and Azure compliance frameworks."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "azure",
+      "reason": "Azure Functions is an Azure-specific serverless compute service and cannot run on other cloud providers."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "javascript",
+        "typescript",
+        "python",
+        "csharp",
+        "java",
+        "go",
+        "php",
+        "rust"
+      ],
+      "reason": "Azure Functions officially supports JavaScript, TypeScript, Python, C#, Java, PowerShell with custom handler support for Go, Rust."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Azure Functions is an event-driven serverless compute platform suitable for APIs, workers, batch jobs, data pipelines, and IoT."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can integrate with Azure Cache for Redis or in-memory caching but does not require it."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions supports async messaging through triggers (Service Bus, Event Grid, Storage Queue) but also handles sync requests."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can invoke AI inference APIs or run lightweight models but is not specialized for AI workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions supports multi-tenant applications through application-level tenant isolation in function code."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Long-running batch jobs exceed Azure Functions timeout limits (5-10 min default, 60 min max on Premium)."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Serverless functions are stateless and ephemeral, making them unsuitable for distributed transaction coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can process streaming data through Event Hubs and IoT Hub triggers for real-time scenarios."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can integrate with Azure Cognitive Search or external vector databases for search operations."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions integrates with Cosmos DB and other document databases through bindings and SDKs."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can use Azure Table Storage, Cosmos DB, or Redis for key-value operations via bindings."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can connect to graph databases like Cosmos DB Gremlin API or Neo4j through client libraries."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can process and store time-series data using Azure Data Explorer or time-series databases."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions handles OLTP workloads through event-driven triggers and database integrations for transactional operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Functions can trigger analytical queries and data transformations but is not optimized for OLAP query processing."
+    }
+  ],
+  "defaultConfig": {
+    "hosting_plan": "consumption",
+    "runtime_version": "latest",
+    "timeout_seconds": 300,
+    "memory_size_mb": 1536,
+    "trigger_type": "http",
+    "cold_start_optimization": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "hosting_plan": {
+        "type": "string",
+        "enum": [
+          "consumption",
+          "premium",
+          "dedicated"
+        ],
+        "description": "Consumption: Pay-per-execution with cold starts (1M free requests/month). Premium: Pre-warmed instances, VNet integration, no cold starts. Dedicated: Runs on App Service Plan for predictable costs and full control."
+      },
+      "runtime_version": {
+        "type": "string",
+        "enum": [
+          "latest",
+          "lts",
+          "specific"
+        ],
+        "description": "Latest: Auto-updates to newest runtime. LTS: Long-term support version for stability. Specific: Pin to exact version for reproducibility."
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 600,
+        "description": "Maximum execution time per function invocation. Consumption plan: max 300s (5min). Premium/Dedicated: max 600s (10min). Longer timeouts may indicate need for async patterns."
+      },
+      "memory_size_mb": {
+        "type": "integer",
+        "enum": [
+          128,
+          256,
+          512,
+          1024,
+          1536,
+          2048,
+          3072,
+          4096
+        ],
+        "description": "Memory allocation per function instance. Higher memory also increases CPU allocation. Affects both performance and cost (GB-seconds billing)."
+      },
+      "trigger_type": {
+        "type": "string",
+        "enum": [
+          "http",
+          "timer",
+          "queue",
+          "blob",
+          "event-grid",
+          "service-bus"
+        ],
+        "description": "Event source that invokes the function. HTTP: REST APIs. Timer: Scheduled jobs. Queue/Blob/Event-Grid: Event-driven processing. Service-Bus: Enterprise messaging."
+      },
+      "cold_start_optimization": {
+        "type": "boolean",
+        "description": "Enable strategies to reduce cold start latency: pre-warmed instances (Premium plan), connection pooling, and dependency optimization. Increases cost but improves response time."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 100,
+      "reason": "At <100 jobs/hour (~0.03 req/s), serverless pay-per-use overhead and cold starts outweigh cost benefits vs. always-on compute.",
+      "message": "arch-serverless-pay-per-use--azure-functions: peak jobs/hour is {actual} (<100). Serverless overhead may exceed always-on compute costs at very low volumes."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At extremely low QPS (<1 req/s), the operational overhead of serverless architecture may not be justified compared to simpler deployment models.",
+      "message": "arch-serverless-pay-per-use--azure-functions: peak read QPS is {actual} req/s (<1). At this low traffic, simpler deployment models may be more appropriate."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 10000,
+      "reason": "At sustained high QPS (>10K req/s), serverless pay-per-execution costs may exceed reserved capacity; analyze cost vs. performance trade-offs.",
+      "message": "arch-serverless-pay-per-use: peak read QPS is {actual} req/s (>10K). At sustained high throughput, pay-per-execution costs may exceed reserved compute instances. Evaluate cost model."
+    }
+  ]
+}

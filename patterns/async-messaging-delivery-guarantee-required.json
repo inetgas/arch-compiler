@@ -1,0 +1,415 @@
+{
+  "id": "async-messaging-delivery-guarantee-required",
+  "version": "1.0.0",
+  "title": "Async Messaging: Delivery Guarantee Required",
+  "description": "Meta-policy pattern that activates when async_messaging is enabled and enforces that messaging_delivery_guarantee is explicitly specified. The delivery guarantee is the foundational decision that determines which implementation pattern is selected downstream: at-most-once activates async-fire-and-forget (no retry, lowest latency/overhead), at-least-once activates queue-consumer-idempotency (retry with deduplication, requires key_value_store), exactly-once requires distributed_transactions: true and a transactional outbox pattern. Without an explicit delivery guarantee, no implementation pattern can be correctly selected and the compiler cannot generate a valid messaging architecture. This pattern also enforces the latency floor imposed by asynchronous broker round-trips (minimum ~50ms p95) and the availability ceiling of typical managed message broker SLAs (99.99%). Specs requiring sub-50ms p95 latency should use synchronous RPC patterns (gRPC, REST) instead of async messaging.",
+  "types": [
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 0.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 99999,
+    "costNotes": "Meta-policy pattern with no direct cost. Messaging infrastructure costs are in downstream implementation patterns (async-event-driven, async-fire-and-forget, queue-consumer-idempotency).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero cost \u2014 meta-policy pattern only. Messaging broker costs are in async-event-driven, async-event-driven--aws/azure/gcp, async-fire-and-forget, and queue-consumer-idempotency patterns.",
+      "adoptionCost": "Zero adoption cost \u2014 this pattern auto-activates when async_messaging: true is set and enforces delivery guarantee as a hard compilation requirement.",
+      "licenseCost": "No license cost \u2014 policy enforcement pattern only.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "async-messaging-requirement-enforcement",
+      "confidence": "high",
+      "reasoning": "Enforces that messaging_delivery_guarantee is explicitly declared when async_messaging is enabled, and validates that the spec's latency and availability requirements are compatible with async broker infrastructure."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "message-queue",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Async messaging requires a durable message broker. The specific broker implementation is determined by the downstream async-event-driven pattern selected based on cloud constraint and delivery guarantee."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "async",
+    "messaging",
+    "delivery-guarantee",
+    "event-driven",
+    "meta-policy"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural enforcement pattern applicable to any async messaging system regardless of broker technology or cloud provider"
+  },
+  "defaultConfig": {},
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Async messaging is compatible with any authentication mechanism; message-level auth is handled by broker IAM policies and the downstream implementation pattern."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is compatible with both audited and non-audited environments; broker delivery logs serve as the audit trail."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Message brokers support tenant isolation through topic/queue namespacing, separate broker instances, or IAM-scoped access policies."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is compatible with PII workloads when message payloads are encrypted at rest and in transit and broker access is IAM-controlled."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when message brokers support configurable retention windows and message deletion for right-to-be-forgotten requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when brokers enforce encryption at rest and in transit with appropriate BAA coverage from the cloud provider."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when message retention and deletion policies cover consumer data deletion requests within required timeframes."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX when broker delivery logs provide an immutable audit trail of message publication and consumption events."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is fundamentally eventually consistent and cannot directly satisfy read-your-writes requirements. If needsReadYourWrites: true, compensating patterns (outbox + polling) must be added on top."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability depends on delivery guarantee: at-most-once sacrifices durability for throughput and is incompatible with durability/strict: true. at-least-once and exactly-once provide durable delivery. Downstream patterns enforce this constraint."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Primary activation gate \u2014 this pattern only applies when async_messaging is explicitly enabled."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Pattern is cloud-agnostic; managed message brokers exist on all major clouds and on-premises (Kafka, RabbitMQ, ActiveMQ)."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Pattern is language-agnostic; message broker client SDKs exist for all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "web",
+        "mobile"
+      ],
+      "reason": "Async messaging applies to backend and data platforms. Not applicable to library or CLI platforms which do not maintain long-lived broker connections."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is independent of caching."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is frequently used in AI inference pipelines for job queuing but is not limited to AI workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Message brokers support both single-tenant and multi-tenant architectures via topic/queue namespacing and IAM policies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is used in both real-time event-driven and batch job-queue architectures."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "exactly-once delivery requires distributed transaction coordination; at-most-once and at-least-once do not. This meta-policy activates regardless; downstream patterns enforce the distributed_transactions constraint."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging and real-time streaming are complementary: messaging delivers discrete events, streaming processes continuous data flows. Both can be enabled simultaneously."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging can trigger vector embedding jobs but is not specific to vector search workloads."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is compatible with document stores as the backing persistence layer for event consumers."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value stores are used for message deduplication in at-least-once delivery patterns but async messaging activates regardless of this flag."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging can trigger graph mutation events but is not specific to graph workloads."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is commonly used in time-series ingestion pipelines for buffering high-volume metric or event streams."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is compatible with OLTP systems, commonly used for transactional outbox pattern and CDC event publication."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging is used in OLAP systems for event-driven analytical pipeline triggers and streaming ETL."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/messaging_delivery_guarantee",
+      "op": "in",
+      "value": [
+        "at-most-once",
+        "at-least-once",
+        "exactly-once"
+      ],
+      "reason": "When async_messaging is enabled, messaging_delivery_guarantee must be explicitly set. This choice determines the implementation pattern selected: at-most-once \u2192 async-fire-and-forget (simple, no retry, lowest overhead, acceptable message loss), at-least-once \u2192 queue-consumer-idempotency (retry with deduplication key, requires key_value_store: true), exactly-once \u2192 transactional outbox pattern (requires distributed_transactions: true). Without this field set, no downstream implementation pattern can activate. Set constraints.features.messaging_delivery_guarantee to one of: at-most-once | at-least-once | exactly-once."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Managed message broker SLAs are bounded at 99.99% (four nines). SQS, Service Bus, and Pub/Sub all guarantee 99.99%. Five-nine availability requires multi-region active-active broker topology beyond standard managed service offerings."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Async broker round-trip (publish \u2192 broker persist \u2192 consumer poll/push \u2192 ack) adds at minimum ~50ms p95 for managed broker services. Systems requiring sub-50ms end-to-end latency should use synchronous RPC (gRPC, REST) instead of async messaging."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Broker tail latency under moderate load typically reaches 200ms p99 due to batching, network jitter, and consumer processing variance. Specs requiring sub-200ms p99 at the messaging layer should use synchronous patterns."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Minimum RTO of 1 minute is achievable with managed broker multi-AZ automatic failover. Sub-minute RTO requires active-active broker topology with pre-warmed consumer connections."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Durable message brokers with persistent storage achieve RPO=0 for at-least-once and exactly-once delivery. at-most-once delivery inherently risks message loss during broker failover."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000000,
+      "reason": "Managed message brokers (Kafka, SQS, Pub/Sub) support up to 1M msg/s (3.6B/hour) with proper partitioning and consumer scaling. Higher throughput requires specialized streaming infrastructure (Kinesis Data Streams, Kafka with high-throughput configuration)."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 100,
+      "reason": "Async messaging adds broker overhead, connection management, and operational complexity. At <100 jobs/hour (~0.03 msg/s), synchronous API calls or direct database writes are simpler and more cost-effective.",
+      "message": "async-messaging-delivery-guarantee-required: peak_jobs_per_hour is {actual} (<100/hour). At this low message volume, async messaging overhead outweighs benefits\u2014consider synchronous RPC or direct writes instead."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": true,
+      "reason": "Async messaging is fundamentally eventually consistent. Satisfying read-your-writes requires compensating patterns (transactional outbox + polling or webhook callbacks), adding significant complexity and latency.",
+      "message": "async-messaging-delivery-guarantee-required: spec requires needsReadYourWrites=true, but async messaging is eventually consistent. Compensating patterns (outbox + polling) add complexity and latency\u2014consider synchronous request-reply if immediate consistency is critical."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": "<",
+      "value": 50,
+      "reason": "Async broker round-trip (publish \u2192 persist \u2192 consume \u2192 ack) adds minimum ~50ms p95 latency. Specs requiring sub-50ms p95 should use synchronous RPC (gRPC, REST) instead of async messaging.",
+      "message": "async-messaging-delivery-guarantee-required: spec requires p95 latency <50ms (actual target: {actual}ms), but async broker infrastructure adds minimum ~50ms overhead. Consider synchronous RPC patterns (gRPC, REST) for low-latency requirements."
+    }
+  ]
+}

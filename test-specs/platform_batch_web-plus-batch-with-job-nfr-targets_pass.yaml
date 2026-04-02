@@ -1,0 +1,33 @@
+# Platform - Web Plus Batch Processing with Job NFR Targets
+#
+# A GCP Python web platform spec with batch_processing: true and all required
+# job NFR targets explicitly set: p95/p99 latency, jobStartP95Seconds,
+# jobStartP99Seconds, and peak_jobs_per_hour throughput. This is the valid
+# complement to the failing batch scenario, demonstrating correct batch spec setup.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - batch processing patterns are selected for the web platform
+#   - job NFR targets are recorded in compiled output
+
+constraints:
+  platform: web
+  cloud: gcp
+  language: python
+  features:
+    batch_processing: true
+project:
+  name: Web Platform (With job NFR set)
+  domain: test
+functional:
+  summary: 'Test scenario: Web Platform (With job NFR set)'
+nfr:
+  availability:
+    target: 0.95
+  latency:
+    p95Milliseconds: 500
+    p99Milliseconds: 1000
+    jobStartP95Seconds: 10
+    jobStartP99Seconds: 30
+  throughput:
+    peak_jobs_per_hour: 360000

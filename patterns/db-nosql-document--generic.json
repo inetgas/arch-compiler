@@ -1,0 +1,490 @@
+{
+  "id": "db-nosql-document--generic",
+  "version": "1.0.0",
+  "title": "NoSQL Document Store (Generic)",
+  "description": "Document-oriented NoSQL database that stores JSON-like objects with flexible, schema-optional structure. Well-suited to content management, product catalogs, user profiles, and semi-structured data where the shape varies per record. Common implementations include MongoDB, DynamoDB, and CouchDB.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": []
+  },
+  "provides": [
+    {
+      "capability": "document-store",
+      "description": "Store and query JSON-like documents",
+      "confidence": "medium",
+      "reasoning": "Core capability of document-oriented NoSQL databases. Accurately describes the pattern's primary function of storing and retrieving JSON-like documents."
+    },
+    {
+      "capability": "flexible-schema",
+      "description": "Schema-less data model for rapid iteration",
+      "confidence": "medium",
+      "reasoning": "Key characteristic of document stores that distinguishes them from relational databases. Documents can have varying structures without requiring predefined schemas."
+    },
+    {
+      "capability": "nosql-database",
+      "confidence": "high",
+      "reasoning": "This pattern is a type of NoSQL database and components may require any NoSQL database capability. Provides important categorization for dependency resolution."
+    },
+    {
+      "capability": "json-store",
+      "confidence": "high",
+      "reasoning": "Document stores specifically handle JSON or JSON-like documents (BSON, etc.). This is a more specific capability that some consumers might explicitly need."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "compute",
+      "confidence": "high",
+      "reasoning": "Database instances require compute resources to run the database engine, process queries, and manage data.",
+      "optional": false
+    },
+    {
+      "capability": "persistent-storage",
+      "confidence": "high",
+      "reasoning": "Document stores need persistent storage to durably store documents. This is distinct from the document-storage capability they provide at the application level.",
+      "optional": false
+    },
+    {
+      "capability": "network-connectivity",
+      "confidence": "high",
+      "reasoning": "Database services need network connectivity for client connections and potentially for replication in distributed deployments.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "consistency_level": "eventual",
+    "index_strategy": "selective",
+    "document_size_limit_mb": 16,
+    "sharding_strategy": "none",
+    "replication_factor": 3,
+    "backup_retention_days": 7,
+    "ssl_enabled": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "consistency_level": {
+        "type": "string",
+        "enum": [
+          "strong",
+          "eventual",
+          "causal"
+        ],
+        "description": "Read consistency model: strong=immediate consistency with higher latency, eventual=best performance with temporary inconsistency, causal=maintains order of related operations"
+      },
+      "index_strategy": {
+        "type": "string",
+        "enum": [
+          "selective",
+          "comprehensive",
+          "minimal"
+        ],
+        "description": "Index creation approach: selective=index based on query patterns (balanced), comprehensive=index all fields (fast reads, slow writes, high storage), minimal=primary key only (fast writes, slow queries)"
+      },
+      "document_size_limit_mb": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 64,
+        "description": "Maximum size per document in MB. Lower limits encourage better data modeling, higher limits support complex nested structures"
+      },
+      "sharding_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "hash",
+          "range",
+          "geo"
+        ],
+        "description": "Data distribution strategy: none=single node, hash=even distribution, range=ordered data queries, geo=location-based routing"
+      },
+      "replication_factor": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 7,
+        "description": "Number of data replicas for high availability and read scaling. Higher values increase durability and read throughput but cost more"
+      },
+      "backup_retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 365,
+        "description": "Number of days to retain automated backups for point-in-time recovery"
+      },
+      "ssl_enabled": {
+        "type": "boolean",
+        "description": "Enable TLS/SSL for database connections. Should be true in all non-local environments."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Generic NoSQL document store pattern with cloud-agnostic implementation. Min $0 assumes free tier usage (MongoDB Atlas free tier 512MB, AWS DynamoDB free tier 25GB/25 WCU/25 RCU, or self-hosted on existing infrastructure). Max $500 represents small-to-medium production workload: ~100GB storage, moderate throughput (1000-5000 requests/min), single-region deployment. Examples: MongoDB Atlas M10 instance ($57/mo) + storage/IOPS, DynamoDB with 100 WCU/RCU + 50GB storage (~$150-200/mo), or managed DocumentDB t3.medium (~$150/mo). Does not include large-scale production which could exceed $5000/mo for high-traffic applications.",
+      "adoptionCost": "Medium-high complexity adoption cost. Factors include: (1) Learning document modeling paradigms vs relational databases (denormalization, embedding vs referencing) - 20-30 hours; (2) Understanding consistency models and trade-offs specific to document stores; (3) Implementing proper indexing strategies for query performance; (4) Setting up connection pooling, retry logic, and error handling; (5) Data migration strategy if converting from existing system; (6) Team training on query languages (MongoDB Query Language, DynamoDB expressions, etc.). With AI coding assistants, reduces from traditional $3000-4000 to ~$1500. Assumes 40-60 development hours at blended rate with AI assistance for boilerplate, schema design suggestions, and query optimization.",
+      "licenseCost": "Generic pattern with primarily open-source implementations. MongoDB Community Edition is free (SSPL license), CouchDB is Apache 2.0, AWS DynamoDB and Azure Cosmos DB are pay-as-you-go with no license fees. Commercial options exist (MongoDB Enterprise at $5000-10000+/year for advanced features like ops manager, LDAP integration) but not required for base pattern implementation. Self-hosted open-source implementations have zero licensing cost, making this accessible for any budget.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "nosql",
+    "document-store",
+    "flexible-schema"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99999,
+      "reason": "Document stores like DynamoDB provides up to 99.999% availability across multiple regions."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Document stores have inherent latency floor of 10ms at p95 due to document parsing, indexing, and network overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Document stores require at least 50ms at p99 for complex queries with secondary indexes and document scanning."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Document stores like DynamoDB enables rapid recovery with automatic failover achieving RTO of at least 1 minute.."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Document stores can support up to 100K read queries per second with proper indexing and connection pooling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Document stores can support up to 100K write queries per second before requiring sharding or specialized variants."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Document stores support multiple tenant isolation strategies including document-level, collection-per-tenant, and database-per-tenant."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can handle PII through field-level encryption, tokenization, data masking, and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores support GDPR compliance through field-level encryption, data masking, deletion APIs, and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can be configured for HIPAA compliance with encryption at rest/in-transit, audit logging, and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compliance achievable through data inventory capabilities, deletion APIs for right-to-be-forgotten, and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance supported through audit trails, immutable logging, access controls, and data retention policies."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Read-your-writes consistency is achievable by reading from primary or using causal consistency mechanisms in document stores."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores support strict durability through write concerns requiring acknowledgment from majority of replicas."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/document_store",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern explicitly provides document-oriented NoSQL database capability as its primary purpose."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Generic document store pattern is cloud-agnostic and serves as base for specific cloud-managed implementations."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Document databases are infrastructure components with client drivers available for all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Document databases are backend infrastructure accessible from any application platform via network protocols."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can serve as primary data layer with or without complementary caching infrastructure."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can be used in both synchronous request-reply and asynchronous event-driven architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can store AI model metadata, inference results, and training data alongside application data."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores support both single-tenant and multi-tenant architectures through flexible schema and isolation strategies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores support both real-time transactional access and batch processing through aggregation pipelines."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores support document-level ACID transactions with some implementations offering multi-document transactions."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can participate in real-time streaming architectures through change streams and event triggers."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Some document stores support vector search capabilities for embedding similarity while others require dedicated vector databases."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can be accessed as key-value stores using document ID lookups while also supporting richer queries."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can model graph relationships through embedded documents and references but are not optimized for deep graph traversal."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can store time-series data using appropriate schema design though specialized time-series databases are more efficient."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores excel at OLTP workloads with document-level operations but also support analytical queries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores support analytical workloads through aggregation frameworks and indexing though dedicated OLAP systems are more efficient."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99999,
+      "reason": "Document stores like DynamoDB provides up to 99.999% availability across multiple regions."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Document stores have inherent latency floor of 10ms at p95 due to document parsing, indexing, and network overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Document stores require at least 50ms at p99 for complex queries with secondary indexes and document scanning."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Document stores like DynamoDB enables rapid recovery with automatic failover achieving RTO of at least 1 minute.."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Synchronous replication with majority write concern enables zero data loss (RPO=0) for document stores."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000000,
+      "reason": "Document stores like DynamoDB auto-scaling supports extremely high throughput up to 100M requests/sec (360B jobs/hour)."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Document stores can support up to 100K read queries per second with proper indexing and connection pooling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Document stores can support up to 100K write queries per second before requiring sharding or specialized variants."
+    }
+  ],
+  "warn_nfr": []
+}

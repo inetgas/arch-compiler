@@ -1,0 +1,27 @@
+# Feature - Caching Off But High Read Throughput Triggers Requirement
+#
+# An API spec with caching explicitly set to false, but high read throughput
+# (500 QPS reads, 300 QPS writes) and needsReadYourWrites consistency set.
+# The compiler should detect that the throughput requirements necessitate
+# caching but the feature flag is explicitly disabled, causing a conflict.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - caching is required by throughput/consistency constraints but feature flag is false
+#   - compiler rejects due to unresolvable requirement conflict
+
+constraints:
+  platform: api
+  features:
+    caching: false
+project:
+  name: Single Feature (Caching Only)
+  domain: test
+functional:
+  summary: 'Test scenario: Single Feature (Caching Only)'
+nfr:
+  consistency:
+    needsReadYourWrites: true
+  throughput:
+    peak_query_per_second_read: 500
+    peak_query_per_second_write: 300

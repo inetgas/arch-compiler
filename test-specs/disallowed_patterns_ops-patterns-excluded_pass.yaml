@@ -1,0 +1,35 @@
+# disallowed-patterns integration test
+#
+# Flutter/Supabase mobile app with ops observability patterns explicitly
+# disallowed — too complex for this project's scope.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS (exit 0)
+#   - ops-low-cost-observability is NOT in selected-patterns
+#   - ops-slo-error-budgets is NOT in selected-patterns
+#   - both appear in rejected-patterns with phase: phase_2_5_disallowed_patterns
+
+project:
+  name: Flutter Mobile App
+  domain: Cross-platform mobile app using Flutter
+functional:
+  summary: Cross-platform mobile app using Flutter
+constraints:
+  platform: mobile
+  cloud: agnostic
+  language: dart
+  saas-providers:
+    - supabase
+    - render
+    - netlify
+disallowed-patterns:
+  - ops-low-cost-observability
+  - ops-slo-error-budgets
+cost:
+  ceilings:
+    monthly_operational_usd: 0
+  preferences:
+    prefer_free_tier_if_possible: true
+nfr:
+  data:
+    pii: false

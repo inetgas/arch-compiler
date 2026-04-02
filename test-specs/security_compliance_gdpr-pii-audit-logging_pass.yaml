@@ -1,0 +1,35 @@
+# Security Compliance - GDPR with PII and Audit Logging
+#
+# An EU-facing SaaS API on AWS with TypeScript, GDPR compliance enabled, PII
+# data present, and audit_logging: true. This is the fully compliant GDPR
+# scenario. The gdpr-basic and gdpr-right-to-be-forgotten patterns should both
+# be selected, along with PII protection and audit logging patterns.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - gdpr-basic compliance pattern IS selected
+#   - gdpr-right-to-be-forgotten pattern IS selected
+#   - PII protection and audit logging patterns are selected
+#   - no errors for the complete GDPR setup
+
+project:
+  name: EU-Facing SaaS Platform
+  domain: saas
+functional:
+  summary: GDPR-compliant SaaS API for European users with full data protection
+constraints:
+  platform: api
+  cloud: aws
+  language: typescript
+nfr:
+  data:
+    pii: true
+    compliance:
+      gdpr: true
+  security:
+    audit_logging: true
+  availability:
+    target: 0.999
+cost:
+  ceilings:
+    monthly_operational_usd: 3000

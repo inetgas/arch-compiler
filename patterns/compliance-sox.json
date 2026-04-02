@@ -1,0 +1,283 @@
+{
+  "id": "compliance-sox",
+  "version": "1.0.0",
+  "title": "SOX Compliance",
+  "description": "Sarbanes-Oxley Act compliance pattern for financial data integrity and audit controls. Implements Section 302 (disclosure controls) and Section 404 (internal controls over financial reporting). Includes segregation of duties, change management controls, access controls, comprehensive audit trails, data integrity verification, and retention policies. Required for publicly-traded companies' financial systems.",
+  "types": [
+    "security",
+    "ops"
+  ],
+  "provides": [
+    {
+      "capability": "sox-compliance",
+      "description": "SOX compliance framework for financial data",
+      "confidence": "medium",
+      "reasoning": "Core capability - this pattern's primary purpose is to provide SOX compliance features for financial systems, implementing Section 302 and Section 404 requirements."
+    },
+    {
+      "capability": "segregation-of-duties",
+      "description": "Enforce separation between development, operations, and financial functions",
+      "confidence": "medium",
+      "reasoning": "Key SOX requirement - pattern enforces separation of responsibilities to prevent fraud and errors in financial processes."
+    },
+    {
+      "capability": "immutable-audit-trail",
+      "description": "Tamper-proof audit logs for all financial data changes",
+      "confidence": "medium",
+      "reasoning": "Critical SOX Section 404 requirement - provides tamper-proof audit logs for financial transactions and system changes."
+    },
+    {
+      "capability": "change-management",
+      "confidence": "high",
+      "reasoning": "Explicitly mentioned in pattern description as a key SOX control for managing and tracking changes to financial systems."
+    },
+    {
+      "capability": "data-integrity-verification",
+      "confidence": "high",
+      "reasoning": "Mentioned in description and critical for Section 404 compliance to ensure accuracy and reliability of financial data."
+    },
+    {
+      "capability": "access-control",
+      "confidence": "high",
+      "reasoning": "SOX compliance mandates segregation of duties and access controls for financial systems \u2014 implementing access control is a core deliverable of this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "audit-logging",
+      "description": "Comprehensive immutable audit logs (SOX requires 7-year retention)",
+      "confidence": "medium",
+      "reasoning": "Foundation requirement - SOX compliance depends on comprehensive logging capabilities to track all financial system activities."
+    },
+    {
+      "capability": "access-control",
+      "description": "Role-based access control with segregation of duties",
+      "confidence": "medium",
+      "reasoning": "Essential for segregation of duties and Section 302 disclosure controls - must restrict and manage user permissions appropriately."
+    },
+    {
+      "capability": "data-retention-policies",
+      "confidence": "high",
+      "reasoning": "SOX mandates specific retention periods (7 years for financial records) which requires dedicated retention policy capabilities.",
+      "optional": true
+    },
+    {
+      "capability": "encryption",
+      "confidence": "high",
+      "reasoning": "Financial data protection is mandatory for SOX compliance to ensure confidentiality and integrity of sensitive financial information.",
+      "optional": true
+    },
+    {
+      "capability": "authentication",
+      "confidence": "high",
+      "reasoning": "Necessary foundation for access-control and audit trails to be effective - must verify user identity for all financial system access.",
+      "optional": false
+    }
+  ],
+  "defaultConfig": {
+    "retention_days": 2555,
+    "audit_log_immutable": true,
+    "change_approval_required": true,
+    "segregation_of_duties_enforced": true,
+    "access_review_frequency_days": 90,
+    "data_integrity_verification": "cryptographic_hash",
+    "backup_retention_days": 2555,
+    "privileged_access_monitoring": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "retention_days": {
+        "type": "integer",
+        "minimum": 2555,
+        "maximum": 3650,
+        "description": "Audit log retention period in days. SOX requires minimum 7 years (2555 days). Longer retention provides extended audit capability but increases storage costs."
+      },
+      "audit_log_immutable": {
+        "type": "boolean",
+        "description": "Ensure audit logs cannot be modified or deleted after creation. Required for SOX Section 802 compliance. Disabling violates compliance requirements."
+      },
+      "change_approval_required": {
+        "type": "boolean",
+        "description": "Require formal approval workflow for all changes to financial systems. Critical for Section 404 internal controls. Disabling increases audit risk."
+      },
+      "segregation_of_duties_enforced": {
+        "type": "boolean",
+        "description": "Enforce role separation between developers, operators, and auditors. Prevents single person from initiating and approving financial transactions. Required for fraud prevention."
+      },
+      "access_review_frequency_days": {
+        "type": "integer",
+        "enum": [
+          30,
+          60,
+          90,
+          180
+        ],
+        "description": "Frequency of access rights reviews in days. More frequent reviews (30 days) provide tighter control but higher operational overhead. Quarterly (90 days) is common practice."
+      },
+      "data_integrity_verification": {
+        "type": "string",
+        "enum": [
+          "cryptographic_hash",
+          "checksum",
+          "digital_signature"
+        ],
+        "description": "Method for verifying financial data integrity. Cryptographic hash provides strongest assurance, digital signature adds non-repudiation, checksum is faster but weaker."
+      },
+      "backup_retention_days": {
+        "type": "integer",
+        "minimum": 2555,
+        "maximum": 3650,
+        "description": "Backup retention period for financial data recovery. Must match or exceed audit log retention. Longer retention enables point-in-time recovery but increases storage costs."
+      },
+      "privileged_access_monitoring": {
+        "type": "boolean",
+        "description": "Enable real-time monitoring and alerting for privileged account activities. Critical for detecting unauthorized access to financial systems. Recommended for all SOX environments."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 500.0,
+      "max": 15000.0
+    },
+    "adoptionCost": 8000.0,
+    "licenseCost": 15000.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "SOX compliance requires continuous monitoring, audit logging, and data integrity services. Minimum ($500) covers: basic audit logging system ($150), security information and event management (SIEM) entry tier ($200), database audit extensions ($100), and backup/archival storage ($50) for small organizations with limited transaction volumes. Maximum ($15,000) represents enterprise deployments with: enterprise SIEM solutions ($5,000), dedicated compliance database clusters with encryption ($4,000), comprehensive log aggregation and retention ($2,000), automated compliance monitoring tools ($2,500), secure backup and disaster recovery ($1,000), and dedicated audit trail storage with long-term retention requirements ($500). Mid-tier deployments typically run $2,000-$5,000/month. Costs scale with transaction volume, user count, and data retention requirements (SOX requires 7-year retention).",
+      "adoptionCost": "SOX compliance implementation is highly complex requiring specialized expertise. Costs include: implementing segregation of duties controls and role-based access control systems ($2,000), configuring comprehensive audit logging across all financial systems ($1,500), establishing change management workflows with approval chains ($1,500), implementing data integrity controls and validation mechanisms ($1,000), setting up automated compliance monitoring and alerting ($1,000), creating audit trail reporting and analysis capabilities ($500), and documenting controls and procedures for auditors ($500). Requires understanding of both technical controls and regulatory requirements (Sections 302/404). Organizations typically need 3-4 weeks of senior developer/architect time plus compliance specialist consultation. Many organizations hire external auditors or consultants to validate implementation, adding significant cost.",
+      "licenseCost": "SOX compliance typically requires commercial compliance and audit tools. Costs include: enterprise SIEM or log management platform licenses ($5,000-$8,000 for perpetual licenses or setup fees), compliance automation and monitoring software ($3,000-$5,000), database audit and monitoring tools ($2,000-$3,000), and change management/ticketing system licenses if not already deployed ($1,000-$2,000). While some open-source components exist (ELK stack for logging), SOX audits typically require certified commercial solutions with vendor support and audit documentation. Many organizations opt for compliance-specific platforms like AuditBoard, LogicManager, or Workiva which range $10,000-$50,000+ annually. The $15,000 estimate represents entry-level commercial tooling; enterprise deployments often exceed $50,000 in initial licensing costs.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "compliance",
+    "sox",
+    "financial",
+    "audit"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "==",
+      "value": true,
+      "reason": "SOX compliance pattern is only selected when Sarbanes-Oxley Act compliance is explicitly required."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "SOX compliance controls support up to 99.99% availability through comprehensive audit trails and change management processes."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Audit logging, segregation of duties validation, and data integrity verification introduce minimum 100ms p95 latency overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Comprehensive audit trails and change management controls require minimum p99 latency of 200ms for validation processes."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "SOX compliance processes including validation of segregation of duties and audit trail verification require at least 5 minutes RTO."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Section 404 internal controls require near-zero RPO to ensure complete audit trail continuity for financial data integrity."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Comprehensive audit logging and segregation of duties validation supports up to 100,000 jobs per hour with full compliance controls."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "SOX Section 302 and 404 mandate comprehensive audit trails for all financial data access and modifications."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "SOX compliance is a governance pattern applicable to any cloud or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "SOX compliance applies to applications written in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "SOX compliance requirements apply to any platform processing or storing financial data."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "SOX compliance typically requires OLTP capabilities for financial transaction processing and audit trail maintenance."
+    }
+  ],
+  "warn_nfr": []
+}

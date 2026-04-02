@@ -1,0 +1,259 @@
+{
+  "id": "obs-telemetry-backend--aws-cloudwatch",
+  "version": "1.0.0",
+  "title": "Telemetry Backend \u2014 AWS CloudWatch",
+  "description": "AWS-native observability backend using CloudWatch Metrics, CloudWatch Logs, and AWS X-Ray for distributed tracing. Zero infrastructure to operate; deeply integrated with all AWS services.",
+  "types": [
+    "ops",
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 20.0,
+      "max": 1000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws"
+    ],
+    "costCeilingCompatibleUsd": 1000,
+    "costNotes": "Free tier: 10 custom metrics, 5GB log ingestion, 100k X-Ray traces/month. Paid: $0.30/custom metric/month, $0.50/GB log ingestion, $0.03/GB log storage, $5/million X-Ray traces. Small (50 metrics, 10GB logs/month): ~$25-40/month. Medium (500 metrics, 100GB logs, 1M traces/month): ~$200-400/month.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "AWS CloudWatch pricing (2025): Custom Metrics $0.30/metric-month (first 10k free), Log Ingestion $0.50/GB, Log Storage $0.03/GB-month, X-Ray Traces $5/million traces (first 100k free). Min ($20): small app, AWS-native services auto-publish free metrics + minimal custom metrics. Max ($1000): medium production with high log volume (500GB/month) and extensive custom metrics.",
+      "adoptionCost": "Very low adoption cost \u2014 AWS services emit metrics automatically. Custom metrics and log groups require minimal agent configuration (~4h) plus dashboard/alarm setup (~12h). Total ~16h at $30/hour = ~$480.",
+      "licenseCost": "No separate license; costs are pay-per-use included in the monthly estimate.",
+      "source": "LLM analysis (as of 25-Mar-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "telemetry-backend",
+      "confidence": "high",
+      "reasoning": "AWS CloudWatch is a fully managed observability backend native to AWS. Receives metrics from AWS services automatically and via the CloudWatch agent or OTLP endpoint (via ADOT)."
+    },
+    {
+      "capability": "structured-logging",
+      "confidence": "high",
+      "reasoning": "CloudWatch Logs ingests structured JSON logs from Lambda, ECS, EC2, and other services. Supports CloudWatch Logs Insights for structured log querying with field-level extraction."
+    },
+    {
+      "capability": "timeseries-storage",
+      "confidence": "high",
+      "reasoning": "CloudWatch Metrics stores all metrics as time-series data with configurable resolution (1-second to 1-minute) and 15-month retention, queryable via GetMetricData API and metric math."
+    },
+    {
+      "capability": "distributed-tracing",
+      "confidence": "high",
+      "reasoning": "AWS X-Ray provides distributed tracing across AWS services and custom applications. Supports the OpenTelemetry SDK via AWS Distro for OpenTelemetry (ADOT) for vendor-neutral instrumentation."
+    },
+    {
+      "capability": "event-tracking",
+      "confidence": "high",
+      "reasoning": "AWS CloudWatch captures and stores discrete application events through CloudWatch Events (EventBridge), custom metrics, and CloudWatch Logs event entries, providing event-tracking infrastructure for compliance, alerting, and operational monitoring."
+    }
+  ],
+  "requires": [],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "obs-telemetry-backend",
+      "obs-telemetry-backend--datadog",
+      "obs-telemetry-backend--grafana-cloud"
+    ]
+  },
+  "tags": [
+    "observability",
+    "aws",
+    "cloudwatch",
+    "xray",
+    "metrics",
+    "logging"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Available to all AWS accounts; free tier included"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.9,
+      "reason": "Telemetry backend is meaningful from 90% availability upward; below that, service reliability is the primary concern, not observability infrastructure."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "At 4-nines availability, CloudWatch's 1-5 minute metric publish delay may be insufficient for real-time SLO breach detection; sub-minute resolution requires additional tooling."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudWatch integrates with AWS CloudTrail for audit logging; compatible with or without formal audit requirements."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "CloudWatch is a core AWS managed service; it reconnects automatically after service restarts. RTO >= 5 minutes is comfortably supported."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 1000000,
+      "reason": "CloudWatch is a fully managed AWS service that scales automatically; high-throughput workloads are supported natively."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 100000,
+      "reason": "CloudWatch agent collects metrics on a push/pull model asynchronously; it does not add per-request overhead to application read paths."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "CloudWatch Logs and X-Ray use asynchronous batched ingestion; they do not constrain application write throughput."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS CloudWatch supports GDPR compliance through AWS data residency controls, encryption, and data processing agreements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS CloudWatch is a HIPAA-eligible service included in the AWS BAA; compatible with HIPAA-regulated workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS CloudWatch supports CCPA compliance through AWS data privacy controls and deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudWatch integrated with CloudTrail provides the audit trail and access logging needed for SOX compliance."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "CloudWatch is AWS-specific and only available when the target cloud is AWS."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "AWS CloudWatch receives telemetry from any language via the CloudWatch agent, AWS SDK, or OTLP (via ADOT)."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "CloudWatch monitors all AWS-hosted platform types natively."
+    }
+  ],
+  "defaultConfig": {
+    "log_retention_days": 30,
+    "xray_sampling_rate": 0.05
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "log_retention_days": {
+        "type": "integer",
+        "enum": [
+          1,
+          3,
+          7,
+          14,
+          30,
+          60,
+          90,
+          180,
+          365
+        ],
+        "description": "Log group retention policy. Applied to all log groups created by this pattern. Shorter values reduce CloudWatch Logs storage costs significantly."
+      },
+      "xray_sampling_rate": {
+        "type": "number",
+        "enum": [
+          0.01,
+          0.05,
+          0.1,
+          0.5,
+          1.0
+        ],
+        "description": "X-Ray trace sampling rate (0.05 = 5%). First 100k traces/month free; higher rates increase cost. Use 1.0 only for low-traffic services or debugging."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.9999,
+      "reason": "At 4-nines availability, CloudWatch metric latency (1-5 minute publish delay) may be insufficient for real-time SLO breach detection.",
+      "message": "obs-telemetry-backend--aws-cloudwatch: availability target {actual} (\u226599.99%) may require sub-minute metric resolution and alerting; CloudWatch publishes at 1-minute intervals by default."
+    }
+  ]
+}

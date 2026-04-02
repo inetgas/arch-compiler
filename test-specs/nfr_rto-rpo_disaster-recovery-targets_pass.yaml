@@ -1,0 +1,34 @@
+# NFR RTO/RPO - Disaster Recovery Targets
+#
+# A mission-critical fintech API on AWS with explicit RTO (60 minutes) and RPO
+# (15 minutes) disaster recovery targets. 99.9% availability is required.
+# This tests that disaster recovery patterns (multi-region backup, failover
+# automation, point-in-time recovery) are selected when RTO/RPO are specified.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - disaster recovery patterns are selected
+#   - RTO and RPO targets are recorded in the compiled output
+#   - backup and cross-region replication patterns are included
+
+project:
+  name: Fintech Payment Processing API
+  domain: fintech
+functional:
+  summary: Payment processing API with strict disaster recovery requirements
+constraints:
+  platform: api
+  cloud: aws
+  language: java
+nfr:
+  availability:
+    target: 0.999
+  rto_minutes: 60
+  rpo_minutes: 15
+  data:
+    pii: true
+  security:
+    audit_logging: true
+cost:
+  ceilings:
+    monthly_operational_usd: 10000

@@ -1,0 +1,248 @@
+{
+  "id": "test-pyramid",
+  "version": "1.0.0",
+  "title": "Test Pyramid",
+  "description": "Unit > integration > few E2E tests; optimizes feedback speed and reliability.",
+  "types": [
+    "test",
+    "build",
+    "ops",
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "The Test Pyramid is a testing strategy pattern, not an infrastructure component. Direct monthly costs are typically zero, as most teams use open-source testing frameworks (JUnit, pytest, Jest, etc.). However, max=$500 accounts for optional CI/CD compute costs for running the test suite: small teams on free CI tiers pay $0, while larger teams with extensive test suites may incur $100-500/month for additional CI minutes on platforms like GitHub Actions ($0.008/minute beyond free tier), CircleCI, or self-hosted CI infrastructure (e.g., a dedicated t3.medium Jenkins server ~$30-50/month plus storage). E2E tests with browser automation may add minimal cloud runner costs.",
+      "adoptionCost": "Medium-high complexity adoption cost. Implementing a proper Test Pyramid requires: (1) Cultural shift and team training on testing philosophy (20-40 hours, ~$1000-1500 in developer time), (2) Establishing unit test infrastructure and patterns across codebase (40-80 hours, ~$2000-4000), (3) Setting up integration test frameworks and test databases (20-40 hours, ~$1000-2000), (4) Implementing selective E2E test suite with proper tooling (Selenium, Playwright, Cypress - 20-40 hours, ~$1000-2000), and (5) CI/CD pipeline configuration for tiered test execution (10-20 hours, ~$500-1000). With AI coding assistants reducing implementation time by ~30-40%, the realistic cost is $2500 for a small-to-medium team. This assumes some existing test infrastructure; greenfield adoption could reach $5000-7000.",
+      "licenseCost": "Testing frameworks are overwhelmingly open-source and free: JUnit, pytest, Jest, Mocha, RSpec, etc. Integration and E2E tools are also typically free: Selenium (open-source), Playwright (MIT license), Cypress (free tier for local testing, paid only for cloud dashboard features which are optional). CI/CD platforms have free tiers sufficient for most Test Pyramid implementations. No mandatory license costs exist for adopting this pattern. Optional commercial tools like Test Management systems (TestRail ~$30-80/user/month) or cloud E2E platforms (BrowserStack ~$29-300/month) are not required for the pattern itself.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "test-strategy",
+      "confidence": "high",
+      "reasoning": "The Test Pyramid is fundamentally a test strategy pattern that defines how to structure and balance different types of tests across unit, integration, and E2E levels, providing systematic guidance for organizing testing efforts."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "unit-test-framework",
+      "confidence": "high",
+      "reasoning": "The foundation of the Test Pyramid requires unit testing infrastructure to implement the broad base of fast, isolated unit tests using frameworks like JUnit, pytest, or Jest.",
+      "optional": true
+    },
+    {
+      "capability": "integration-test-framework",
+      "confidence": "high",
+      "reasoning": "The middle layer of the pyramid requires integration testing capabilities with distinct tooling (e.g., TestContainers, database test harnesses) to test component interactions.",
+      "optional": true
+    },
+    {
+      "capability": "e2e-test-framework",
+      "confidence": "high",
+      "reasoning": "The top of the pyramid requires end-to-end testing frameworks (like Selenium, Cypress, Playwright) to execute the few but critical full-system tests that complete the three-tier structure.",
+      "optional": true
+    },
+    {
+      "capability": "continuous-integration",
+      "confidence": "medium",
+      "reasoning": "The Test Pyramid's fast feedback loop and tiered execution strategy is most effective when integrated into CI/CD pipelines for automated test execution and rapid developer feedback.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "testing",
+    "quality"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Test quality improvements reduce data corruption bugs, supporting RPO of at least 5 minutes."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Test Pyramid is a testing methodology that applies universally across all cloud environments and on-premises deployments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Test Pyramid is a language-agnostic testing strategy that applies to any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Test Pyramid applies to all platform types as a universal testing strategy."
+    }
+  ],
+  "defaultConfig": {
+    "unit_test_ratio": "70",
+    "integration_test_ratio": "20",
+    "e2e_test_ratio": "10",
+    "test_isolation_level": "strict",
+    "mock_external_dependencies": "true",
+    "parallel_execution": "enabled"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "unit_test_ratio": {
+        "type": "string",
+        "enum": [
+          "60",
+          "70",
+          "80"
+        ],
+        "description": "Percentage of tests that should be fast, isolated unit tests. Higher ratios optimize for speed and reliability but may miss integration issues."
+      },
+      "integration_test_ratio": {
+        "type": "string",
+        "enum": [
+          "15",
+          "20",
+          "25",
+          "30"
+        ],
+        "description": "Percentage of tests covering component interactions. Higher ratios catch more integration bugs but increase test execution time and maintenance."
+      },
+      "e2e_test_ratio": {
+        "type": "string",
+        "enum": [
+          "5",
+          "10",
+          "15"
+        ],
+        "description": "Percentage of end-to-end tests covering critical user journeys. Minimal coverage reduces flakiness and execution time while focusing on high-value scenarios."
+      },
+      "test_isolation_level": {
+        "type": "string",
+        "enum": [
+          "strict",
+          "moderate",
+          "relaxed"
+        ],
+        "description": "Strict: Each test fully isolated with mocks. Moderate: Shared test fixtures allowed. Relaxed: Some shared state between tests. Stricter isolation improves reliability but increases setup complexity."
+      },
+      "mock_external_dependencies": {
+        "type": "string",
+        "enum": [
+          "true",
+          "false",
+          "integration-only"
+        ],
+        "description": "Whether to mock external services (APIs, databases). True optimizes unit test speed, false increases realism, integration-only balances both approaches."
+      },
+      "parallel_execution": {
+        "type": "string",
+        "enum": [
+          "enabled",
+          "disabled",
+          "unit-only"
+        ],
+        "description": "Run tests in parallel to reduce feedback time. Enabled maximizes speed, disabled ensures sequential execution for dependent tests, unit-only parallelizes fastest tests."
+      }
+    }
+  },
+  "warn_nfr": []
+}

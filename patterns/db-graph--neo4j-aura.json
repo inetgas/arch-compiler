@@ -1,0 +1,482 @@
+{
+  "id": "db-graph--neo4j-aura",
+  "version": "1.0.0",
+  "title": "Graph Database (Neo4j Aura)",
+  "description": "Neo4j Aura is a fully-managed cloud graph database. Offers Cypher query language, APOC procedures, and Graph Data Science library.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-graph--neptune"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "graph-database",
+      "confidence": "high",
+      "reasoning": "Neo4j Aura is fundamentally a graph database service that provides both storage and database management capabilities for graph data structures with nodes and relationships."
+    },
+    {
+      "capability": "graph-query",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly includes Cypher query language, enabling users to traverse and query graph relationships as a core capability."
+    },
+    {
+      "capability": "graph-algorithms",
+      "description": "Built-in graph algorithms (PageRank, community detection, shortest path)",
+      "confidence": "medium",
+      "reasoning": "The Graph Data Science library is explicitly mentioned, providing graph algorithms such as pathfinding, centrality, and community detection."
+    },
+    {
+      "capability": "apoc-procedures",
+      "description": "APOC library for advanced graph operations",
+      "confidence": "medium",
+      "reasoning": "APOC (Awesome Procedures on Cypher) is explicitly mentioned as a feature, providing extended functionality and procedures for Neo4j operations."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "cloud-infrastructure",
+      "confidence": "high",
+      "reasoning": "Neo4j Aura is a fully-managed cloud service that inherently requires cloud infrastructure to operate and deliver its database capabilities.",
+      "optional": true
+    },
+    {
+      "capability": "network-connectivity",
+      "confidence": "high",
+      "reasoning": "As a cloud-based database service, network connectivity is essential for clients to access and interact with Neo4j Aura.",
+      "optional": true
+    }
+  ],
+  "preferredProviders": [
+    "neo4j-aura"
+  ],
+  "defaultConfig": {
+    "provider": "neo4j-aura",
+    "tier": "professional",
+    "instance_size": "2GB",
+    "region": "us-east-1",
+    "backup_enabled": true,
+    "gds_enabled": false,
+    "apoc_enabled": true,
+    "ssl_enforced": true,
+    "service_auth_method": "password"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "neo4j-aura"
+        ],
+        "description": "Managed Neo4j Aura cloud service"
+      },
+      "tier": {
+        "type": "string",
+        "enum": [
+          "free",
+          "professional",
+          "enterprise"
+        ],
+        "description": "Aura tier: free (limited features, shared resources), professional (dedicated resources, backups), enterprise (advanced security, SLA)"
+      },
+      "instance_size": {
+        "type": "string",
+        "enum": [
+          "1GB",
+          "2GB",
+          "8GB",
+          "16GB",
+          "32GB",
+          "64GB"
+        ],
+        "description": "Memory allocation for graph storage and query processing. Larger sizes support more nodes/relationships and complex queries"
+      },
+      "region": {
+        "type": "string",
+        "enum": [
+          "us-east-1",
+          "us-west-2",
+          "eu-west-1",
+          "eu-central-1",
+          "ap-southeast-1",
+          "ap-southeast-2"
+        ],
+        "description": "Geographic region for data residency and latency optimization"
+      },
+      "backup_enabled": {
+        "type": "boolean",
+        "description": "Enable automatic daily backups with point-in-time recovery (Professional/Enterprise only)"
+      },
+      "gds_enabled": {
+        "type": "boolean",
+        "description": "Enable Graph Data Science library for algorithms like PageRank, community detection, similarity (additional cost)"
+      },
+      "apoc_enabled": {
+        "type": "boolean",
+        "description": "Enable APOC (Awesome Procedures on Cypher) library for extended graph operations and utilities"
+      },
+      "ssl_enforced": {
+        "type": "boolean",
+        "enum": [
+          true
+        ],
+        "description": "Neo4j Aura enforces bolt+s (TLS) on all connections. This cannot be disabled."
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "password",
+          "sso"
+        ],
+        "description": "Neo4j Aura connection auth. 'password' uses username/password credentials; 'sso' uses OAuth2/SAML SSO via Aura enterprise."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Neo4j Aura offers a free tier with 200k nodes/400k relationships suitable for development and small projects (min=$0). Entry-level production instances (AuraDB Professional) start around $65/month for 1GB RAM, 1 CPU. Mid-tier production workloads with 4GB RAM, 2 CPUs cost ~$400-600/month. High-traffic production systems with 8-16GB RAM, 4+ CPUs and Graph Data Science capabilities range $800-1500/month. Complex enterprise deployments with multi-region, high availability, and advanced GDS features can reach $2000+/month. Max set to $2000 for typical production scenarios, though enterprise can exceed this.",
+      "adoptionCost": "Neo4j Aura has high adoption complexity requiring: (1) Learning graph database concepts and Cypher query language (10-15 hours, ~$1200), (2) Data modeling for graph structures - converting relational thinking to nodes/relationships (8-12 hours, ~$800), (3) APOC procedures and Graph Data Science library familiarization (6-10 hours, ~$600), (4) Migration/integration with existing data sources (10-15 hours, ~$900). Total ~40 hours at $100/hour blended rate. Even with AI coding assistants helping with Cypher queries and pattern matching, the conceptual shift to graph thinking and performance tuning for traversals requires significant expertise. Lower than full custom graph implementation ($8000+) but higher than traditional SQL databases.",
+      "licenseCost": "Neo4j Aura is a fully-managed cloud service with usage-based pricing included in the monthly operational costs. No separate upfront license fee required. Neo4j Community Edition is open-source (GPLv3), and Aura pricing is consumption-based. Enterprise features (advanced security, multi-region) are included in higher tier plans. Unlike on-premise Neo4j Enterprise which requires licensing ($150k+/year for enterprise deployments), Aura bundles all costs into the monthly subscription with no separate license purchase.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "graph",
+    "relationships",
+    "traversal"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Neo4j Aura Enterprise tier supports up to 99.99% availability with active-active clustering."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Graph database queries require at least 50ms p95 latency for complex traversals."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Graph database p99 latency requires at least 200ms for complex multi-hop traversals."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Neo4j Aura provides automatic failover with RTO of 5-10 minutes for Professional tier."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Neo4j Aura can handle up to 360M graph queries per hour at scale with proper indexing."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Neo4j Aura graph database can handle up to 5000 read queries per second for traversal operations."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Neo4j Aura graph database can handle up to 10000 write queries per second for node/relationship mutations."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura Enterprise provides comprehensive audit logging for all database operations."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Neo4j Aura supports multiple tenant isolation strategies including per-tenant databases and label-based isolation."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura can store PII with encryption at rest and in transit, supporting both scenarios."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura is GDPR compliant with data residency controls, encryption, and right-to-be-forgotten capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura Enterprise tier supports HIPAA compliance with BAA availability, encryption, and audit controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura supports CCPA compliance through data access controls, deletion capabilities, and privacy management."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura supports SOX compliance requirements through audit trails, access controls, and change tracking."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j provides read-your-writes consistency through causal clustering and session-based guarantees."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura provides strict durability with ACID compliance, write-ahead logging, and synchronous replication options."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Neo4j Aura is a cloud-agnostic managed service available on AWS, Azure, and GCP."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "c",
+        "cpp"
+      ],
+      "reason": "Neo4j Aura is accessible via official drivers for Python, JavaScript, Java, Go, .NET, and other languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Neo4j Aura is a cloud-hosted database service accessible from any platform via Bolt protocol and HTTP APIs."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "neo4j-aura"
+      ],
+      "reason": "Pattern specifically requires neo4j-aura as the database service"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura works with or without external caching layers for query result optimization."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura supports both synchronous queries and async messaging patterns for event-driven architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura Graph Data Science library supports AI/ML inference with graph algorithms and embeddings."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura supports multi-tenancy through separate databases or label-based isolation strategies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura supports batch processing for bulk data loads, graph algorithms, and ETL operations."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura provides ACID transactions within a single database but does not natively support distributed transactions across databases."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura supports real-time streaming through change data capture and integration with Kafka or message queues."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura supports vector similarity search for embeddings used in AI/ML applications."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura can store document-like structures as node properties but is primarily optimized for graph relationships."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura can function as a key-value store using node lookups by ID or indexed properties."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern explicitly provides graph database capability as its primary purpose."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura can model time-series data using temporal properties and relationships but is not optimized for time-series workloads."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura supports OLTP workloads with transactional graph queries and real-time updates."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neo4j Aura Graph Data Science library supports OLAP workloads with graph algorithms and analytical queries."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "Graph databases like Neo4j Aura add operational complexity and cost; at very low read QPS, simpler storage solutions (relational or document stores) may be more appropriate unless complex graph traversals are essential.",
+      "message": "db-graph--neo4j-aura: peak read QPS is {actual} req/s (<1). Graph database overhead may not be justified at this scale unless complex relationship traversals are required."
+    }
+  ]
+}

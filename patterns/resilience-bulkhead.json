@@ -1,0 +1,391 @@
+{
+  "id": "resilience-bulkhead",
+  "version": "1.0.0",
+  "title": "Bulkhead Isolation",
+  "description": "Partition resources per dependency/tenant; reduces blast radius and noisy-neighbor effects.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Bulkhead isolation requires resource partitioning which typically increases infrastructure costs by 20-50% due to: (1) Separate thread pools/connection pools per dependency (minimal overhead in code but requires tuning), (2) Separate compute resources per tenant/service partition - min scenario uses container resource limits (ECS/K8s with cpu/memory quotas adding ~$100/mo for small workloads), (3) Max scenario involves dedicated infrastructure per bulkhead (separate VPCs, load balancers, database read replicas, cache clusters) for high-traffic multi-tenant systems with strict isolation requirements. The pattern itself is architectural but forces infrastructure multiplication - e.g., 3 bulkheads with $500 base cost each = $1500, plus shared monitoring/orchestration adds $500-2000, reaching $5000 for production multi-tenant systems with 5+ bulkheads.",
+      "adoptionCost": "Medium-high complexity requiring: (1) Architecture redesign to identify and map dependencies/tenants to bulkheads (8-16 hours of senior architect time), (2) Implementation of resource isolation mechanisms - thread pools (Resilience4j, Hystrix), container resource limits (K8s ResourceQuotas, LimitRanges), or infrastructure partitioning (16-32 hours), (3) Monitoring and observability setup to track per-bulkhead metrics (CPU, memory, latency, error rates) - 8-16 hours, (4) Load testing to validate isolation and tune resource allocations (8-16 hours), (5) Documentation and team training on bulkhead patterns (8 hours). Total ~48-88 hours at blended rate of $50-75/hr with AI assistance reducing implementation time by 30-40%. Complexity stems from distributed systems knowledge, resource tuning expertise, and understanding failure domain boundaries.",
+      "licenseCost": "Open source implementation using libraries like Resilience4j (Apache 2.0), Netflix Hystrix (archived but Apache 2.0), or native platform features (Kubernetes ResourceQuotas, AWS ECS task resource limits, thread pool executors in Java/Go/.NET). No commercial licenses required for core pattern implementation. Optional commercial APM tools (New Relic, Datadog) for enhanced monitoring would add $100-500/mo but are operational, not license costs. The pattern is cloud/platform-agnostic and relies on standard concurrency primitives and infrastructure controls.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "fault-isolation",
+      "confidence": "high",
+      "reasoning": "Bulkhead pattern fundamentally provides fault isolation by partitioning resources, preventing cascading failures across system boundaries. This is more precise than blast-radius-reduction which describes the outcome rather than the capability itself."
+    },
+    {
+      "capability": "resource-isolation",
+      "confidence": "high",
+      "reasoning": "The pattern provides resource isolation between different dependencies, tenants, or workloads, which is the core mechanism enabling fault containment and preventing noisy-neighbor effects."
+    },
+    {
+      "capability": "concurrency-control",
+      "confidence": "high",
+      "reasoning": "Bulkhead pattern provides controlled concurrency management by limiting thread pools, connection pools, or other resources per partition, preventing resource exhaustion."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "resource-isolation",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "The pattern fundamentally requires the ability to partition resources (thread pools, connection pools, memory, CPU) into isolated segments. This is the essential prerequisite for implementing bulkhead isolation."
+    },
+    {
+      "capability": "quota-enforcement",
+      "confidence": "high",
+      "reasoning": "Implementation requires the ability to set and enforce limits on resources allocated to each partition (e.g., max threads, max connections, max memory). Without limiting mechanisms, partitioning alone cannot prevent resource exhaustion.",
+      "optional": true
+    },
+    {
+      "capability": "monitoring",
+      "confidence": "medium",
+      "reasoning": "Operational visibility into partition health and resource utilization is required for detecting saturation, identifying noisy neighbors, and ensuring bulkheads are functioning as intended.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "resilience",
+    "isolation"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.99,
+      "reason": "Bulkhead isolation adds operational complexity (resource partitioning, monitoring per bulkhead). At <99% availability targets, simpler resilience patterns may suffice."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Bulkhead isolation introduces minimal latency overhead from resource partitioning and coordination."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Resource contention within bulkhead boundaries during peak load creates tail latency variance."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Isolated bulkhead failures enable rapid recovery by restarting only affected partitions."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 50,
+      "reason": "At low throughput, resource contention and noisy-neighbor effects are minimal. Bulkhead partitioning overhead (separate pools, coordination) outweighs benefits."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Bulkhead isolation is a cloud-agnostic architectural pattern implementable across all deployment environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Bulkhead isolation is a language-agnostic design pattern implemented through resource management and concurrency controls."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Bulkhead pattern applies to backend systems managing resources and handling concurrent workloads across all platforms."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bulkhead isolation benefits caching layers through connection pool partitioning but works without caching."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging systems benefit from bulkhead isolation to partition consumer pools but pattern applies regardless."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bulkhead pattern isolates AI inference workloads to prevent resource exhaustion but applies to non-AI systems."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bulkhead isolation is highly valuable for multi-tenant applications to prevent noisy neighbors but works for single-tenant."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing workloads benefit from resource partitioning to isolate different job types but pattern applies broadly."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bulkhead pattern partitions resources used by distributed transactions but does not require them."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming benefits from bulkhead isolation to partition stream processors but pattern works without streaming."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bulkhead isolation can partition vector search workloads but is applicable regardless of vector search usage."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bulkhead pattern isolates document store connection pools and queries but works with any database type."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value store connections benefit from bulkhead partitioning to prevent connection exhaustion but not required."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bulkhead isolation applies to graph database workloads to prevent expensive queries from affecting other operations."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database workloads benefit from bulkhead isolation to partition high-frequency writes from queries."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads benefit from bulkhead isolation to prevent transaction storms but pattern applies to all workload types."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workloads benefit from bulkhead isolation to contain expensive analytical queries but not a requirement."
+    }
+  ],
+  "defaultConfig": {
+    "isolation_strategy": "thread_pool",
+    "partition_by": "dependency",
+    "max_concurrent_calls": 10,
+    "queue_size": 20,
+    "timeout_ms": 5000,
+    "failure_threshold": 50
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "isolation_strategy": {
+        "type": "string",
+        "enum": [
+          "thread_pool",
+          "semaphore",
+          "process",
+          "container"
+        ],
+        "description": "Resource isolation mechanism. thread_pool: separate thread pools per partition (best for I/O-bound). semaphore: limit concurrent calls without threads (lightweight). process: separate OS processes (strongest isolation, higher overhead). container: separate containers/pods (cloud-native, Kubernetes-friendly)."
+      },
+      "partition_by": {
+        "type": "string",
+        "enum": [
+          "dependency",
+          "tenant",
+          "priority",
+          "endpoint"
+        ],
+        "description": "How to partition resources. dependency: isolate by external service/database. tenant: isolate by customer/organization (multi-tenancy). priority: isolate by request priority (critical vs non-critical). endpoint: isolate by API endpoint or operation type."
+      },
+      "max_concurrent_calls": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000,
+        "description": "Maximum concurrent requests allowed per partition. Lower values provide stronger isolation but may reduce throughput. Higher values increase resource utilization but reduce blast radius protection."
+      },
+      "queue_size": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10000,
+        "description": "Size of waiting queue when partition is at capacity. 0 means reject immediately. Larger queues buffer load spikes but may increase latency and memory usage."
+      },
+      "timeout_ms": {
+        "type": "integer",
+        "minimum": 100,
+        "maximum": 60000,
+        "description": "Maximum time (milliseconds) a request can wait in queue or execute before timing out. Prevents resource exhaustion from slow dependencies."
+      },
+      "failure_threshold": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "description": "Percentage of failures (0-100) that triggers partition degradation or circuit breaking. Lower values are more sensitive to failures but may cause false positives."
+      }
+    }
+  },
+  "warn_nfr": []
+}

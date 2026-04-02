@@ -1,0 +1,25 @@
+# Input Shape - NFR Section Only
+#
+# An e-commerce API spec that provides only nfr values (availability target
+# and PII flag) alongside minimal constraints, with no cost section. This
+# tests that nfr-driven pattern selection works without a cost section present.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - PII-aware patterns are selected due to pii: true
+#   - availability patterns appropriate for 0.999 target are selected
+
+project:
+  name: My API
+  domain: ecommerce
+functional:
+  summary: Product API
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+nfr:
+  availability:
+    target: 0.999
+  data:
+    pii: true

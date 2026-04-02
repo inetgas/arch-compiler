@@ -1,0 +1,29 @@
+# Feature - Multiple Features Enabled Together
+#
+# An API spec with several feature flags enabled simultaneously: caching,
+# async_messaging, multi_tenancy, messaging_delivery_guarantee (at-least-once),
+# and key_value_store. Tenant count is set to 5 with schema-per-tenant isolation.
+# This tests that co-existing features are all selected without conflicts.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns for caching, async messaging, multi-tenancy, and key-value store are selected
+#   - no inter-feature conflicts are detected
+
+constraints:
+  platform: api
+  tenantCount: 5
+  features:
+    caching: true
+    async_messaging: true
+    multi_tenancy: true
+    messaging_delivery_guarantee: at-least-once
+    key_value_store: true
+project:
+  name: Multiple Features
+  domain: test
+functional:
+  summary: 'Test scenario: Multiple Features'
+nfr:
+  security:
+    tenant_isolation: schema-per-tenant

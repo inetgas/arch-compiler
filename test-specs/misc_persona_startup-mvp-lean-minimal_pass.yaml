@@ -1,0 +1,29 @@
+# Misc Persona - Startup MVP (Lean and Fast)
+#
+# A lean startup MVP spec for a SaaS product API on AWS with Python. Budget is
+# capped at $50/month with free tier preference, and only 95% availability is
+# required. This represents the classic "build fast and cheap" scenario with
+# minimal infrastructure overhead.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - cost-effective and free-tier patterns are selected
+#   - expensive HA patterns are not required at 95% availability
+
+project:
+  name: MVP Product API
+  domain: saas
+functional:
+  summary: Beta product for early users
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+cost:
+  ceilings:
+    monthly_operational_usd: 50
+  preferences:
+    prefer_free_tier_if_possible: true
+nfr:
+  availability:
+    target: 0.95

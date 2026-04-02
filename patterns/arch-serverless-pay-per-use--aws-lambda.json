@@ -1,0 +1,433 @@
+{
+  "id": "arch-serverless-pay-per-use--aws-lambda",
+  "version": "1.0.0",
+  "title": "Serverless Pay-Per-Use Compute with AWS Lambda",
+  "description": "Cost optimisation pattern that eliminates idle infrastructure spend by running workloads on AWS Lambda\u2019s per-invocation billing model. Well-suited to bursty or unpredictable workloads where provisioned servers would sit idle most of the time; accepts Lambda cold-start latency as the trade-off.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws-lambda"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 1M requests/month, 400,000 GB-seconds compute.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents usage within AWS Lambda free tier (1M requests/month + 400,000 GB-seconds compute), suitable for low-traffic applications, development/staging environments, or background jobs processing <30K requests/day. Max $500 represents moderate production workload: ~10M requests/month ($2.00 for requests beyond free tier) + ~5M GB-seconds compute (~$83 beyond free tier) + additional costs for data transfer, CloudWatch logs, and associated services (API Gateway, S3, DynamoDB). High-traffic applications (100M+ requests/month) could exceed $2,000-5,000/month but represent edge cases beyond typical serverless adoption patterns.",
+      "adoptionCost": "Medium-high complexity due to: (1) Architectural shift from traditional server-based to event-driven serverless requiring 20-40 hours of learning and experimentation ($1,000-2,000 developer time), (2) Refactoring existing applications to fit Lambda constraints (stateless, 15-minute timeout, cold starts), (3) Learning Infrastructure-as-Code tools (CloudFormation, SAM, Serverless Framework), (4) Understanding Lambda-specific patterns (layers, provisioned concurrency, VPC configuration), (5) Setting up monitoring/observability (CloudWatch, X-Ray). With AI coding assistants reducing boilerplate and configuration effort by 30-40%, teams can accelerate Lambda function creation and IaC templates. However, architectural decisions and debugging cold start/timeout issues still require human expertise.",
+      "licenseCost": "AWS Lambda is a managed service with no upfront license fees - pure pay-as-you-go pricing model. No software licenses required as it's part of AWS infrastructure. Supporting tools are mostly open source (Serverless Framework, SAM CLI) or included with AWS account (CloudFormation, CloudWatch basic metrics). Optional commercial tools like Datadog, New Relic for enhanced monitoring would be separate decisions, not inherent to the pattern itself.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "serverless-compute",
+      "confidence": "high",
+      "reasoning": "AWS Lambda provides fully managed compute without server provisioning or management, which is the foundational characteristic of serverless computing."
+    },
+    {
+      "capability": "event-driven-compute",
+      "confidence": "high",
+      "reasoning": "Lambda is fundamentally designed for event-driven architectures, triggering function execution in response to events from various AWS services and external sources."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "AWS Lambda automatically scales compute resources based on incoming request volume without manual intervention, which is a core characteristic of serverless compute."
+    },
+    {
+      "capability": "reduced-idle-cost",
+      "confidence": "high",
+      "reasoning": "Lambda's pay-per-use model eliminates costs during idle periods since you only pay for actual invocation and compute time, not for provisioned capacity."
+    },
+    {
+      "capability": "function-as-a-service",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly describes AWS Lambda pay-per-use FaaS deployment."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Lambda functions must be designed for stateless execution as containers are ephemeral. Any pattern using Lambda requires adherence to stateless design principles or external state management.",
+      "optional": false
+    },
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "Lambda functions need an event source or trigger to invoke them (API Gateway, S3, DynamoDB, CloudWatch Events, etc.). The pattern requires integration with event sources to function.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-microservices",
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "serverless",
+    "aws",
+    "lambda"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "AWS Lambda is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Lambda's shared infrastructure and cold start behavior limits availability to approximately four nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Lambda warm invocations add 10-50ms overhead for event processing and infrastructure routing."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "P99 includes occasional cold starts and AWS infrastructure variability that add latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 0.1,
+      "reason": "Lambda automatically recovers from failures by routing to healthy infrastructure within seconds."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "With quota increases, Lambda can scale to 100K+ concurrent executions supporting 360M jobs per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Lambda serverless pay-per-use model supports up to 50K read QPS with auto-scaling compute."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 20000,
+      "reason": "Lambda serverless pay-per-use model supports up to 20K write QPS with auto-scaling compute."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda infrastructure is GDPR-compliant but applications can use it for both compliant and non-compliant workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda is HIPAA-eligible when configured with BAA but supports both HIPAA and non-HIPAA workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda supports CCPA-compliant applications but does not enforce compliance at the compute layer."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda can be used for SOX-compliant financial workloads with proper access controls and audit logging."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "AWS Lambda is AWS-specific serverless compute service."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "ruby",
+        "php"
+      ],
+      "reason": "AWS Lambda natively supports these runtime languages with managed runtime environments."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Lambda is infrastructure that can serve any platform type including web backends, APIs, batch jobs, and data pipelines."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda works with or without caching layers like ElastiCache or in-memory caching."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda integrates well with SQS, SNS, EventBridge for async messaging but also supports synchronous request-reply."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda suitable for serverless AI inference workloads with pay-per-invocation pricing but not required."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda supports both single-tenant and multi-tenant application architectures through function isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda excels at batch processing with event-driven invocations but also handles real-time requests."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda can participate in distributed transactions via Step Functions or saga patterns but does not require them."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda can process Kinesis and DynamoDB streams for real-time data processing but supports any workload type."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda can invoke vector search services for AI/ML embeddings but does not require vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda integrates with document stores like DynamoDB but supports any data store type."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda works with key-value stores like DynamoDB or ElastiCache but does not require them."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda can query graph databases like Neptune but supports applications without graph data."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda can process time-series data with Timestream or other databases but does not require time-series storage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda supports OLTP workloads with low-latency database access and transactional processing but also handles non-OLTP."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Lambda can handle OLAP workloads for analytical queries and data transformations but also supports transactional workloads."
+    }
+  ],
+  "defaultConfig": {
+    "memory_size": 512,
+    "timeout": 30,
+    "architecture": "x86_64",
+    "provisioned_concurrency": 0,
+    "reserved_concurrency": null
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "memory_size": {
+        "type": "integer",
+        "enum": [
+          128,
+          256,
+          512,
+          1024,
+          2048,
+          3008
+        ],
+        "description": "Memory allocation in MB (CPU scales proportionally). Higher memory = faster execution but higher cost. 512MB balances cost and performance for most workloads"
+      },
+      "timeout": {
+        "type": "integer",
+        "minimum": 3,
+        "maximum": 900,
+        "description": "Maximum execution time in seconds (1-900). Longer timeouts allow complex processing but risk higher costs on hung functions. 30s suits most API/event handlers"
+      },
+      "architecture": {
+        "type": "string",
+        "enum": [
+          "x86_64",
+          "arm64"
+        ],
+        "description": "Processor architecture. ARM64 (Graviton2) offers 20% better price-performance but may have library compatibility issues. x86_64 has broader ecosystem support"
+      },
+      "provisioned_concurrency": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1000,
+        "description": "Pre-warmed instances to eliminate cold starts. Costs $0.015/GB-hour even when idle. Use 0 for cost optimization, >0 for latency-sensitive workloads"
+      },
+      "reserved_concurrency": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "minimum": 1,
+        "maximum": 1000,
+        "description": "Maximum concurrent executions (null = unreserved). Limits blast radius and prevents runaway costs, but can throttle legitimate traffic. Use for cost control on unpredictable workloads"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 100,
+      "reason": "At <100 jobs/hour, Lambda's cold start overhead and operational complexity may outweigh benefits compared to simpler compute options.",
+      "message": "arch-serverless-pay-per-use--aws-lambda: peak_jobs_per_hour is {actual} (<100). Lambda cold starts and operational complexity may outweigh pay-per-use savings at this low volume."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At extremely low QPS (<1 req/s), the operational overhead of serverless architecture may not be justified compared to simpler deployment models.",
+      "message": "arch-serverless-pay-per-use--aws-lambda: peak read QPS is {actual} req/s (<1). At this low traffic, simpler deployment models may be more appropriate."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 10000,
+      "reason": "At sustained high QPS (>10K req/s), serverless pay-per-execution costs may exceed reserved capacity; analyze cost vs. performance trade-offs.",
+      "message": "arch-serverless-pay-per-use: peak read QPS is {actual} req/s (>10K). At sustained high throughput, pay-per-execution costs may exceed reserved compute instances. Evaluate cost model."
+    }
+  ]
+}

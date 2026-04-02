@@ -1,0 +1,26 @@
+# Security - PII Without Audit Logging (No Compliance Flag)
+#
+# An agnostic API spec with pii: true but audit_logging explicitly set to false.
+# There is no compliance flag (sox, hipaa, gdpr) set that would mandate audit
+# logging. The compiler is permissive about this combination unless a compliance
+# pattern explicitly requires audit logging, so compilation succeeds.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - PII patterns are selected but audit logging is not forced without compliance flag
+#   - the missing audit logging is visible in the output for human review
+
+nfr:
+  data:
+    pii: true
+  security:
+    audit_logging: false
+project:
+  name: PII + No Audit Logging (Impossible)
+  domain: test
+functional:
+  summary: 'Test scenario: PII + No Audit Logging (Impossible)'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

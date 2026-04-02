@@ -1,0 +1,271 @@
+{
+  "id": "policy-no-free-saas-for-pii",
+  "version": "1.0.0",
+  "title": "Policy: No free SaaS for PII",
+  "description": "Policy gate that rejects free-tier SaaS provider patterns when the spec declares PII is present. Enforces organizational policy that PII-handling systems must use paid, contractually obligated providers with defined data processing agreements.",
+  "types": [
+    "ops"
+  ],
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Enforced by policy.",
+    "adoptionCost": 500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "This is a policy pattern, not an infrastructure or service. It has no direct monthly operational costs. The policy mandates that systems handling PII must use paid SaaS tiers instead of free tiers, but the actual costs depend on which services are selected and are accounted for in those specific patterns (e.g., if using Auth0, Stripe, or database services for PII). The policy itself is simply a governance rule with no inherent infrastructure footprint.",
+      "adoptionCost": "Low-to-medium adoption cost. Implementation involves: (1) Documenting and communicating the policy across engineering teams (2-4 hours), (2) Identifying existing systems that process PII and auditing their current SaaS usage (4-8 hours), (3) Implementing policy-as-code enforcement through tools like Open Policy Agent, AWS Service Control Policies, or similar governance frameworks (8-12 hours), (4) Creating compliance checklists and architecture review processes (4-6 hours). Total estimated effort: 18-30 hours at $25-30/hour blended rate with AI assistance = $450-$900. Set at $500 as a reasonable midpoint for policy documentation and enforcement automation.",
+      "licenseCost": "No license costs. This is an internal organizational policy that can be enforced using open-source policy-as-code tools (Open Policy Agent, Cloud Custodian, or native cloud governance tools like AWS Config Rules, Azure Policy, or GCP Organization Policies). While enterprise policy management platforms exist (e.g., HashiCorp Sentinel, Styra DAS), basic policy enforcement can be achieved with free tools. The policy itself is organizational IP with no licensing fees.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "policy-enforcement",
+      "confidence": "high",
+      "reasoning": "This pattern provides policy enforcement capability by defining and enforcing organizational rules about technology usage. Specifically, it enforces compliance rules regarding PII handling and SaaS tier selection."
+    },
+    {
+      "capability": "compliance-reporting",
+      "confidence": "high",
+      "reasoning": "Policy enforcement patterns need to generate audit reports and compliance documentation to demonstrate adherence to organizational rules and regulatory requirements."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "pii-detection",
+      "confidence": "high",
+      "reasoning": "To enforce this policy, the system needs to detect whether PII is being stored or processed. Without identifying PII data, the policy cannot determine which systems fall under this restriction.",
+      "optional": true
+    },
+    {
+      "capability": "saas-tier-identification",
+      "confidence": "high",
+      "reasoning": "The policy needs to identify whether a SaaS service is free-tier or paid-tier to determine if it violates the policy. This requires visibility into service configuration and subscription levels.",
+      "optional": true
+    },
+    {
+      "capability": "monitoring",
+      "confidence": "high",
+      "reasoning": "Continuous monitoring is needed to detect policy violations, track compliance status, and identify when systems begin storing PII or switch to free-tier services.",
+      "optional": false
+    },
+    {
+      "capability": "configuration-management",
+      "confidence": "medium",
+      "reasoning": "Tracking and validating service tier settings across the organization is essential to maintain an accurate inventory of SaaS services and their configurations for policy enforcement.",
+      "optional": true
+    },
+    {
+      "capability": "alerting",
+      "confidence": "high",
+      "reasoning": "Stakeholders must be notified when policy violations are detected to enable timely remediation and maintain compliance with organizational security policies.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-managed-postgres--render",
+      "db-managed-postgres--supabase",
+      "db-managed-postgres--railway",
+      "db-managed-postgres--neon",
+      "db-managed-mysql--planetscale",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "hosting-static-frontend",
+      "hosting-static-frontend--netlify",
+      "hosting-static-frontend--vercel",
+      "hosting-static-frontend--cloudflare-pages"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "policy",
+    "security",
+    "paid"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General organizational policy pattern applicable to any system handling PII"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Paid SaaS offerings typically support up to 99.99% availability through multi-region deployment and enterprise SLAs."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "This policy is only activated when PII is present, forbidding free-tier SaaS for such systems."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "This organizational policy applies universally across all cloud environments and on-premises deployments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "This is an organizational policy pattern that applies to infrastructure and service tier selection regardless of programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "This policy applies to any platform that might use SaaS services for storing or processing PII data."
+    }
+  ],
+  "defaultConfig": {
+    "enforcement_level": "blocking",
+    "pii_classification": "strict",
+    "exemption_process": "required",
+    "approved_paid_tiers": [
+      "professional",
+      "business",
+      "enterprise"
+    ]
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "enforcement_level": {
+        "type": "string",
+        "enum": [
+          "blocking",
+          "warning",
+          "audit"
+        ],
+        "description": "Blocking prevents deployment, warning allows with alerts, audit logs violations for review"
+      },
+      "pii_classification": {
+        "type": "string",
+        "enum": [
+          "strict",
+          "moderate",
+          "minimal"
+        ],
+        "description": "Strict includes all personal identifiers, moderate excludes pseudonymized data, minimal only covers regulated PII (SSN, health records)"
+      },
+      "exemption_process": {
+        "type": "string",
+        "enum": [
+          "required",
+          "optional",
+          "disabled"
+        ],
+        "description": "Whether teams can request exemptions through approval workflow, make it optional, or disable exemptions entirely"
+      },
+      "approved_paid_tiers": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "starter",
+            "professional",
+            "business",
+            "enterprise"
+          ]
+        },
+        "description": "Which paid tier levels are acceptable for PII workloads based on SLA, compliance, and support requirements"
+      }
+    }
+  },
+  "warn_nfr": []
+}

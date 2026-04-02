@@ -1,0 +1,36 @@
+# Tenancy - Shared DB Row-Level Isolation
+#
+# A multi-tenant SaaS API on AWS with Python, multi_tenancy: true, and
+# shared_db_row_level isolation mode. Row-level security (RLS) in a shared
+# database is the most cost-effective isolation strategy for small-to-medium
+# tenant counts. This tests that the shared_db_row_level isolation pattern is
+# correctly selected.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - multi-tenancy pattern with shared_db_row_level isolation is selected
+#   - row-level security infrastructure patterns are included
+#   - per-tenant-db and schema-per-tenant patterns are NOT selected
+
+project:
+  name: Multi-Tenant SaaS Platform
+  domain: saas
+functional:
+  summary: SaaS API with shared database and row-level tenant isolation
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+  tenantCount: 500
+  features:
+    multi_tenancy: true
+nfr:
+  security:
+    tenant_isolation: shared_db_row_level
+  availability:
+    target: 0.99
+  data:
+    pii: true
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

@@ -1,0 +1,30 @@
+# SaaS Disallowed - Disallowed Provider Not in Allowed List (Preemptive)
+#
+# A web TypeScript spec that lists vercel in saas-providers and netlify in
+# disallowed-saas-providers, but netlify is not in saas-providers. This is a
+# valid preemptive declaration: the user blocks netlify as a future safeguard
+# even though it wasn't requested. Vercel patterns should still be selected.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - hosting-static-frontend--netlify is NOT selected (netlify disallowed)
+#   - hosting-static-frontend--vercel IS selected (vercel is in saas-providers)
+#   - no error for disallowing a provider not in the allowed list
+
+project:
+  name: Frontend App No Netlify
+  domain: marketing
+functional:
+  summary: Static marketing site - Netlify explicitly off-limits per security policy
+constraints:
+  cloud: agnostic
+  language: typescript
+  platform: web
+  saas-providers:
+    - vercel
+  disallowed-saas-providers:
+    - netlify
+cost:
+  preferences:
+    prefer_free_tier_if_possible: true
+nfr: {}

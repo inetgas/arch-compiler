@@ -1,0 +1,20 @@
+{
+  "summary": {
+    "total_patterns": 180,
+    "total_asymmetric_conflicts": 0,
+    "generic_missing_variant_conflicts": 0,
+    "variant_missing_generic_conflict": 0,
+    "variant_missing_sibling_conflict": 0,
+    "architecture_missing_conflict": 0,
+    "other_asymmetric": 0,
+    "patterns_needing_fixes": 0
+  },
+  "categories": {
+    "generic_missing_variant_conflicts": [],
+    "variant_missing_generic_conflict": [],
+    "variant_missing_sibling_conflict": [],
+    "architecture_pattern_missing_conflict": [],
+    "other_asymmetric": []
+  },
+  "fixes": {}
+}

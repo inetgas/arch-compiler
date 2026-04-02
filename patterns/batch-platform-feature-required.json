@@ -1,0 +1,347 @@
+{
+  "id": "batch-platform-feature-required",
+  "version": "1.0.0",
+  "title": "Batch Platform: batch_processing Feature Flag Required",
+  "description": "Meta-policy pattern that activates when the platform is one of the batch-oriented platform types (batch, data-pipeline, worker, ml-training) and enforces that the batch_processing feature flag is explicitly set to true. These platform types are semantically batch workloads: they execute scheduled or event-driven jobs rather than responding to real-time requests. Failing to declare batch_processing: true on a batch platform means the compiler will not select batch infrastructure patterns (batch-processing-required, data-batch-processing--*) and will size the system as if it were a real-time API service \u2014 producing an architecturally incorrect output. This pattern closes that gap by making the implicit explicit: if your platform IS batch, you must declare it as such so the full batch enforcement chain fires.",
+  "types": [
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 0.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 99999,
+    "costNotes": "Meta-policy pattern with no direct cost. Infrastructure costs are in downstream batch implementation patterns.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero cost \u2014 meta-policy pattern only. Batch compute costs are in the data-batch-processing--* variant patterns.",
+      "adoptionCost": "Zero adoption cost \u2014 this pattern auto-activates on batch platform types and enforces batch_processing: true as a hard compilation requirement.",
+      "licenseCost": "No license cost \u2014 policy enforcement pattern only.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "batch-feature-flag-enforcement",
+      "confidence": "high",
+      "reasoning": "Enforces that batch_processing: true is declared whenever the spec uses a batch-oriented platform type, preventing silent mis-classification of batch systems as real-time services."
+    }
+  ],
+  "requires": [],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "batch",
+    "meta-policy",
+    "feature-flag-enforcement",
+    "platform"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural enforcement pattern applicable to any batch platform regardless of technology or cloud provider"
+  },
+  "defaultConfig": {},
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Batch platforms are compatible with any authentication mechanism; job-level auth is handled by IAM roles and scheduler credentials."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch job execution logs serve as an audit trail; compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Batch platforms support tenant isolation through job queue namespacing, separate worker pools, or IAM-scoped job execution."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Batch platform availability ceiling matches managed batch scheduler SLAs. Five-nine availability requires active-active multi-region batch topology."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms are compatible with PII workloads when data at rest and in transit is encrypted and job access is IAM-controlled."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when batch jobs support configurable data retention and deletion workflows."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when batch jobs enforce encryption at rest and in transit with appropriate BAA coverage."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when batch jobs support consumer data deletion within required timeframes."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX when batch job execution logs provide an immutable audit trail of data processing operations."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms are inherently eventually consistent. If read-your-writes is required, compensating patterns must be added on top."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability depends on batch checkpointing strategy. With idempotent jobs and checkpointing, strict durability is achievable."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "batch",
+        "data-pipeline",
+        "worker",
+        "ml-training"
+      ],
+      "reason": "Primary activation gate \u2014 these platform types are semantically batch workloads. api, web, mobile, desktop, iot, library, cli platforms are excluded because they are real-time or interactive, not scheduled batch."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Batch platform enforcement is cloud-agnostic; managed batch services exist on all major clouds and on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Batch platform enforcement is language-agnostic."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Intentionally compatible with both true and false \u2014 this pattern must activate even when batch_processing is false or unset so it can enforce the correct value via requires_constraints."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms work with or without caching."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms can use async messaging for job queuing but do not require it."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms are commonly used for batch AI inference (embedding generation, bulk predictions) but are not limited to AI workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms support both single-tenant and multi-tenant job architectures."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms can coordinate distributed transactions within a job but do not require them."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms and real-time streaming are complementary; lambda architecture combines both."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms are used for offline vector index building and bulk embedding generation."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms are compatible with document stores as the source or sink for batch jobs."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms can use key-value stores for job state and deduplication."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms support graph analytics and bulk graph mutation jobs."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms are commonly used for time-series aggregation and historical rollup jobs."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms can run bulk OLTP operations during off-peak windows."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch platforms naturally support OLAP via scheduled analytical queries and aggregation jobs."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": true,
+      "reason": "Batch-oriented platforms (batch, data-pipeline, worker, ml-training) must explicitly declare batch_processing: true. Without this flag the compiler will not activate batch infrastructure patterns (batch-processing-required, data-batch-processing--*), leaving the spec without correctly sized batch scheduling, job start latency enforcement, or throughput validation."
+    }
+  ],
+  "requires_nfr": [],
+  "warn_nfr": []
+}

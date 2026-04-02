@@ -1,0 +1,500 @@
+{
+  "id": "platform-kubernetes",
+  "version": "1.0.0",
+  "title": "Kubernetes Platform Standardization",
+  "description": "Standardize on Kubernetes; namespaces/operators; standardized ingress/service patterns.",
+  "types": [
+    "deploy",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 8000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 8000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Minimum represents a small development/staging cluster (3 t3.medium nodes ~$100/month, managed control plane ~$75/month on EKS/GKE/AKS, load balancer ~$20/month, basic monitoring ~$5/month). Maximum represents a production setup with 10-20 nodes across multiple availability zones (compute ~$4000/month), managed Kubernetes service fees (~$220/month for 3 clusters), production-grade ingress controllers and load balancers (~$200/month), comprehensive monitoring/logging (~$500-1000/month), persistent storage (~$500/month), data transfer/egress (~$500-1500/month), and operator/service mesh overhead (~$500/month). Costs scale significantly with traffic, number of services, and high-availability requirements.",
+      "adoptionCost": "Very high complexity adoption. Requires: (1) Team training on Kubernetes concepts, kubectl, YAML manifests, operators (40-80 hours across team = $3000-4000), (2) Infrastructure setup including cluster provisioning, network policies, RBAC, secrets management, CI/CD pipelines (60-100 hours = $3000-5000), (3) Migration of existing applications to containerized deployments with health checks, resource limits, and horizontal pod autoscaling (40-80 hours = $2000-4000), (4) Establishing patterns for ingress, service mesh, monitoring, and logging (20-40 hours = $1000-2000). Total reflects 160-300 hours of senior engineering time. Steep learning curve for teams new to container orchestration. Requires expertise in distributed systems, networking, and DevOps practices.",
+      "licenseCost": "Kubernetes itself is open source (Apache 2.0 license) with no licensing fees. Managed Kubernetes services (EKS, GKE, AKS) charge for control plane management but not licenses. Common operators and tools (Prometheus, Grafana, cert-manager, nginx-ingress) are also open source. However, organizations may choose commercial offerings like Rancher ($0-15k/year), OpenShift ($50k+/year), or Tanzu ($25k+/year) for enterprise support and additional features. The baseline assumes open source tooling; adjust upward if enterprise Kubernetes distributions are required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "container-orchestration",
+      "confidence": "high",
+      "reasoning": "Kubernetes is fundamentally a container orchestration platform that manages the deployment, scaling, and operation of containerized applications across a cluster of machines."
+    },
+    {
+      "capability": "service-deployment",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly establishes standardized ingress and service patterns that enable consistent deployment of services across the platform."
+    },
+    {
+      "capability": "namespace-isolation",
+      "confidence": "high",
+      "reasoning": "Kubernetes namespaces are explicitly mentioned as a key feature, providing logical isolation and multi-tenancy capabilities for different workloads and teams."
+    },
+    {
+      "capability": "operator-pattern",
+      "confidence": "high",
+      "reasoning": "The pattern specifically mentions operators as part of the standardization approach, enabling automated management of complex applications through custom controllers."
+    },
+    {
+      "capability": "service-discovery",
+      "confidence": "high",
+      "reasoning": "Kubernetes provides built-in DNS-based service discovery that allows services to find and communicate with each other using consistent naming conventions."
+    },
+    {
+      "capability": "load-balancing",
+      "confidence": "high",
+      "reasoning": "The standardized ingress and service patterns inherently provide load balancing capabilities through Kubernetes Services and Ingress controllers."
+    },
+    {
+      "capability": "secrets-management",
+      "confidence": "high",
+      "reasoning": "Kubernetes Secrets provide native capabilities for managing sensitive configuration data, which is essential for standardized platform operations."
+    },
+    {
+      "capability": "cluster-management",
+      "confidence": "high",
+      "reasoning": "Kubernetes is a cluster management system — selecting this pattern means cluster management is in place."
+    },
+    {
+      "capability": "container-runtime",
+      "confidence": "high",
+      "reasoning": "Kubernetes manages container runtimes (containerd/CRI-O) as part of its node setup."
+    },
+    {
+      "capability": "scheduler",
+      "confidence": "high",
+      "reasoning": "Kubernetes includes a built-in scheduler for pod placement and CronJobs for batch scheduling."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "cluster-management",
+      "confidence": "high",
+      "reasoning": "The pattern requires dedicated operational expertise to manage the Kubernetes cluster infrastructure, perform upgrades, handle scaling, and maintain the control plane.",
+      "optional": false
+    },
+    {
+      "capability": "container-runtime",
+      "confidence": "high",
+      "reasoning": "Kubernetes requires a container runtime (such as containerd or CRI-O) to actually execute and manage containers on cluster nodes.",
+      "optional": false
+    },
+    {
+      "capability": "container-registry",
+      "confidence": "high",
+      "reasoning": "A container registry is essential for storing and distributing container images that Kubernetes pulls and deploys across the cluster.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "platform",
+    "kubernetes"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Kubernetes with standardized patterns can achieve up to four nines availability through pod autoscaling and multi-zone deployments."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.95,
+      "reason": "Kubernetes platform investment (cluster management, operators, multi-zone setup) is less valuable when availability requirements are modest."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Kubernetes service mesh and ingress routing introduce minimum 10ms p95 latency overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Network variability and pod scheduling delays in Kubernetes result in at least 50ms p99 latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Kubernetes automated pod restart and liveness probe recovery achieves RTO of at least 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Kubernetes cluster capacity for job scheduling and pod orchestration limits peak throughput to 360M jobs per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Kubernetes platform with standardized ingress and service mesh can handle extremely high read query throughput across distributed pods."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Kubernetes platform with horizontal pod autoscaling and load balancing supports extremely high write query throughput."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes audit logging and standardized observability patterns can be enabled or disabled based on requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes provides infrastructure capabilities for GDPR compliance through audit logging, RBAC, and data controls."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes supports HIPAA-compliant deployments through encryption, access controls, and audit logging when configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes platform features support CCPA requirements through data access controls and audit capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes audit logging and RBAC enable SOX compliance controls for financial data when properly configured."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Kubernetes runs on all major cloud providers and on-premises infrastructure as a cloud-agnostic orchestration platform."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Kubernetes orchestrates containerized applications written in any programming language without language-specific constraints."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Kubernetes supports all backend and server-side workload types including APIs, batch jobs, workers, and ML workloads."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes can orchestrate caching layers like Redis or Memcached as StatefulSets or external services."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes provides orchestration for message queue and event streaming workloads like Kafka, RabbitMQ, and NATS."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes is widely used for ML inference workloads with GPU support through device plugins and specialized operators."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes namespaces and RBAC provide strong multi-tenancy isolation for workloads in shared clusters."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes has native Job and CronJob resources for batch processing and scheduled task execution."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes can orchestrate distributed transaction coordinators and microservices implementing saga patterns."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes supports real-time streaming platforms like Kafka, Flink, and Spark Streaming as StatefulSet deployments."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes can orchestrate vector databases like Pinecone, Weaviate, or Milvus for AI/ML embedding search workloads."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes can orchestrate document-oriented databases like MongoDB or Couchbase as StatefulSet deployments."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes can orchestrate key-value stores like Redis, etcd, or Consul for fast lookups and caching."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes can orchestrate graph databases like Neo4j or JanusGraph for relationship-heavy queries."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes can orchestrate time-series databases like InfluxDB, TimescaleDB, or Prometheus for metrics storage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes supports OLTP databases and transactional workloads through StatefulSets with persistent storage."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Kubernetes supports OLAP and analytical processing workloads through distributed query engines and data warehouses."
+    }
+  ],
+  "defaultConfig": {
+    "namespace_strategy": "per-environment",
+    "ingress_controller": "nginx",
+    "service_mesh": "none",
+    "operator_framework": "native",
+    "autoscaling": "hpa",
+    "network_policy": "disabled"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "namespace_strategy": {
+        "type": "string",
+        "enum": [
+          "per-environment",
+          "per-team",
+          "per-application",
+          "monolithic"
+        ],
+        "description": "How to organize Kubernetes namespaces: per-environment (dev/staging/prod), per-team (team isolation), per-application (app isolation), or monolithic (single namespace). Affects isolation, RBAC complexity, and resource management."
+      },
+      "ingress_controller": {
+        "type": "string",
+        "enum": [
+          "nginx",
+          "traefik",
+          "istio",
+          "ambassador",
+          "contour"
+        ],
+        "description": "Ingress controller for routing external traffic. NGINX is simple and widely adopted, Traefik offers auto-discovery, Istio provides service mesh features, Ambassador is API gateway-focused, Contour uses Envoy for advanced routing."
+      },
+      "service_mesh": {
+        "type": "string",
+        "enum": [
+          "none",
+          "istio",
+          "linkerd",
+          "consul"
+        ],
+        "description": "Service mesh for advanced traffic management, observability, and security. 'none' for simpler deployments, Istio for full features but complexity, Linkerd for lightweight option, Consul for multi-cloud."
+      },
+      "operator_framework": {
+        "type": "string",
+        "enum": [
+          "native",
+          "operator-sdk",
+          "kubebuilder",
+          "helm-operator"
+        ],
+        "description": "Framework for building Kubernetes operators to manage custom resources. Native for full control, Operator SDK for scaffolding, Kubebuilder for Go-based operators, Helm Operator for Helm chart automation."
+      },
+      "autoscaling": {
+        "type": "string",
+        "enum": [
+          "hpa",
+          "vpa",
+          "keda",
+          "hpa-vpa-combined"
+        ],
+        "description": "Autoscaling strategy: HPA (Horizontal Pod Autoscaler) scales pod replicas, VPA (Vertical Pod Autoscaler) adjusts resource requests, KEDA for event-driven scaling, or combined HPA+VPA for both dimensions."
+      },
+      "network_policy": {
+        "type": "string",
+        "enum": [
+          "disabled",
+          "default-deny",
+          "namespace-isolation",
+          "zero-trust"
+        ],
+        "description": "Network security policy enforcement. Disabled for open communication, default-deny requires explicit allow rules, namespace-isolation restricts cross-namespace traffic, zero-trust enforces strict pod-to-pod policies."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "Kubernetes platform overhead (ingress, service mesh, pod networking) is not justified for very low traffic workloads.",
+      "message": "platform-kubernetes: peak read QPS is {actual} req/s (<1). Kubernetes operational complexity and resource overhead may not be justified for very low-traffic workloads."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+# Cost Preference - Conflicting Free Tier and High Budget
+#
+# An API spec with a $0 monthly budget ceiling but prefer_free_tier_if_possible
+# set to false and prefer_saas_first set to true. These preferences conflict
+# with a zero budget, testing that the compiler handles contradictory cost
+# preferences without erroring.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - compiler records the conflicting preferences without rejecting the spec
+#   - pattern selection proceeds based on platform and other constraints
+
+cost:
+  ceilings:
+    monthly_operational_usd: 0
+  preferences:
+    prefer_free_tier_if_possible: false
+    prefer_saas_first: true
+project:
+  name: Cost Preference Conflicts
+  domain: test
+functional:
+  summary: 'Test scenario: Cost Preference Conflicts'
+nfr: {}
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

@@ -1,0 +1,34 @@
+# NFR Latency - Job Start P95 in Cluster Batch Range (>= 300s)
+#
+# Batch platform with jobStartP95Seconds=600 falls in the cluster batch range
+# (>= 300s). Heavy ML training jobs that take minutes to provision a cluster
+# are acceptable here. data-batch-processing--cluster is selected because it
+# handles long cold-start provisioning; serverless approaches are excluded.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - data-batch-processing--cluster IS selected (jobStartP95 >= 300s)
+#   - data-batch-processing--serverless is NOT selected (requires jobStartP95 <= 300s)
+
+project:
+  name: ML Training Pipeline
+  domain: ml
+functional:
+  summary: ML model training jobs that provision GPU clusters with 10-minute start times
+constraints:
+  platform: batch
+  cloud: aws
+  language: python
+  features:
+    batch_processing: true
+nfr:
+  availability:
+    target: 0.99
+  latency:
+    jobStartP95Seconds: 600
+    jobStartP99Seconds: 900
+  throughput:
+    peak_jobs_per_hour: 20
+cost:
+  ceilings:
+    monthly_operational_usd: 5000

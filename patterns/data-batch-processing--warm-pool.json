@@ -1,0 +1,492 @@
+{
+  "id": "data-batch-processing--warm-pool",
+  "version": "1.0.0",
+  "title": "Batch Processing: Managed Batch with Warm Worker Pool",
+  "description": "Batch job execution using managed batch services (AWS Batch with warm pools, Azure Batch, Google Batch) with pre-provisioned container instances maintained in a warm standby state. Achieves P95 job start times of 10-60 seconds by keeping a pool of ready-to-execute workers alive, eliminating container pull and VM provisioning delays. Balances job start latency and infrastructure cost \u2014 idle warm workers incur standby costs but eliminate cold-start delays. Best for workloads with predictable load patterns, sub-minute start requirements, and batch jobs running multiple times per hour.",
+  "types": [
+    "design",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 150.0,
+      "max": 6000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 5000,
+    "costNotes": "Warm pool costs include standby infrastructure charges even when no jobs are running. Min ($150): small warm pool (2-4 instances t3.medium in standby ~$50/mo) + compute for jobs + storage. Max ($6000): large warm pools for high-frequency jobs with significant data processing.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Warm pool batch adds idle standby costs vs cold-start. Min ($150): 2x t3.medium warm instances (24/7 standby ~$50/mo) + periodic batch compute ($70-80/mo) + S3 storage ($20). Max ($6000): 10x c5.2xlarge warm pool ($800/mo idle) + production batch compute at peak ($3500-4000/mo) + data transfer and storage ($1000+).",
+      "adoptionCost": "Warm pool configuration adds complexity over base batch: pool sizing, idle timeout tuning, health monitoring for warm workers, and cost optimization for standby instances. Estimate 13-14 developer days at ~$180/day = $2500.",
+      "licenseCost": "No license cost. AWS Batch warm pools, Azure Batch, and Google Batch are usage-based managed services with no upfront licensing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "batch-processing",
+      "confidence": "high",
+      "reasoning": "Provides batch processing capability via managed batch services with warm workers \u2014 processing data in scheduled or event-driven batches with fast job start."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Enables ETL batch workflows with fast job start suited to sub-hourly batch pipelines."
+    },
+    {
+      "capability": "high-throughput-processing",
+      "confidence": "high",
+      "reasoning": "Warm worker pools enable high throughput through pre-provisioned parallelism, avoiding scheduling overhead of cold-start batch."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "scheduler",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Managed batch services provide built-in schedulers; external schedulers (EventBridge, Airflow) can trigger jobs."
+    },
+    {
+      "capability": "job-orchestration",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Orchestration required to manage job submission, monitor warm pool health, and coordinate multi-step batch workflows."
+    },
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Batch jobs require persistent storage for input data and results; warm workers maintain storage connections between jobs."
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Managed batch services provide retry capabilities; warm pool configuration must handle worker failures without draining the pool."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-stream-processing",
+      "data-batch-processing--serverless",
+      "data-batch-processing--cold-start",
+      "data-batch-processing--cluster"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "batch",
+    "warm-pool",
+    "managed-batch"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Managed batch with warm pools is compatible with any auth mechanism; job-level auth is handled by IAM roles attached to worker instances."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed batch services provide job execution logs and CloudTrail/Activity Log integration; compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Warm pool batch supports tenant isolation through separate job queues per tenant with IAM-scoped worker roles."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Managed batch services with warm pools can achieve up to 99.99% availability; five-nine availability requires active-active multi-region topology."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": "<=",
+      "value": 300,
+      "reason": "Warm pool batch is optimized for 10-60s P95 job start. Tolerating >5 minute start times suggests cold-start batch is sufficient and more cost-effective."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 60,
+      "reason": "Managed batch with warm worker pools achieves P95 job start in 10-60 seconds. Workers remain in warm standby but require job dispatch, container allocation from pool, and setup. Cannot guarantee sub-10s consistently at P95."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 180,
+      "reason": "P99 job start for warm pool batch is 60-180 seconds, accounting for pool exhaustion events requiring new worker provisioning under high concurrency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 10,
+      "reason": "Warm pool batch RTO is 10-30 minutes: warm workers restart quickly but failed jobs must be detected, re-queued, and re-assigned to an available worker."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "RPO of 5+ minutes for warm pool batch; data arriving between batch runs is at risk until re-processing from last checkpoint."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Warm pool batch handles up to 360M jobs/hour with sufficient pool sizing and horizontal scaling of managed batch services."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 4,
+      "reason": "Warm pool batch maintains idle workers between jobs, incurring standby costs. At <4 jobs/hour (1 job per 15+ minutes), cold-start batch is more cost-effective."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed batch with warm pools is compatible with PII workloads when workers are configured with appropriate encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch is compatible with GDPR through proper data handling and deletion capabilities within batch jobs."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch supports HIPAA compliance with encryption at rest/transit and appropriate BAA coverage for managed services."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch is compatible with CCPA when batch jobs support consumer data deletion within required timeframes."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch supports SOX compliance through job execution logs and managed service audit trails."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch is inherently eventually consistent. Read-your-writes requires compensating patterns (polling, outbox) on top."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strict durability achievable with idempotent jobs and checkpointing to durable storage; warm pool state is ephemeral."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Warm pool batch is available on all major clouds (AWS Batch warm pools, Azure Batch, Google Batch) and on-prem via Kubernetes Job pools."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Managed batch services support all languages via containerized job images."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Warm pool batch targets scheduled job execution platforms; api platform excluded as batch is not a request-response architecture."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch works with or without caching; warm workers can maintain connection pools to caches between jobs."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch can use message queues for job dispatch but primarily relies on managed batch job queues."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch supports AI inference with pre-loaded models in warm workers, suitable for batch embedding generation and bulk predictions."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch supports multi-tenant workloads through separate job queues with namespace-isolated warm pools per tenant."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires batch_processing feature flag \u2014 this is the warm-pool variant of the batch processing implementation pattern."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch can coordinate distributed transactions within job execution but requires saga patterns for multi-step transactions."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch is compatible with lambda architecture combining managed batch and real-time streaming."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch can build vector indexes and generate embeddings with models pre-loaded in warm workers."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch works with document stores; warm workers maintain persistent connections between jobs."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch can use key-value stores for job state; warm workers benefit from persistent connection pooling."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch supports graph analytics and bulk graph mutations in scheduled batch jobs."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch handles time-series aggregation and historical rollup jobs with predictable scheduling."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch can execute bulk OLTP operations during off-peak windows with fast job start."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Warm pool batch naturally supports OLAP aggregation with predictable sub-minute start times."
+    }
+  ],
+  "defaultConfig": {
+    "worker_type": "warm-pool",
+    "schedule_type": "cron",
+    "retry_strategy": "exponential_backoff",
+    "parallelism": "partitioned",
+    "failure_handling": "dead_letter_queue"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "worker_type": {
+        "type": "string",
+        "enum": [
+          "warm-pool"
+        ],
+        "description": "Execution environment. Warm-pool: managed batch service (AWS Batch with warm pools, Azure Batch, Google Batch) with pre-provisioned worker instances in standby state."
+      },
+      "schedule_type": {
+        "type": "string",
+        "enum": [
+          "cron",
+          "interval",
+          "event_driven",
+          "manual"
+        ],
+        "description": "How batches are triggered. Cron is most common for warm pool batch with predictable execution windows."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "immediate",
+          "exponential_backoff",
+          "fixed_delay"
+        ],
+        "description": "How failed jobs are retried. Exponential_backoff recommended to avoid pool resource contention."
+      },
+      "parallelism": {
+        "type": "string",
+        "enum": [
+          "single",
+          "partitioned",
+          "distributed"
+        ],
+        "description": "Execution model. Partitioned recommended: split input across multiple workers in the warm pool for parallel processing."
+      },
+      "failure_handling": {
+        "type": "string",
+        "enum": [
+          "fail_job",
+          "skip_and_continue",
+          "dead_letter_queue",
+          "partial_commit"
+        ],
+        "description": "What happens when individual records fail. Dead_letter_queue recommended for production warm pool batch to capture failures without blocking the pool."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<",
+      "value": 0.95,
+      "reason": "Warm-pool batch with availability target <95% indicates non-critical workload; simpler cron-based solutions may be more cost-effective than managed batch infrastructure.",
+      "message": "data-batch-processing--warm-pool: availability target is {actual} (<95%). For non-critical batch jobs, simpler cron-based execution may reduce operational overhead."
+    }
+  ]
+}

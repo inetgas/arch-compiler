@@ -1,0 +1,478 @@
+{
+  "id": "hosting-managed-paas--aws",
+  "version": "1.0.0",
+  "title": "Managed Web/API Hosting on AWS (Elastic Beanstalk/App Runner)",
+  "description": "Deploy APIs and background workers on AWS Elastic Beanstalk or App Runner with automatic scaling, load balancing, and health monitoring. Abstracts EC2 and ECS provisioning behind a managed deployment surface; choose App Runner for simpler container deployments, Beanstalk for deeper instance-level control.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 150.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 750 hours/month of t2.micro/t3.micro for first 12 months. Elastic Beanstalk itself is free; you pay for EC2, load balancer, and other AWS resources used.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents free tier usage (750 hours/month of t2.micro/t3.micro covers a single instance 24/7 for 12 months). Max $150 represents a typical small production API after free tier expires: 1x t3.small instance ($15/month) + Application Load Balancer ($16/month + $0.008/LCU-hour = ~$22/month for low traffic) + 50GB EBS storage ($5/month) + data transfer (~$5-10/month) + CloudWatch logs ($5/month) + RDS t3.micro database if needed ($15-20/month) + S3 for application versions ($1-2/month). App Runner alternative would be $25-50/month for similar workload (0.25 vCPU, 0.5GB RAM with auto-scaling). Costs scale significantly with traffic, multiple instances, and larger instance types.",
+      "adoptionCost": "Medium-high complexity due to AWS ecosystem learning requirements. Includes understanding AWS IAM roles and policies (4-8 hours), VPC and security groups configuration (4-6 hours), Elastic Beanstalk/App Runner platform-specific concepts (8-12 hours), deployment pipeline setup with eb CLI or AWS CLI (4-6 hours), environment configuration management (.ebextensions or apprunner.yaml) (4-8 hours), health monitoring and CloudWatch setup (3-5 hours), and troubleshooting deployment issues (5-10 hours). Total 30-55 hours at $50-100/hour effective cost including developer time, testing, and documentation. Lower for teams already familiar with AWS, higher for AWS newcomers. App Runner reduces complexity slightly vs Elastic Beanstalk but has less flexibility.",
+      "licenseCost": "Both AWS Elastic Beanstalk and AWS App Runner are free services with no additional licensing fees. You only pay for the underlying AWS resources consumed (EC2 instances, load balancers, CloudWatch, etc.). No proprietary software licenses required. Open source application runtimes (Node.js, Python, Java, etc.) are all freely available on these platforms.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "This is the core capability - Elastic Beanstalk and App Runner both provide managed hosting for web APIs and applications with automatic infrastructure management."
+    },
+    {
+      "capability": "reduced-ops",
+      "confidence": "medium",
+      "reasoning": "Valid benefit of managed services - reduces operational overhead by handling infrastructure provisioning, patching, and maintenance automatically."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "Both Elastic Beanstalk and App Runner provide automatic scaling based on traffic and resource utilization metrics."
+    },
+    {
+      "capability": "load-balancing",
+      "confidence": "high",
+      "reasoning": "Elastic Beanstalk includes Application Load Balancer integration, and App Runner provides built-in load balancing for distributing traffic."
+    },
+    {
+      "capability": "health-monitoring",
+      "confidence": "high",
+      "reasoning": "Both services include built-in health checks and monitoring capabilities to ensure application availability and automatically replace unhealthy instances."
+    },
+    {
+      "capability": "platform-as-a-service",
+      "confidence": "high",
+      "reasoning": "Elastic Beanstalk and App Runner are both PaaS offerings that abstract infrastructure management and provide complete application deployment platforms."
+    },
+    {
+      "capability": "worker-hosting",
+      "confidence": "medium",
+      "reasoning": "The pattern explicitly mentions background workers support, which Elastic Beanstalk enables through worker environments for async task processing."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "containerized-application",
+      "confidence": "medium",
+      "reasoning": "App Runner requires container images (Docker), and Elastic Beanstalk supports containers alongside other deployment formats. This is a key requirement for using these services effectively.",
+      "optional": true
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Auto-scaling and load balancing work best with stateless applications. Any session state should be externalized to databases or caches for proper horizontal scaling.",
+      "optional": false
+    },
+    {
+      "capability": "cloud-infrastructure",
+      "confidence": "high",
+      "reasoning": "Requires AWS account and infrastructure. This pattern depends on AWS-specific services and cannot be implemented without AWS cloud access.",
+      "optional": true
+    },
+    {
+      "capability": "ci-cd-pipeline",
+      "confidence": "medium",
+      "reasoning": "These managed services work best with automated deployment pipelines for reliable and repeatable application deployments and updates.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "aws",
+    "api-hosting",
+    "elastic-beanstalk"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "AWS Elastic Beanstalk is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.995,
+      "reason": "Free tier t2.micro/t3.micro instances with basic Elastic Beanstalk/App Runner infrastructure provide up to 99.5% availability ceiling."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Managed PaaS platforms introduce minimal overhead for API request-response workloads achieving p95 latency floor of 50ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Shared infrastructure and auto-scaling warmup on Elastic Beanstalk/App Runner create p99 latency floor of 200ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Health check detection plus failure threshold plus instance replacement on managed PaaS requires at least 2 minutes RTO."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "Auto-scaling to hundreds of instances with load balancing supports ceiling of 36M jobs per hour (10K per second)."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Free-tier and low-cost managed PaaS instances provide moderate read query throughput ceiling of 1000 QPS."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Free-tier and low-cost managed PaaS instances provide moderate write query throughput ceiling of 500 QPS."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Managed API hosting pattern supports all authentication mechanisms via application-level implementation."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR compliance is achievable via AWS region selection and application-level data controls on managed PaaS."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compliance requires AWS BAA and application controls; Elastic Beanstalk/App Runner support HIPAA-eligible configurations."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compliance is application-level concern for data rights; pattern supports both compliant and non-compliant workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance for audit trails and controls can be implemented on top of managed PaaS infrastructure."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "Pattern specifically targets AWS Elastic Beanstalk and AWS App Runner services exclusively."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "sql",
+        "dart",
+        "swift",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Elastic Beanstalk and App Runner support multiple runtimes including Python, Node.js, Java, Go, .NET, Ruby, and PHP."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Pattern hosts backend APIs and workers serving web, mobile, and other client platforms."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Caching is optional; pattern works with or without external caching layers like ElastiCache."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Async messaging via SQS/SNS is optional; pattern supports both synchronous APIs and async worker integrations."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AI inference workloads can run on Elastic Beanstalk/App Runner instances or integrate with SageMaker endpoints."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is application-level architecture concern; pattern supports both single-tenant and multi-tenant applications."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Pattern is optimized for web/API request-response workloads; batch processing should use AWS Batch or ECS instead."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Distributed transactions require stable infrastructure; free-tier t2.micro instances lack sufficient resources for coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Pattern focuses on request-response APIs; real-time streaming requires Kinesis, MSK, or WebSocket-specific infrastructure."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search is data-layer concern (OpenSearch, RDS pgvector); API hosting pattern is neutral to this feature."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document store usage (DynamoDB, DocumentDB) is data-layer concern; API hosting pattern is neutral to this feature."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value store usage (DynamoDB, ElastiCache) is data-layer concern; API hosting pattern is neutral to this feature."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph database usage (Neptune) is data-layer concern; API hosting pattern is neutral to this feature."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database usage (Timestream) is data-layer concern; API hosting pattern is neutral to this feature."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workload characteristics are determined by backend database; API hosting layer is neutral to this feature."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workload characteristics are determined by backend data warehouse; API hosting layer is neutral to this feature."
+    }
+  ],
+  "defaultConfig": {
+    "service": "elastic-beanstalk",
+    "instance_type": "t3.micro",
+    "scaling_mode": "auto",
+    "min_instances": 1,
+    "max_instances": 4,
+    "health_check_enabled": true,
+    "load_balancer": "application"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "service": {
+        "type": "string",
+        "enum": [
+          "elastic-beanstalk",
+          "app-runner"
+        ],
+        "description": "AWS service choice. Elastic Beanstalk offers more control, VPC access, and broader language support. App Runner is simpler with automatic deployments from source/container but limited to containerized apps and has less networking flexibility."
+      },
+      "instance_type": {
+        "type": "string",
+        "enum": [
+          "t2.micro",
+          "t3.micro",
+          "t3.small",
+          "t3.medium"
+        ],
+        "description": "EC2 instance type for Elastic Beanstalk. t2.micro/t3.micro are free tier eligible (750 hrs/month). Larger instances provide more CPU/memory but increase costs."
+      },
+      "scaling_mode": {
+        "type": "string",
+        "enum": [
+          "single",
+          "auto",
+          "scheduled"
+        ],
+        "description": "Scaling strategy. Single instance is cheapest (free tier). Auto-scaling adjusts based on load (CPU/requests). Scheduled scaling for predictable traffic patterns."
+      },
+      "min_instances": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10,
+        "description": "Minimum number of instances for auto-scaling. Higher values improve availability but increase baseline costs."
+      },
+      "max_instances": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100,
+        "description": "Maximum instances for auto-scaling. Limits cost exposure during traffic spikes while capping capacity."
+      },
+      "load_balancer": {
+        "type": "string",
+        "enum": [
+          "application",
+          "network",
+          "none"
+        ],
+        "description": "Load balancer type for Elastic Beanstalk. Application LB supports HTTP/HTTPS routing (most common). Network LB for TCP/UDP. None for single-instance deployments (free tier)."
+      },
+      "health_check_enabled": {
+        "type": "boolean",
+        "description": "Enable health monitoring and automatic instance replacement. Improves reliability but may increase instance churn and costs."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At very low QPS (<1 req/s), managed PaaS overhead (load balancer, health checks, auto-scaling) is not cost-effective compared to serverless alternatives.",
+      "message": "hosting-managed-paas--aws: peak read QPS is {actual} req/s (<1). Managed PaaS overhead may not be cost-effective; consider AWS Lambda/API Gateway for sporadic traffic."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 500,
+      "reason": "At high sustained QPS (>500 req/s), free-tier instances approach throughput ceiling and require scaling to multiple instances, increasing costs beyond free tier.",
+      "message": "hosting-managed-paas--aws: peak read QPS is {actual} req/s (>500). Free-tier instances will require scaling beyond 750 hours/month allocation; expect costs beyond free tier."
+    }
+  ]
+}

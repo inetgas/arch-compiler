@@ -1,0 +1,265 @@
+{
+  "id": "pki-internal-ca",
+  "version": "1.0.0",
+  "title": "Internal Certificate Authority (PKI)",
+  "description": "Deploy a self-managed internal Certificate Authority for issuing X.509 certificates to services, enabling mTLS, client authentication, and zero-trust networking. Covers common open-source CA implementations: HashiCorp Vault PKI (recommended for dynamic short-lived certs), Smallstep CA/step-ca (ACME-compatible, developer-friendly), cfssl (Cloudflare's PKI toolkit), and OpenSSL-based manual CAs. Works in air-gapped and on-premises environments where external CAs (e.g., Let's Encrypt) are inaccessible.",
+  "types": [
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 400.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 50.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "All major CA implementations (Vault, step-ca, cfssl, OpenSSL) are open-source at no license cost. Infrastructure cost: small VM or container (~$10-50/month) to run CA service. Vault OSS is free; Vault Enterprise adds HCP Vault pricing. Step-ca and cfssl are free. Air-gapped/on-prem deployments have no SaaS costs.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "CA server requires minimal compute: a t3.micro (~$8/month) or equivalent is sufficient for most internal PKI workloads. Min=0 for on-prem bare-metal or existing infrastructure; max=50 covers a dedicated small cloud VM with storage.",
+      "adoptionCost": "PKI setup has non-trivial complexity: designing root/intermediate CA hierarchy (1-2 hours), deploying CA server (1-2 hours), integrating certificate issuance with services (2-4 hours), establishing rotation procedures (1-2 hours). Total: ~8 hours at $50/hour = $400. AI tools help with Vault policy authoring and certificate config.",
+      "licenseCost": "HashiCorp Vault OSS, Smallstep step-ca, cfssl, and OpenSSL are all open-source with no license fees. HashiCorp changed Vault to BSL in 2023; OpenBao is the OSS fork if BSL is a concern.",
+      "source": "LLM analysis (as of March 2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "certificate-authority",
+      "confidence": "high",
+      "reasoning": "This pattern is specifically designed to establish and operate a Certificate Authority that issues X.509 certificates to services and clients."
+    },
+    {
+      "capability": "certificate-management",
+      "confidence": "high",
+      "reasoning": "Internal CA handles the full certificate lifecycle: issuance, renewal, revocation (CRL/OCSP), and rotation."
+    },
+    {
+      "capability": "pki",
+      "confidence": "high",
+      "reasoning": "Deploying an internal CA establishes a complete Public Key Infrastructure with root/intermediate CA hierarchy."
+    },
+    {
+      "capability": "mutual-tls-support",
+      "confidence": "high",
+      "reasoning": "Internal CA issues the client and server certificates required to establish mTLS connections between services."
+    },
+    {
+      "capability": "zero-trust-networking",
+      "confidence": "medium",
+      "reasoning": "Short-lived certificates issued by internal CA are a foundation for zero-trust service identity (e.g., SPIFFE/SPIRE integration)."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "infrastructure",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "CA server requires a host (VM, container, or bare-metal) to run on. For air-gapped environments this is physical infrastructure."
+    },
+    {
+      "capability": "persistent-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "CA state (root key, certificate database, CRL) requires durable persistent storage."
+    },
+    {
+      "capability": "network-isolation",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "CA server should be network-isolated \u2014 only certificate issuance endpoints exposed, root CA key kept offline or in HSM."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "pki",
+    "tls",
+    "mtls",
+    "certificates",
+    "certificate-authority",
+    "vault",
+    "step-ca",
+    "cfssl",
+    "zero-trust",
+    "on-prem",
+    "air-gapped",
+    "security"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "All major CA implementations are open-source and publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "mtls",
+      "reason": "Internal CA is only needed when mTLS is the authentication mechanism. OAuth2/OIDC, JWT, and API key auth do not require X.509 certificates issued by an internal CA."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Internal CA availability depends on deployment architecture; single-node CA is typically 99.9%, HA cluster can reach 99.99%."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "CA recovery requires restoring encrypted key material and state from backup; minimum RTO is 5 minutes for warm standby."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "With synchronous replication or HSM-backed storage, CA can achieve near-zero RPO for certificate issuance state."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Internal CA can meet HIPAA requirements for encryption key management and certificate-based authentication when properly configured with audit logging."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Internal CA is GDPR-neutral; certificate Subject fields may contain personal data requiring appropriate handling."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Internal CA is CCPA-neutral; certificate management has no direct consumer data implications."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Internal CA with audit logging supports SOX access control and change management requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Internal CA can be deployed on any cloud (Vault on EC2/AKS/GKE, step-ca on any container platform) or on-premises. Essential for air-gapped on-prem environments where external CAs are inaccessible."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "swift",
+        "dart",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "X.509 certificate integration is available in all languages via TLS libraries (OpenSSL, BoringSSL, native TLS stacks). CA interaction uses standard ACME, EST, or HTTP APIs."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api"
+      ],
+      "reason": "Internal CA issues certificates for services across all platforms; particularly critical for API and backend service mTLS."
+    }
+  ],
+  "defaultConfig": {
+    "ca_implementation": "vault",
+    "ca_hierarchy": "root-intermediate",
+    "key_algorithm": "ecdsa-p256",
+    "cert_validity_days": 90,
+    "enable_ocsp": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "ca_implementation": {
+        "type": "string",
+        "enum": [
+          "vault",
+          "step-ca",
+          "cfssl",
+          "openssl"
+        ],
+        "description": "CA software. vault: HashiCorp Vault PKI secrets engine \u2014 best for dynamic short-lived certs and Kubernetes integration. step-ca: Smallstep \u2014 ACME-compatible, developer-friendly, good for zero-trust. cfssl: Cloudflare PKI toolkit \u2014 lightweight, REST API. openssl: manual OpenSSL CA \u2014 maximum control, highest operational burden."
+      },
+      "ca_hierarchy": {
+        "type": "string",
+        "enum": [
+          "root-only",
+          "root-intermediate"
+        ],
+        "description": "CA hierarchy depth. root-only: simpler but root key exposed for issuance (not recommended for production). root-intermediate: root CA kept offline; intermediate CA issues certs \u2014 standard production practice for protecting root key."
+      },
+      "key_algorithm": {
+        "type": "string",
+        "enum": [
+          "ecdsa-p256",
+          "ecdsa-p384",
+          "rsa-2048",
+          "rsa-4096"
+        ],
+        "description": "Key algorithm for CA and issued certificates. ecdsa-p256 recommended: smaller keys, faster TLS handshakes, strong security. rsa-2048/4096 for legacy compatibility with older clients or compliance requirements specifying RSA."
+      },
+      "cert_validity_days": {
+        "type": "integer",
+        "description": "Default certificate validity period in days. Short-lived certs (1-90 days) reduce revocation burden and limit blast radius of compromised certs. Longer validity (1-3 years) reduces rotation operational overhead. 90 days aligns with Let's Encrypt precedent."
+      },
+      "enable_ocsp": {
+        "type": "boolean",
+        "description": "Enable OCSP (Online Certificate Status Protocol) for real-time certificate revocation checking. Recommended for high-security environments. Requires CA server to be reachable by all certificate consumers; not suitable for fully air-gapped environments."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">",
+      "value": 0.999,
+      "reason": "Single-node CA is typically 99.9%; targets above 99.9% require HA CA cluster with standby replicas.",
+      "message": "pki-internal-ca: availability target {actual} requires HA CA cluster deployment. Single-node CA is ~99.9%. Deploy active-standby (step-ca HA, Vault HA with Raft) to meet higher targets."
+    }
+  ]
+}

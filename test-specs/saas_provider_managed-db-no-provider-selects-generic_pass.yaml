@@ -1,0 +1,29 @@
+# SaaS Provider - Generic Managed DB Selected When No Provider Specified
+#
+# A spec with oltp_workload enabled but no specific DB saas-provider listed.
+# The generic db-managed-postgres base pattern should be selected as a
+# fallback recommendation.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - db-managed-postgres IS selected (no specific DB provider in saas-providers)
+#   - db-managed-postgres--supabase is NOT selected (supabase not in saas-providers)
+#   - db-managed-postgres--render is NOT selected (render not in saas-providers)
+
+project:
+  name: Generic DB Stack
+  domain: saas
+functional:
+  summary: API with OLTP workload but no specific DB provider preference
+constraints:
+  cloud: aws
+  language: python
+  platform: api
+  features:
+    oltp_workload: true
+nfr:
+  availability:
+    target: 0.99
+cost:
+  ceilings:
+    monthly_operational_usd: 50

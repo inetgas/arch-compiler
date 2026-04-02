@@ -1,0 +1,414 @@
+{
+  "id": "resilience-rate-limiting",
+  "version": "1.0.0",
+  "title": "Rate Limiting and Quotas",
+  "description": "Protect from overload; enforce per-tenant quotas; supports fairness and cost control.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Rate limiting can be implemented at multiple levels with varying costs. Min $0 represents application-level rate limiting using open-source libraries (e.g., token bucket in-memory) with no additional infrastructure. Max $500 represents production-grade distributed rate limiting using Redis cluster (~$100-200/month for cache.m5.large) plus API Gateway rate limiting features (AWS API Gateway with throttling ~$100-200/month for moderate traffic) plus observability costs (CloudWatch/Datadog metrics ~$100-200/month). For high-scale scenarios with dedicated rate limiting services like Kong Enterprise or Redis Enterprise clusters, costs could reach $1000-2000/month, but typical implementations stay well under $500.",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) Understanding rate limiting algorithms (token bucket, leaky bucket, sliding window) - 1-2 days, (2) Implementing or integrating rate limiting middleware/library - 2-3 days, (3) Configuring distributed state management if needed (Redis/Memcached) - 1-2 days, (4) Setting up per-tenant quota tracking and enforcement - 2-3 days, (5) Implementing monitoring, alerting, and observability for rate limit violations - 2-3 days, (6) Testing edge cases and performance under load - 2-3 days, (7) Documentation and team training - 1 day. Total 10-15 developer days at $150/day blended rate = $1500-2250. With AI coding assistants reducing boilerplate by 30-40%, estimate $1500. Complexity stems from distributed coordination, fairness algorithms, and operational monitoring requirements.",
+      "licenseCost": "Open-source solutions dominate: application libraries (Bucket4j, Resilience4j, rate-limiter-flexible) are free; infrastructure options include open-source Redis, Nginx/OpenResty rate limiting, Envoy/Istio rate limiting, and Kong Gateway (OSS). Managed API Gateway services (AWS API Gateway, Azure API Management, GCP Cloud Endpoints) include rate limiting in pay-per-use pricing with no separate license. Enterprise rate limiting solutions (Kong Enterprise, Redis Enterprise) exist but are optional upgrades, not required for implementation. Standard implementation uses free/OSS tools.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "overload-protection",
+      "confidence": "high",
+      "reasoning": "Rate limiting directly provides overload protection by controlling request throughput and preventing system saturation from excessive traffic."
+    },
+    {
+      "capability": "tenant-fairness",
+      "confidence": "medium",
+      "reasoning": "Per-tenant quotas ensure fair resource distribution among tenants, preventing any single tenant from monopolizing system resources."
+    },
+    {
+      "capability": "quota-enforcement",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly enforces per-tenant quotas as stated in the description, making quota enforcement a core provided capability."
+    },
+    {
+      "capability": "cost-control",
+      "confidence": "high",
+      "reasoning": "Rate limits and quotas enable billing boundaries and prevent runaway resource consumption costs, as directly mentioned in the pattern description."
+    },
+    {
+      "capability": "time-windowing",
+      "confidence": "high",
+      "reasoning": "Rate limiting patterns implement sliding window or fixed window algorithms to track requests over time periods, providing temporal control over request rates."
+    },
+    {
+      "capability": "rate-limiting",
+      "confidence": "high",
+      "reasoning": "Resilience rate-limiting IS the canonical rate-limiting pattern \u2014 it enforces per-client, per-tenant, and global request quotas via token bucket or leaky bucket algorithms."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "tenant-identification",
+      "confidence": "medium",
+      "reasoning": "To enforce per-tenant quotas, the pattern requires the ability to identify which tenant is making each request through tenant identifiers or keys.",
+      "optional": false
+    },
+    {
+      "capability": "state-management",
+      "confidence": "high",
+      "reasoning": "Rate limiting requires tracking request counts and timestamps, necessitating some form of state storage to maintain counters across requests.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "resilience",
+    "finops",
+    "tenancy",
+    "dotnet",
+    "go",
+    "java",
+    "node",
+    "python"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Rate limiting can reject requests under overload, supporting up to four nines availability."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.95,
+      "reason": "Rate limiting is primarily valuable for protecting high-availability systems; at very low availability targets, simpler approaches may suffice."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Rate limiting adds minimal overhead (typically sub-millisecond), requiring at least 1ms p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Under high load or distributed state checks, p99 latency floor is at least 5ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Rate limiting state can be restored quickly, achieving RTO of at least 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 10,
+      "reason": "Rate limiting adds infrastructure overhead (state management, latency checks) that may not be justified at very low throughput."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Rate limiting is a cloud-agnostic pattern implementable on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Rate limiting is an architectural pattern implementable in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Rate limiting applies to any platform that processes requests or consumes resources."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rate limiting applies to systems with or without caching layers."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rate limiting is valuable for async messaging systems to prevent queue saturation but applies universally."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AI inference workloads benefit from rate limiting due to high costs but pattern applies universally."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenant applications benefit from per-tenant quotas but rate limiting applies to single-tenant systems too."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing systems benefit from rate limiting to control resource consumption but pattern applies universally."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rate limiting protects distributed transaction systems from overload but works with any transaction model."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming systems need rate limiting to prevent overwhelming downstream consumers but pattern applies universally."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search workloads benefit from rate limiting due to computational costs but pattern applies universally."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rate limiting protects document store systems from overload but applies to all storage types."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rate limiting protects key-value stores from excessive load but applies to all storage types."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rate limiting protects graph databases from expensive query overload but applies to all database types."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rate limiting protects time-series databases from ingestion overload but applies to all database types."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads benefit from rate limiting to protect transactional resources but pattern applies universally."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workloads benefit from rate limiting to control expensive analytical queries but pattern applies universally."
+    }
+  ],
+  "defaultConfig": {
+    "algorithm": "token-bucket",
+    "scope": "per-tenant",
+    "enforcement_point": "application",
+    "quota_type": "requests",
+    "burst_allowance": "enabled"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "algorithm": {
+        "type": "string",
+        "enum": [
+          "token-bucket",
+          "leaky-bucket",
+          "fixed-window",
+          "sliding-window"
+        ],
+        "description": "Rate limiting algorithm. Token-bucket allows bursts, leaky-bucket smooths traffic, fixed-window is simple but has boundary issues, sliding-window is accurate but more complex."
+      },
+      "scope": {
+        "type": "string",
+        "enum": [
+          "global",
+          "per-tenant",
+          "per-user",
+          "per-ip"
+        ],
+        "description": "Granularity of rate limiting. Global protects overall system, per-tenant ensures fairness in multi-tenant systems, per-user for individual accountability, per-ip for anonymous traffic."
+      },
+      "enforcement_point": {
+        "type": "string",
+        "enum": [
+          "gateway",
+          "application",
+          "distributed"
+        ],
+        "description": "Where rate limiting is enforced. Gateway (API gateway/load balancer) for centralized control, application for fine-grained logic, distributed (e.g., Redis) for multi-instance coordination."
+      },
+      "quota_type": {
+        "type": "string",
+        "enum": [
+          "requests",
+          "compute-time",
+          "data-volume",
+          "cost-based"
+        ],
+        "description": "What to limit. Requests for API calls, compute-time for expensive operations, data-volume for bandwidth/storage, cost-based for cloud resource consumption."
+      },
+      "burst_allowance": {
+        "type": "string",
+        "enum": [
+          "enabled",
+          "disabled",
+          "limited"
+        ],
+        "description": "Whether to allow traffic bursts. Enabled allows temporary spikes, disabled enforces strict rate, limited allows controlled bursts up to a threshold."
+      }
+    }
+  },
+  "warn_nfr": []
+}

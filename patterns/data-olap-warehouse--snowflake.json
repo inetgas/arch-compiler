@@ -1,0 +1,335 @@
+{
+  "id": "data-olap-warehouse--snowflake",
+  "version": "1.0.0",
+  "title": "OLAP Warehouse: Snowflake (Cloud-Agnostic)",
+  "description": "Columnar data warehouse on Snowflake, deployable on AWS, Azure, or GCP. Snowflake's unique architecture separates storage (S3/ADLS/GCS), compute (virtual warehouses), and query coordination (cloud services layer) independently. Multiple virtual warehouses can run concurrently against the same data without contention, enabling near-linear concurrency scaling. Best for teams requiring cloud portability, multi-cloud access to the same data, or high analytical concurrency beyond what single-cloud managed warehouses support. Query latency is 200ms-10s; simple cached queries return in under 200ms with result cache. Multi-cluster warehouses scale concurrency to 1,000+ simultaneous queries.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 20000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 15000,
+    "costNotes": "Credits billed per virtual warehouse second. X-Small warehouse: $2/credit (~$0.0006/sec). X-Large: $16/credit. Storage: $23/TB/mo compressed. Free trial: $400 credits.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($50): X-Small warehouse running 2 hours/day for development ($2/credit \u00d7 0.5 credits/hr \u00d7 60hr/mo = $60). Max ($20,000): multiple X-Large multi-cluster warehouses for high-concurrency production ($16/credit \u00d7 8 credits/hr \u00d7 720hr/mo \u00d7 2 clusters = $18,400) + storage. Most production teams land $500-$5,000/mo with auto-suspend and right-sizing.",
+      "adoptionCost": "Snowflake is operationally simpler than Redshift/Synapse. Adoption cost is dbt pipeline setup, Fivetran/Airbyte connectors, and BI tool integration. Estimate 12-15 developer days at ~$160/day = $2,500.",
+      "licenseCost": "No traditional software license. Snowflake charges on credit consumption. Business Critical and VPS editions have higher per-credit pricing for advanced security features.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "Snowflake delivers columnar MPP query execution with independent compute scaling via virtual warehouses."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "Integrates with Tableau, Power BI, Looker, Sigma, and any JDBC/ODBC-compatible BI tool. Native Snowsight UI for ad-hoc queries."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "dbt-snowflake is the dominant ELT tool. Snowpipe for continuous ingestion. Fivetran, Airbyte, and Stitch have native Snowflake connectors."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Snowflake expects data via COPY INTO from cloud storage, Snowpipe streaming, or Kafka Snowflake Connector. Direct high-frequency row inserts are possible but expensive."
+    },
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Snowflake uses the underlying cloud's object storage (S3/ADLS/GCS) for its internal storage layer. External tables can query cloud storage directly."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--self-hosted"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "warehouse",
+    "snowflake",
+    "cloud-agnostic",
+    "columnar",
+    "multi-cloud"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Cloud-agnostic pattern applicable to AWS, Azure, and GCP deployments"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Snowflake p95 is 200ms-10s for analytical queries. Result cache serves repeated queries in under 100ms; local disk cache warms after first execution. Cold queries on large datasets take 2-30s."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Snowflake SLA is 99.9% for Standard, 99.99% for Business Critical edition. Multi-region failover available on Business Critical with Business Continuity add-on."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Snowflake virtual warehouses start in seconds. RTO is effectively 1-5 minutes for cloud-level zone issues; platform-level failures are rare with 99.9-99.99% SLA."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Snowflake Time Travel provides point-in-time recovery up to 90 days (Enterprise edition). Fail-safe provides an additional 7-day non-configurable recovery window."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Multi-cluster Snowflake warehouses scale to ~1,000 concurrent queries. Above this, query routing logic and cloud services layer become bottlenecks. Most analytical workloads do not approach this limit."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100,
+      "reason": "Snowflake COPY INTO and Snowpipe support high-throughput batch ingestion. Above ~100 write QPS, Kafka Snowflake Connector or Snowpipe Streaming is required."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Snowflake supports username/password, OAuth 2.0, key-pair authentication, MFA, and SAML SSO via Okta, Azure AD, and other IdPs."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Snowflake ACCOUNT_USAGE schema provides full query history, login history, and access events. Compatible with enterprise audit requirements."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Snowflake supports dynamic data masking, row access policies, column-level security, and end-to-end encryption. Compatible with PII workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when data residency controls, column masking, and right-to-erasure pipeline procedures are in place."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when warehouse-level encryption and appropriate BAA coverage are configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when consumer data deletion triggers a pipeline reprocess that excludes deleted records."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX when query audit logs provide an immutable trail of data access and transformation operations."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability is handled by the underlying object storage layer (S3, GCS, ADLS). All major managed warehouses provide durable storage by default."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "snowflake"
+      ],
+      "reason": "Snowflake is a cross-cloud SaaS product. This variant activates only when snowflake is explicitly opted-in via constraints.saas-providers, distinguishing it from the cloud-native OLAP variants (--aws, --gcp, --azure)."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Snowflake deploys on AWS, Azure, and GCP. Cloud-agnostic choice for teams avoiding cloud vendor lock-in."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Snowflake provides JDBC/ODBC drivers and is agnostic to language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Snowflake serves as analytical backend for any platform."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Snowflake is selected specifically for OLAP analytical workloads."
+    }
+  ],
+  "defaultConfig": {
+    "edition": "enterprise",
+    "warehouse_size": "medium",
+    "multi_cluster": false,
+    "auto_suspend_seconds": 300,
+    "ingestion_mode": "copy-into",
+    "query_result_cache": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "edition": {
+        "type": "string",
+        "enum": [
+          "standard",
+          "enterprise",
+          "business-critical"
+        ],
+        "description": "standard: core warehouse features. enterprise: multi-cluster warehouses, column-level security, Time Travel up to 90 days. business-critical: HIPAA/PCI compliance, private connectivity, failover."
+      },
+      "warehouse_size": {
+        "type": "string",
+        "enum": [
+          "x-small",
+          "small",
+          "medium",
+          "large",
+          "x-large",
+          "2x-large",
+          "3x-large",
+          "4x-large"
+        ],
+        "description": "Controls compute nodes per cluster. Doubles in cost and parallelism at each step. Medium is a common production starting point. Scale up for faster complex queries; scale down with auto-suspend for cost savings."
+      },
+      "multi_cluster": {
+        "type": "boolean",
+        "description": "Automatically adds warehouse clusters during concurrency spikes. Requires Enterprise edition. Recommended when peak analytical QPS exceeds ~50 concurrent queries."
+      },
+      "auto_suspend_seconds": {
+        "type": "integer",
+        "minimum": 60,
+        "maximum": 3600,
+        "description": "Suspend warehouse after N seconds of inactivity to reduce cost. 300s (5 min) is a common production setting. Set lower for dev/test; disable for always-on production warehouses."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "copy-into",
+          "snowpipe",
+          "kafka-connector",
+          "snowpipe-streaming"
+        ],
+        "description": "copy-into: bulk COPY from S3/ADLS/GCS (batch ETL). snowpipe: micro-batch continuous ingestion (~60s lag). kafka-connector: Kafka to Snowflake streaming. snowpipe-streaming: row-level streaming API for sub-second ingestion."
+      },
+      "query_result_cache": {
+        "type": "boolean",
+        "description": "Snowflake result cache serves identical queries from cache for 24 hours at no compute cost. Always enabled by default; disable only if stale results are unacceptable."
+      }
+    }
+  },
+  "warn_nfr": []
+}

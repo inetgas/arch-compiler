@@ -1,0 +1,484 @@
+{
+  "id": "db-timeseries--timescaledb",
+  "version": "1.0.0",
+  "title": "Time-Series Database (TimescaleDB)",
+  "description": "TimescaleDB is a PostgreSQL extension for time-series data. Combines relational and time-series capabilities with automatic partitioning (hypertables). Best for: combining time-series with relational data, using SQL for time-series queries, self-hosted deployments. Leverages PostgreSQL ecosystem (extensions, tools, backups).",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-timeseries--influxdb",
+      "db-timeseries--influxdb-cloud",
+      "db-timeseries--timestream",
+      "db-timeseries--timescale-cloud"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "timeseries-storage",
+      "description": "PostgreSQL-based time-series storage with hypertables",
+      "confidence": "medium",
+      "reasoning": "TimescaleDB's primary purpose is storing and managing time-series data through hypertables with automatic partitioning. This is its core functionality."
+    },
+    {
+      "capability": "sql-queries",
+      "description": "Use standard SQL for time-series analysis",
+      "confidence": "medium",
+      "reasoning": "As a PostgreSQL extension, TimescaleDB provides full SQL query capabilities for time-series data, which is a key differentiator from other time-series databases."
+    },
+    {
+      "capability": "continuous-aggregates",
+      "description": "Automatic materialized views for downsampling",
+      "confidence": "medium",
+      "reasoning": "Continuous aggregates are a core TimescaleDB feature for materialized views that automatically refresh, essential for time-series analytics and downsampling."
+    },
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "TimescaleDB is built on PostgreSQL and provides full relational database capabilities alongside time-series features, enabling the combination of time-series with relational data."
+    },
+    {
+      "capability": "time-series-compression",
+      "confidence": "high",
+      "reasoning": "TimescaleDB offers native compression for time-series data, which is a significant feature for managing storage costs and performance in production deployments."
+    },
+    {
+      "capability": "hypertables",
+      "confidence": "high",
+      "reasoning": "Hypertables are TimescaleDB's specific automatic partitioning mechanism that abstracts time-series data management and is fundamental to its architecture."
+    },
+    {
+      "capability": "data-retention-policies",
+      "confidence": "high",
+      "reasoning": "TimescaleDB offers automated data retention management which is important for time-series use cases to manage storage and comply with data lifecycle requirements."
+    },
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "TimescaleDB is a PostgreSQL extension; it inherits full native RLS support via CREATE POLICY, enabling per-tenant time-series data isolation."
+    },
+    {
+      "capability": "xa-protocol",
+      "confidence": "medium",
+      "reasoning": "TimescaleDB is built on PostgreSQL and inherits full PREPARE TRANSACTION support for XA distributed transaction coordination."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "postgresql",
+      "description": "Requires PostgreSQL 12+ with TimescaleDB extension",
+      "confidence": "medium",
+      "reasoning": "TimescaleDB is a PostgreSQL extension and cannot function without PostgreSQL as its foundation. It requires PostgreSQL to be installed and running."
+    }
+  ],
+  "preferredProviders": [
+    "timescale-cloud"
+  ],
+  "defaultConfig": {
+    "retention_days": 90,
+    "chunk_time_interval_hours": 168,
+    "compression_enabled": true,
+    "continuous_aggregates_enabled": true,
+    "replication_factor": 1,
+    "max_connections": 100,
+    "ssl_mode": "require"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3650,
+        "description": "Data retention policy in days. Older chunks are automatically deleted. Trade-off: longer retention = more storage costs vs. historical data availability"
+      },
+      "chunk_time_interval_hours": {
+        "type": "integer",
+        "enum": [
+          1,
+          24,
+          168,
+          720
+        ],
+        "description": "Hypertable chunk interval: 1=hourly (very high throughput), 24=daily (high throughput), 168=weekly (standard), 720=monthly (low throughput). Smaller chunks = better for recent data queries, larger = better compression"
+      },
+      "compression_enabled": {
+        "type": "boolean",
+        "description": "Enable TimescaleDB native compression (10x-20x storage reduction). Trade-off: compressed chunks are read-only but dramatically reduce costs"
+      },
+      "continuous_aggregates_enabled": {
+        "type": "boolean",
+        "description": "Enable continuous aggregates for automatic downsampling (hourly/daily rollups). Trade-off: faster queries on historical data vs. additional write overhead"
+      },
+      "replication_factor": {
+        "type": "integer",
+        "enum": [
+          1,
+          2,
+          3
+        ],
+        "description": "Number of data replicas: 1=no replication (single node), 2=high availability, 3=maximum durability. Trade-off: higher availability vs. storage/compute costs"
+      },
+      "max_connections": {
+        "type": "integer",
+        "minimum": 20,
+        "maximum": 500,
+        "description": "Maximum concurrent database connections. Trade-off: higher limit supports more clients but increases memory usage (each connection ~10MB)"
+      },
+      "ssl_mode": {
+        "type": "string",
+        "enum": [
+          "disable",
+          "prefer",
+          "require",
+          "verify-full"
+        ],
+        "description": "TimescaleDB (PostgreSQL) SSL connection mode."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents free self-hosted deployment on existing infrastructure or TimescaleDB Cloud free tier (up to 30 days data retention, limited storage). Low-range production starts at $50-100 for small self-hosted instances (basic VPS or cloud VM with 2-4 vCPUs, 8-16GB RAM). Mid-range $300-500 covers managed TimescaleDB Cloud services for moderate workloads (multi-GB daily ingestion, standard compression). Max $2000 represents larger production deployments with high ingestion rates (millions of data points/day), significant storage (1-5TB), read replicas for analytics, and automated backups. Enterprise-scale deployments with extensive data retention can exceed this range significantly.",
+      "adoptionCost": "Medium-high complexity adoption. Requires understanding of: (1) PostgreSQL administration and tuning, (2) TimescaleDB-specific concepts (hypertables, continuous aggregates, compression policies, retention policies), (3) Time-series data modeling best practices (indexing strategies, chunk sizing), (4) Migration from existing time-series solutions if applicable. Team needs 1-2 weeks for: learning TimescaleDB extensions, designing schema with proper time-series partitioning, implementing compression and retention policies, setting up monitoring and backup strategies, and load testing. Lower than pure distributed time-series databases due to PostgreSQL familiarity, but higher than basic PostgreSQL due to specialized time-series optimization knowledge required.",
+      "licenseCost": "TimescaleDB Community Edition is fully open source (Apache 2.0 license) with core features including hypertables, continuous aggregates, compression, and data retention policies available at no cost. Can be self-hosted indefinitely without licensing fees. Managed TimescaleDB Cloud is usage-based (pay-as-you-go) rather than requiring upfront licenses. Enterprise features in Timescale license are optional add-ons, not required for standard time-series workloads. No per-core, per-server, or seat-based licensing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "time-series",
+    "metrics",
+    "iot"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Self-hosted TimescaleDB with proper replication and failover can achieve up to four nines availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "TimescaleDB as a PostgreSQL-based relational database achieves p95 latency floor of 5ms for typical queries."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "TimescaleDB p99 latency floor is 20ms due to PostgreSQL query processing and hypertable chunking overhead."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "With streaming replication and automatic failover, TimescaleDB achieves RTO of at least 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "TimescaleDB can handle up to 100k inserts/second sustained (360M writes per hour) with optimized hypertables."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "TimescaleDB supports up to 50k read queries per second with proper indexing and continuous aggregates."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "TimescaleDB optimized for time-series writes can handle up to 100k write queries per second with batching."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB inherits PostgreSQL's ACID guarantees with WAL, supporting both strict and relaxed durability modes."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB provides strong consistency with read-your-writes guarantees as a PostgreSQL-based system."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports comprehensive audit logging through PostgreSQL's pgaudit extension when required."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports GDPR compliance through PostgreSQL features including encryption, retention policies, and data deletion."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB can meet HIPAA requirements with proper configuration including encryption, audit logging, and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports CCPA compliance through data retention, deletion capabilities, and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports SOX compliance through audit logging, access controls, data integrity, and backup capabilities."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB can handle PII data with encryption at rest and in transit, column-level security, and access controls."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "TimescaleDB supports multiple tenant isolation strategies including row-level security, schema separation, and database-per-tenant."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "TimescaleDB can be self-hosted on any cloud provider or on-premises infrastructure as a PostgreSQL extension."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "TimescaleDB is database infrastructure accessible from any language with PostgreSQL client support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "web",
+        "mobile",
+        "iot",
+        "agnostic"
+      ],
+      "reason": "TimescaleDB is backend infrastructure for time-series data storage supporting APIs, workers, batch jobs, data pipelines, and IoT workloads."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": true,
+      "reason": "TimescaleDB pattern is specifically designed for time-series database workloads with hypertables and time-series optimizations."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports OLTP workloads as it's built on PostgreSQL and can combine transactional with time-series data."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports analytical queries on time-series data with continuous aggregates and compression for OLAP use cases."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB is a database pattern that can work with or without additional caching layers for query optimization."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB is compatible with applications that use async messaging for data ingestion or event-driven architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB can store time-series data for AI inference applications and integrate with ML pipelines for feature engineering."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports multi-tenant architectures through row-level security, schema isolation, and database-per-tenant patterns."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports batch processing workloads for time-series data aggregation, compression, and continuous aggregates."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports distributed transactions through PostgreSQL's two-phase commit protocol when coordination is required."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB can ingest real-time streaming data and serve as storage backend for streaming analytics with low-latency writes."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB can leverage PostgreSQL vector extensions (pgvector) for combined time-series and vector similarity search."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB supports JSONB columns for document storage alongside time-series data in hybrid data models."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB can function as a key-value store using PostgreSQL's indexing capabilities for fast lookups with time-series context."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "TimescaleDB can leverage PostgreSQL graph extensions (Apache AGE) for combined time-series and graph relationship queries."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 10,
+      "reason": "TimescaleDB's hypertable partitioning and time-series optimizations add overhead that is not justified at very low write rates.",
+      "message": "db-timeseries--timescaledb: peak write QPS is {actual} req/s (<10). TimescaleDB's hypertable overhead may not be justified; consider simpler PostgreSQL tables or SQLite."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 1000,
+      "reason": "TimescaleDB is optimized for high-volume time-series ingestion. At very low ingestion rates, the complexity of hypertables and continuous aggregates is unnecessary.",
+      "message": "db-timeseries--timescaledb: peak ingestion is {actual} jobs/hour (<1000). TimescaleDB's time-series optimizations may be overkill; consider standard PostgreSQL or simpler storage."
+    }
+  ]
+}

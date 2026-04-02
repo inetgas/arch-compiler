@@ -1,0 +1,24 @@
+# Schema Validation - Wrong Type: String Instead of Float for Cost Ceiling
+#
+# A spec with cost.ceilings.monthly_operational_usd set to the string "free"
+# instead of a numeric value. The schema requires this field to be a number,
+# so passing a string triggers a type mismatch validation error.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: monthly_operational_usd must be a number, got string "free"
+#   - compiler rejects at schema validation stage
+
+cost:
+  ceilings:
+    monthly_operational_usd: free
+project:
+  name: Type Mismatches
+  domain: test
+functional:
+  summary: 'Test scenario: Type Mismatches'
+nfr: {}
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

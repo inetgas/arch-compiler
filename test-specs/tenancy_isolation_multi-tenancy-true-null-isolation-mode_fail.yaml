@@ -1,0 +1,23 @@
+# Tenancy - Multi-Tenancy True with Null Isolation Mode
+#
+# A spec with multi_tenancy: true feature but tenant_isolation set to n/a
+# (effectively null/none). When multi_tenancy is enabled, an isolation mode
+# must be specified. Setting it to n/a while multi_tenancy is true is a
+# contradiction that causes the compiler to reject the spec.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - multi_tenancy: true requires a valid tenant_isolation mode
+#   - compiler rejects because tenant_isolation: n/a conflicts with multi_tenancy: true
+
+constraints:
+  features:
+    multi_tenancy: true
+nfr:
+  security:
+    tenant_isolation: n/a
+project:
+  name: Multi-Tenancy + Tenant Isolation
+  domain: test
+functional:
+  summary: 'Test scenario: Multi-Tenancy + Tenant Isolation'

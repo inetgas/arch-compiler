@@ -1,0 +1,35 @@
+# Integration test fixture: NFR <= threshold annotates activation field
+#
+# Purpose:
+#   - platform=batch selects batch-platform-feature-required
+#   - batch_processing=false violates its requires_constraints (== True)
+#   - availability=0.99 satisfies the pattern's `<= 0.9999` NFR ceiling rule
+#   - Tests that NFR <= threshold (availability ceiling) annotates the field
+#   - Tests that "threshold: <=" appears in the suggestions block
+#
+# Expected compiler behaviour:
+#   - rc=1 (violation)
+#   - batch_processing: false has ❌ annotation
+#   - availability: target: 0.99 has an activation annotation (no ❌)
+#   - Suggestions block contains "threshold: <=" entry
+
+project:
+  name: LTE Threshold Violation Test
+  domain: test
+
+functional:
+  summary: Batch platform spec with batch_processing:false to trigger availability <= ceiling annotation
+
+constraints:
+  platform: batch
+  cloud: agnostic
+  language: python
+  features:
+    caching: false
+    batch_processing: false   # violates batch-platform-feature-required
+
+nfr:
+  availability:
+    target: 0.99   # satisfies <= 0.9999 ceiling rule → activation annotation
+  throughput:
+    peak_query_per_second_read: 10

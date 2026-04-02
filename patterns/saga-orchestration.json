@@ -1,0 +1,465 @@
+{
+  "id": "saga-orchestration",
+  "version": "1.0.0",
+  "title": "Saga Pattern (Orchestration)",
+  "description": "Central orchestrator coordinates local transactions and compensations; clearer control flow and observability.",
+  "types": [
+    "design",
+    "build",
+    "ops",
+    "test"
+  ],
+  "cost": {
+    "adoptionCost": 4000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Saga orchestration requires a central orchestrator service (VM/container: $20-200), message queue/event bus (AWS SQS/SNS: $10-500, or Kafka: $50-2000), state persistence database (RDS/DynamoDB: $30-1500), and monitoring/observability stack (CloudWatch/Datadog: $20-800). Min represents small-scale implementation with managed services on minimal instances (t3.small orchestrator, basic SQS, t3.micro RDS). Max represents production-grade deployment with HA orchestrator cluster, high-throughput message queuing, replicated state store, comprehensive distributed tracing, and multi-region capabilities. Actual costs scale with transaction volume, saga complexity, and retention requirements.",
+      "adoptionCost": "High complexity implementation requiring: (1) Deep understanding of distributed transaction patterns and compensation logic (40-60 hours learning/design), (2) Building or integrating orchestrator framework (Temporal, Netflix Conductor, or custom solution: 80-120 hours), (3) Implementing saga definitions, compensation handlers, and timeout/retry logic across multiple services (60-100 hours), (4) Establishing distributed tracing and saga visualization (20-40 hours), (5) Testing complex failure scenarios and rollback paths (40-60 hours). Requires senior developers with distributed systems expertise. Total estimate: 240-380 hours at $50-80/hour blended rate, though AI assistants can reduce boilerplate code generation by 20-30%, bringing typical implementation to $4000 for medium-sized systems.",
+      "licenseCost": "Open-source orchestration frameworks available: Temporal (MIT license), Netflix Conductor (Apache 2.0), Camunda (Apache 2.0 for community edition), Eclipse MicroProfile LRA. Most organizations use these OSS solutions. Commercial support/hosting options exist (Temporal Cloud: usage-based, Camunda Enterprise) but are optional. Pattern itself is architecture-agnostic and license-free. Assuming OSS stack for base implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "distributed-transaction-coordination",
+      "confidence": "high",
+      "reasoning": "The saga orchestration pattern specifically provides coordination of distributed transactions across services through a central orchestrator that manages the execution sequence and dependencies between local transactions."
+    },
+    {
+      "capability": "compensation-logic",
+      "confidence": "high",
+      "reasoning": "This pattern provides the ability to define and execute compensating transactions to rollback completed steps when failures occur, with the orchestrator maintaining logic to undo operations in reverse order."
+    },
+    {
+      "capability": "transaction-observability",
+      "confidence": "high",
+      "reasoning": "The centralized orchestrator provides a single point to monitor saga state, track progress, and observe the entire transaction flow, which is a key advantage over choreography-based approaches."
+    },
+    {
+      "capability": "centralized-control-flow",
+      "confidence": "high",
+      "reasoning": "The orchestration approach provides explicit centralized control over the saga flow, with the orchestrator determining the sequence and coordination of service interactions, distinguishing it from choreography patterns."
+    },
+    {
+      "capability": "workflow-orchestration-engine",
+      "confidence": "high",
+      "reasoning": "Saga orchestration IS a workflow orchestration engine \u2014 the central coordinator manages step sequencing, compensations, and transaction state across distributed services."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "workflow-orchestration-engine",
+      "confidence": "high",
+      "reasoning": "The pattern requires a central orchestrator component that manages saga state, coordinates service calls, handles compensation logic, and controls the execution flow of the distributed transaction.",
+      "optional": false
+    },
+    {
+      "capability": "service-communication",
+      "confidence": "high",
+      "reasoning": "The orchestrator needs mechanisms to communicate with participating services to invoke local transactions and compensations, whether through synchronous calls or asynchronous messaging.",
+      "optional": false
+    },
+    {
+      "capability": "state-management",
+      "confidence": "high",
+      "reasoning": "The orchestrator must persist saga state to track progress, recover from failures, and ensure reliable compensation execution with exactly-once semantics.",
+      "optional": true
+    },
+    {
+      "capability": "idempotent-operations",
+      "confidence": "high",
+      "reasoning": "Services participating in sagas must support idempotent operations to handle retries and ensure reliable compensation, as the orchestrator may need to retry failed operations or compensations.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "distributed-2pc",
+      "saga-choreography"
+    ],
+    "incompatibleAssumptions": [
+      "consistencyModel"
+    ]
+  },
+  "tags": [
+    "saga",
+    "workflow",
+    "consistency"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Orchestrator as central coordination point limits availability to four nines despite distributed service architecture."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Saga orchestration adds coordination overhead including state persistence, service calls, and workflow execution steps."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "At p99, orchestrator state persistence, retries, compensation logic, and network variance compound tail latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Orchestrator must detect failures, initiate compensations across multiple services, and restore workflow state for recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Orchestrator state persistence and coordination overhead creates throughput bottleneck limiting peak to approximately 100k jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 100,
+      "reason": "Saga orchestration adds significant coordination overhead (state persistence, service calls, workflow execution). At <100 jobs/hour, simpler synchronous transactions or direct service calls are more appropriate."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Saga orchestration can coordinate read operations across services up to 50k QPS before orchestrator becomes bottleneck."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Orchestrator coordination overhead and state persistence limit write throughput to approximately 10k QPS for transactional workflows."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration works with or without audit logging, though logging saga steps and compensations is recommended for observability."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration provides eventual consistency but can be configured to support read-your-writes with proper orchestrator state queries."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration supports both strict and relaxed durability depending on underlying service persistence configurations."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Saga orchestration is a cloud-agnostic architectural pattern deployable on any cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Saga orchestration is an architectural pattern implementable in any programming language with workflow orchestration capabilities."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Saga orchestration is a backend coordination pattern applicable to APIs, workers, batch jobs, and data pipelines."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration works with or without caching layers in the coordinated services."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Saga orchestration requires async messaging to coordinate distributed transactions and trigger compensations across services."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration can coordinate transactions involving AI inference services or any other service type."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration works in both single-tenant and multi-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration can coordinate batch processing workflows as well as real-time transactional workflows."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": true,
+      "reason": "Saga orchestration pattern is specifically designed to manage distributed transactions across multiple services."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration can coordinate transactions with or without real-time streaming data sources."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration can coordinate transactions involving vector search services or any other data store type."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration works with document stores, relational databases, or any other storage type for coordinated services."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration works with key-value stores or any other storage type for coordinated services and orchestrator state."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration can coordinate transactions involving graph databases or any other data store type."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration can coordinate transactions involving time-series databases or any other data store type."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration is commonly used for OLTP workloads but also applicable to analytical and batch workflows."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Saga orchestration can coordinate OLAP workloads though it is more commonly used for transactional OLTP workflows."
+    }
+  ],
+  "defaultConfig": {
+    "orchestrator_type": "centralized",
+    "compensation_strategy": "backward_recovery",
+    "timeout_handling": "automatic_compensation",
+    "state_persistence": "database",
+    "retry_policy": "exponential_backoff",
+    "max_retry_attempts": 3
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "orchestrator_type": {
+        "type": "string",
+        "enum": [
+          "centralized",
+          "distributed",
+          "hybrid"
+        ],
+        "description": "Orchestrator architecture: centralized (single coordinator service), distributed (multiple coordinators with leader election), or hybrid (centralized with failover replicas)"
+      },
+      "compensation_strategy": {
+        "type": "string",
+        "enum": [
+          "backward_recovery",
+          "forward_recovery",
+          "manual_intervention"
+        ],
+        "description": "How to handle failures: backward_recovery (rollback via compensating transactions), forward_recovery (retry until success), or manual_intervention (pause for human decision)"
+      },
+      "timeout_handling": {
+        "type": "string",
+        "enum": [
+          "automatic_compensation",
+          "retry_then_compensate",
+          "alert_only"
+        ],
+        "description": "Action when step times out: automatic_compensation (immediately trigger rollback), retry_then_compensate (retry before compensating), or alert_only (notify but don't auto-compensate)"
+      },
+      "state_persistence": {
+        "type": "string",
+        "enum": [
+          "database",
+          "event_store",
+          "in_memory"
+        ],
+        "description": "Where to store saga state: database (durable ACID storage), event_store (event-sourced history), or in_memory (fast but non-durable for non-critical sagas)"
+      },
+      "retry_policy": {
+        "type": "string",
+        "enum": [
+          "exponential_backoff",
+          "fixed_interval",
+          "immediate",
+          "none"
+        ],
+        "description": "Retry strategy for failed steps: exponential_backoff (increasing delays), fixed_interval (constant delay), immediate (no delay), or none (fail immediately)"
+      },
+      "max_retry_attempts": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 10,
+        "description": "Maximum number of retry attempts before triggering compensation (0 means no retries)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

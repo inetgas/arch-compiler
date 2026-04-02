@@ -1,0 +1,24 @@
+# Platform - Web Plus Batch Processing Missing Batch Feature Flag
+#
+# A GCP Python web platform spec that sets batch_processing: true in the
+# features but has no nfr job targets set. A web platform combined with
+# batch_processing requires job NFR targets (jobStartP95Seconds etc.) to be
+# specified, so compilation fails without them.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - batch_processing feature on web platform requires job NFR targets
+#   - compiler rejects due to missing required job latency/throughput nfr
+
+constraints:
+  platform: web
+  cloud: gcp
+  language: python
+  features:
+    batch_processing: true
+project:
+  name: Web Platform (Without job NFR set)
+  domain: test
+functional:
+  summary: 'Test scenario: Web Platform (Without job NFR set)'
+nfr: {}

@@ -1,0 +1,31 @@
+# Config Override - Verbose Pattern Config with Multiple Overrides
+#
+# An AWS JavaScript API spec with a patterns block providing verbose configuration
+# for the arch-serverless--aws pattern, overriding defaults for compute_service,
+# api_gateway, database, storage, auth_service, and event_bus. This tests that
+# multiple config overrides on a single selected pattern are all accepted and
+# propagated to the compiled output.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - arch-serverless--aws pattern is selected (aws + api compatible)
+#   - all six config overrides appear in the compiled pattern config
+
+project:
+  name: Verbose User Pattern Config Test
+  domain: test
+functional:
+  summary: Test spec for verbose mode user-provided pattern config
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+nfr: {}
+patterns:
+  arch-serverless--aws:
+    compute_service: lambda
+    api_gateway: api-gateway-rest
+    database: dynamodb
+    storage: s3-standard
+    auth_service: cognito
+    event_bus: eventbridge

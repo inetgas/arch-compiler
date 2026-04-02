@@ -1,0 +1,237 @@
+{
+  "id": "gof-observer",
+  "version": "1.0.0",
+  "title": "Observer",
+  "description": "In-process pub/sub to decouple subject and observers.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "The Observer pattern is a pure code-level design pattern (Gang of Four) that implements in-process pub/sub for decoupling subjects and observers. It requires no infrastructure, external services, or runtime dependencies beyond the application's own process memory. All state is maintained in-memory within the application, so there are no recurring monthly service costs. This is purely an architectural pattern for organizing code relationships.",
+      "adoptionCost": "Observer is a fundamental and widely-understood design pattern with low adoption cost. Most modern languages provide built-in support or standard library implementations (e.g., C# events, Java Observable/Observer, JavaScript EventEmitter). Implementation typically involves: (1) defining subject/observable interface (~1-2 hours), (2) implementing observer registration/notification mechanism (~2-3 hours), (3) creating concrete observers (~1-2 hours), (4) writing unit tests (~2-3 hours). With AI coding assistants providing boilerplate code and pattern templates, total effort is approximately 8-12 hours at $50/hour blended rate = $400-600. Given the pattern's simplicity and abundant examples/tooling, estimate $300 for a straightforward implementation. Complexity increases if implementing thread-safe notifications or weak references to prevent memory leaks.",
+      "licenseCost": "The Observer pattern is a language-agnostic design pattern from the public domain Gang of Four book (1994). Implementation uses standard language features and requires no third-party libraries, commercial tools, or proprietary licenses. All necessary components (interfaces, collections for observer lists, notification mechanisms) are available in standard language libraries at no cost. Organizations may choose optional reactive programming libraries (RxJava, RxJS, Reactive Extensions) which are open source under Apache 2.0 or MIT licenses, incurring zero licensing cost.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "in-process-pub-sub",
+      "confidence": "high",
+      "reasoning": "The Observer pattern implements a publish-subscribe mechanism where subjects (publishers) notify observers (subscribers) of state changes within a single application's memory space, not across distributed systems."
+    },
+    {
+      "capability": "event-notification",
+      "confidence": "high",
+      "reasoning": "The Observer pattern fundamentally provides event notification capability, allowing objects to be notified when changes occur in the subject they're observing."
+    },
+    {
+      "capability": "loose-coupling",
+      "confidence": "high",
+      "reasoning": "A primary benefit of the Observer pattern is decoupling the subject from its observers, where the subject doesn't need to know concrete observer types, only that they implement the observer interface."
+    },
+    {
+      "capability": "one-to-many-dependency",
+      "confidence": "high",
+      "reasoning": "The Observer pattern specifically establishes a one-to-many relationship between a subject and multiple observers, allowing one subject to notify many dependent observers of state changes."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "object-oriented-programming",
+      "confidence": "high",
+      "reasoning": "The Observer pattern, as a Gang of Four design pattern, typically requires OOP support with interfaces/abstract classes for the Subject and Observer abstractions, polymorphism for multiple observer types, and object references for maintaining observer lists.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "gof",
+    "code-pattern",
+    "dotnet",
+    "go",
+    "java",
+    "node",
+    "python"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Observer organises code behavior by decoupling event producers from consumers, not data content; it applies regardless of whether PII is present in the system."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Observer is a behavioral code pattern; GDPR compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Observer is a behavioral code pattern; CCPA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of CCPA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Observer is a behavioral code pattern; HIPAA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of HIPAA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Observer is a behavioral code pattern; SOX compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of SOX requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Observer operates below the persistence layer, coordinating in-process event notifications; read-your-writes consistency is enforced at the data store, not by this pattern."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Observer does not implement persistence; strict durability guarantees are provided at the infrastructure layer and are orthogonal to this in-process pub/sub pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Observer pattern is an in-process design pattern independent of cloud infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Observer is a fundamental Gang of Four pattern applicable across all object-oriented languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Observer pattern is a general-purpose design pattern that works on any execution platform."
+    }
+  ],
+  "defaultConfig": {
+    "notification_strategy": "push",
+    "observer_lifecycle": "manual",
+    "notification_order": "registration",
+    "error_handling": "continue"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "notification_strategy": {
+        "type": "string",
+        "enum": [
+          "push",
+          "pull"
+        ],
+        "description": "Push: Subject actively notifies observers (classic Observer). Pull: Observers poll subject for changes (reduces coupling but adds latency)."
+      },
+      "observer_lifecycle": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "weak-reference",
+          "auto-cleanup"
+        ],
+        "description": "Manual: Observers must explicitly unsubscribe. Weak-reference: Subject holds weak refs to prevent memory leaks. Auto-cleanup: Subject removes dead observers automatically."
+      },
+      "notification_order": {
+        "type": "string",
+        "enum": [
+          "registration",
+          "priority",
+          "random"
+        ],
+        "description": "Registration: Notify in subscription order (predictable). Priority: Observers specify priority levels (complex but flexible). Random: No guaranteed order (prevents order dependencies)."
+      },
+      "error_handling": {
+        "type": "string",
+        "enum": [
+          "continue",
+          "stop",
+          "isolate"
+        ],
+        "description": "Continue: One observer's exception doesn't affect others. Stop: First exception halts notification chain. Isolate: Catch and log exceptions per observer with callbacks."
+      }
+    }
+  },
+  "warn_nfr": []
+}

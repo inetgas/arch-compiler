@@ -1,0 +1,352 @@
+{
+  "id": "arch-egress-minimization",
+  "version": "1.0.0",
+  "title": "Network Egress Minimization",
+  "description": "Reduce cloud egress cost by co-locating compute and data, using CDNs, and avoiding cross-region data flows.",
+  "types": [
+    "cost",
+    "design",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Network Egress Minimization is an optimization pattern that reduces costs rather than incurring them. It involves architectural decisions (data locality, CDN usage, avoiding cross-region transfers) that decrease egress charges. The pattern itself has no direct infrastructure cost - it's applied to existing services. Actual savings depend on current egress volume: organizations can save $100-$10,000+/month depending on data transfer patterns. CDN costs (if newly adopted) would be $20-$500/month but typically offset by egress savings. Setting to $0 as this is a cost-reduction pattern, not a cost-incurring service.",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) Architecture review to identify egress patterns and hotspots (8-16 hours, $800-$1,600), (2) Redesigning data flows and API patterns to enforce locality (16-32 hours, $1,200-$2,400), (3) CDN configuration and testing if not already in use (8-16 hours, $400-$800), (4) Monitoring setup for egress metrics (4-8 hours, $200-$400), (5) Documentation and team training on egress-aware design principles (4-8 hours, $200-$400). Total: 40-80 hours at $50-$100/hour = $2,000-$8,000. Mid-range estimate of $2,500 reflects that some organizations may already have partial CDN coverage or monitoring, reducing implementation time. Higher end applies when significant architectural refactoring is needed across multiple services.",
+      "licenseCost": "No licensing costs required. This pattern uses native cloud provider features (regional resource placement, VPC peering, CDN services) that are usage-based, not license-based. Open-source monitoring tools (Prometheus, Grafana, CloudWatch) can track egress metrics. Commercial network monitoring tools exist ($5,000-$50,000/year) but are optional - native cloud dashboards provide sufficient visibility for most implementations. CDNs like CloudFront, Azure CDN, or Cloudflare operate on pay-per-use models without upfront licensing fees.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "egress-cost-reduction",
+      "confidence": "high",
+      "reasoning": "This pattern directly reduces network egress costs through strategic architectural decisions like co-locating compute with data, using CDNs, and avoiding cross-region transfers. The core purpose of this pattern is to decrease billable egress traffic through architectural optimization."
+    },
+    {
+      "capability": "data-locality",
+      "confidence": "medium",
+      "reasoning": "Co-locating compute and data resources is a core technique of this pattern. This capability enables reduced latency and lower egress costs by keeping data processing close to data storage."
+    },
+    {
+      "capability": "cdn-integration",
+      "confidence": "high",
+      "reasoning": "CDN usage is explicitly mentioned as a key technique in this pattern for reducing egress costs by caching content closer to end users and minimizing origin server traffic."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "network-topology-control",
+      "confidence": "high",
+      "reasoning": "To implement this pattern effectively, you need the ability to control and configure network topology, including region placement, VPC configuration, and routing decisions to avoid cross-region data flows.",
+      "optional": true
+    },
+    {
+      "capability": "cost-visibility",
+      "confidence": "high",
+      "reasoning": "This pattern requires visibility into egress costs to identify optimization opportunities and measure the effectiveness of implemented strategies.",
+      "optional": true
+    },
+    {
+      "capability": "traffic-analysis",
+      "confidence": "medium",
+      "reasoning": "Identifying high-egress data flows is essential for knowing which systems and data paths need optimization. Traffic analysis enables data-driven decisions about where to apply co-location and CDN strategies.",
+      "optional": true
+    },
+    {
+      "capability": "geo-distribution-control",
+      "confidence": "medium",
+      "reasoning": "Managing compute and data placement strategies across geographic regions is fundamental to implementing this pattern. You need control over where resources are deployed to achieve co-location and minimize cross-region transfers.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "cost",
+    "egress",
+    "network",
+    "cdn",
+    "data-locality"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.99,
+      "reason": "Egress minimization through regional co-location and CDN integration adds architectural complexity; systems with low availability targets may not justify this overhead."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 5,
+      "reason": "At very low request volumes, network egress costs are minimal and the complexity of egress optimization (CDN setup, regional co-location) may not be cost-justified."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Egress cost reduction through CDN and regional co-location is compatible with GDPR compliance requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost optimization strategies through data locality work with or without CCPA compliance requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Egress minimization patterns are neutral to SOX compliance requirements for financial data."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Network egress costs and optimization strategies are specific to major cloud providers with metered cross-region bandwidth."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "api",
+        "mobile",
+        "data-pipeline",
+        "ml-inference",
+        "batch",
+        "iot"
+      ],
+      "reason": "Egress minimization applies to any platform that serves data to external clients or transfers data across network boundaries."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Network egress optimization is an infrastructure and topology pattern that operates independently of application language."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Egress reduction benefits from caching but does not require it as a prerequisite."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost optimization through data locality applies to both synchronous and asynchronous communication patterns."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Egress minimization through regional co-location works for both single-tenant and multi-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Data locality strategies for cost reduction apply to batch processing and real-time workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Network topology optimization for egress cost is independent of distributed transaction requirements."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Egress cost reduction benefits streaming workloads through co-location but applies to non-streaming workloads as well."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Infrastructure-level egress optimization is neutral to the presence of vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Network cost optimization strategies apply regardless of document store usage."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Egress minimization through data locality works with any storage backend including key-value stores."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost reduction through network topology optimization is independent of graph database usage."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Egress cost optimization applies to time-series and non-time-series workloads equally."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Network egress minimization benefits OLTP workloads but is not limited to transactional systems."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Data locality and CDN strategies for cost reduction apply to analytical and transactional workloads."
+    }
+  ],
+  "defaultConfig": {
+    "cdn_strategy": "full",
+    "data_locality": "regional",
+    "cross_region_replication": "minimal",
+    "compression_enabled": true,
+    "static_asset_strategy": "cdn_edge"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "cdn_strategy": {
+        "type": "string",
+        "enum": [
+          "full",
+          "static-only",
+          "none"
+        ],
+        "description": "CDN usage level. 'full' caches both static and dynamic content at edge (lowest egress, highest complexity), 'static-only' caches assets only (balanced), 'none' for internal-only apps (no CDN cost but higher egress)"
+      },
+      "data_locality": {
+        "type": "string",
+        "enum": [
+          "global",
+          "regional",
+          "single-zone"
+        ],
+        "description": "Data placement strategy. 'global' replicates worldwide (lowest latency, highest cost), 'regional' keeps data in user regions (balanced), 'single-zone' centralizes data (lowest cost, higher latency for distant users)"
+      },
+      "cross_region_replication": {
+        "type": "string",
+        "enum": [
+          "none",
+          "minimal",
+          "full"
+        ],
+        "description": "Cross-region data sync level. 'none' avoids all cross-region traffic (lowest egress cost), 'minimal' syncs only critical data (balanced), 'full' maintains complete replicas (highest availability, highest cost)"
+      },
+      "compression_enabled": {
+        "type": "boolean",
+        "description": "Enable compression for data transfers. Reduces egress volume by 60-80% but adds CPU overhead. Recommended for most workloads."
+      },
+      "static_asset_strategy": {
+        "type": "string",
+        "enum": [
+          "cdn_edge",
+          "regional_storage",
+          "origin_only"
+        ],
+        "description": "Static asset delivery approach. 'cdn_edge' serves from CDN edge locations (lowest egress from origin), 'regional_storage' uses regional buckets (moderate cost), 'origin_only' serves directly (highest egress cost, simplest setup)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

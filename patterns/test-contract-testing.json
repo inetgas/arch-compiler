@@ -1,0 +1,241 @@
+{
+  "id": "test-contract-testing",
+  "version": "1.0.0",
+  "title": "Consumer-Driven Contract Testing",
+  "description": "Verify provider/consumer contracts; reduces integration surprises; supports independent deployability.",
+  "types": [
+    "test",
+    "build",
+    "design",
+    "ops",
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Contract testing is primarily a testing methodology with minimal infrastructure costs. Min=$0 represents small teams running contract tests in existing CI/CD pipelines with no additional infrastructure. Max=$500 accounts for: (1) Pact Broker hosting on cloud (t3.small EC2 ~$15-30/month or managed service like PactFlow starting at $250-500/month for teams), (2) Additional CI/CD compute time for contract verification builds (~$50-100/month for frequent contract verification across multiple services), (3) Contract test environment costs if dedicated (~$100-200/month for lightweight test instances). Most teams using open-source Pact with self-hosted broker will be in the $50-150/month range.",
+      "adoptionCost": "Medium-high complexity adoption. Factors: (1) Learning curve: Teams must understand contract testing philosophy, consumer-driven design, and tools like Pact (~40-60 hours training/research), (2) Initial setup: Configure Pact Broker, integrate with CI/CD pipelines, establish contract versioning strategy (~80-120 hours), (3) Refactoring: Retrofit existing services to support contract testing, write initial contracts for critical integrations (~120-160 hours), (4) Process changes: Establish workflows for contract changes, breaking changes, versioning policies (~40-60 hours), (5) Team coordination: Multiple teams (consumers/providers) must align on contract testing practices. Total estimated effort: 280-400 hours at blended rate of $75-100/hour = $2,100-4,000. The $2,500 mid-point reflects typical implementation with 2-4 services and 2-3 teams.",
+      "licenseCost": "Open-source tools dominate this space. Pact (most popular contract testing framework) is Apache 2.0 licensed and free. Pact Broker is also open-source. Spring Cloud Contract is Apache 2.0. Commercial options exist (PactFlow managed service at $250-500/month, SmartBear services) but are subscription-based, not one-time licenses. Most organizations start with free open-source tools. Enterprise support contracts are optional ($5,000-20,000/year) but not required for adoption. Setting license cost to $0 for typical open-source adoption path.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "contract-testing",
+      "confidence": "high",
+      "reasoning": "This pattern specifically implements consumer-driven contract testing, which is a distinct testing capability that verifies service interactions through defined contracts."
+    },
+    {
+      "capability": "contract-verification",
+      "confidence": "high",
+      "reasoning": "The pattern verifies that providers honor their contracts with consumers, providing explicit validation that both sides of the contract are properly implemented."
+    },
+    {
+      "capability": "independent-deployability-support",
+      "confidence": "medium",
+      "reasoning": "Contract testing enables services to be deployed independently by ensuring compatibility without requiring full integration testing, though this is more of an enablement outcome than a direct capability."
+    },
+    {
+      "capability": "contract-stub-generation",
+      "confidence": "medium",
+      "reasoning": "Many contract testing tools generate stubs or mocks from contracts for consumer testing, allowing consumers to develop against provider contracts without the actual provider running."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "api-contracts",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Contract testing fundamentally requires defined contracts between consumers and providers, typically expressed in formats like Pact files, OpenAPI specs, or other contract definition languages."
+    },
+    {
+      "capability": "test-framework",
+      "confidence": "high",
+      "reasoning": "Consumer-driven contract testing requires a testing framework to execute contract tests, such as Pact, Spring Cloud Contract, or similar tools that can run automated contract verification.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "testing",
+    "contracts",
+    "microservices"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Contract testing supports GDPR-compliant and non-compliant systems as it verifies API contracts."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Contract testing supports HIPAA-compliant and non-compliant systems as it verifies API contracts."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Contract testing supports CCPA-compliant and non-compliant systems as it verifies API contracts."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Contract testing supports SOX-compliant and non-compliant systems as it verifies API contracts."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Contract testing is cloud-agnostic and works across all deployment environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Consumer-driven contract testing is a methodology that can be implemented across all programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "agnostic",
+        "n/a"
+      ],
+      "reason": "Contract testing applies to any platform where services or components communicate via APIs."
+    }
+  ],
+  "defaultConfig": {
+    "contract_testing_tool": "pact",
+    "contract_storage": "broker",
+    "verification_trigger": "on_provider_change",
+    "consumer_version_selectors": "deployed_or_released",
+    "breaking_change_policy": "fail_build"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "contract_testing_tool": {
+        "type": "string",
+        "enum": [
+          "pact",
+          "spring-cloud-contract",
+          "postman",
+          "custom"
+        ],
+        "description": "Contract testing framework. Pact is polyglot and widely adopted; Spring Cloud Contract integrates with Spring ecosystem; Postman for API-first teams; custom for bespoke solutions."
+      },
+      "contract_storage": {
+        "type": "string",
+        "enum": [
+          "broker",
+          "git",
+          "artifact_repository"
+        ],
+        "description": "Where contracts are stored and shared. Broker (Pact Broker) enables dynamic verification and webhooks; Git for version control integration; artifact repository for existing CI/CD workflows."
+      },
+      "verification_trigger": {
+        "type": "string",
+        "enum": [
+          "on_provider_change",
+          "on_consumer_change",
+          "both",
+          "scheduled"
+        ],
+        "description": "When provider verifies contracts. On provider change catches breaking changes early; on consumer change validates new requirements; both for maximum safety; scheduled for periodic validation."
+      },
+      "consumer_version_selectors": {
+        "type": "string",
+        "enum": [
+          "deployed_or_released",
+          "all_versions",
+          "main_branch_only",
+          "tagged_versions"
+        ],
+        "description": "Which consumer versions to verify against. Deployed/released ensures production compatibility; all versions for comprehensive testing; main branch for active development; tagged for specific releases."
+      },
+      "breaking_change_policy": {
+        "type": "string",
+        "enum": [
+          "fail_build",
+          "warn_only",
+          "block_deployment"
+        ],
+        "description": "Action on contract violations. Fail build prevents merging breaking changes; warn only for gradual adoption; block deployment prevents production issues while allowing development."
+      }
+    }
+  },
+  "warn_nfr": []
+}

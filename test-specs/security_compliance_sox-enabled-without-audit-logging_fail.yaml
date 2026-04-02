@@ -1,0 +1,27 @@
+# Security Compliance - SOX Enabled Without Audit Logging
+#
+# A fintech API on AWS with Python and SOX compliance enabled
+# (nfr.data.compliance.sox: true) but audit_logging explicitly set to false.
+# SOX compliance requires audit logging to be enabled as a mandatory control.
+# The compiler detects this contradiction and rejects the spec.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - SOX compliance requires audit_logging: true
+#   - compiler rejects because SOX + no audit logging is an invalid combination
+
+project:
+  name: SOX Missing Audit Test
+  domain: fintech
+functional:
+  summary: SOX compliance but missing audit logging - should fail compilation
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+nfr:
+  data:
+    compliance:
+      sox: true
+  security:
+    audit_logging: false

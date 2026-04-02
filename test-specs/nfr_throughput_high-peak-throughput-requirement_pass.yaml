@@ -1,0 +1,37 @@
+# NFR Throughput - High Peak Throughput Requirement
+#
+# A high-traffic event API on AWS with Python, 5000 reads/sec and 1000 writes/sec
+# peak throughput, and 99.9% availability. Async messaging is enabled to handle
+# traffic spikes. This tests that throughput-optimizing patterns (auto-scaling,
+# load balancing, queue-based load leveling) are selected for high QPS targets.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - throughput-scaling patterns are selected (auto-scaling, load balancing)
+#   - async messaging patterns are selected for spike absorption
+#   - throughput targets are recorded in the compiled output
+
+project:
+  name: High-Traffic Event Processing API
+  domain: analytics
+functional:
+  summary: Event ingestion API handling high peak traffic with async processing
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+  features:
+    async_messaging: true
+    messaging_delivery_guarantee: at-least-once
+    caching: true
+nfr:
+  availability:
+    target: 0.999
+  throughput:
+    peak_query_per_second_read: 5000
+    peak_query_per_second_write: 1000
+  data:
+    pii: false
+cost:
+  ceilings:
+    monthly_operational_usd: 5000

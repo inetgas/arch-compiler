@@ -1,0 +1,49 @@
+# SaaS Provider - Vercel Managed PaaS and Static Frontend Coexist
+#
+# A Next.js app deployed fully on Vercel: serverless API routes (hosted by
+# hosting-managed-paas configured for vercel) and static frontend assets (hosted by
+# hosting-static-frontend--vercel). Both patterns serve different roles and
+# should be selected simultaneously — this is the standard Vercel full-stack
+# deployment model.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - hosting-managed-paas IS selected (vercel in saas-providers; generic variant wins conflict resolution,
+#     configured with provider: vercel in defaultConfig)
+#   - hosting-static-frontend--vercel IS selected (vercel in saas-providers)
+
+project:
+  name: Next.js Full-Stack on Vercel
+  domain: saas
+functional:
+  summary: Full-stack Next.js app with serverless API routes and static frontend on Vercel
+constraints:
+  cloud: agnostic
+  language: typescript
+  platform: api
+  saas-providers:
+    - vercel
+  features:
+    caching: false
+    async_messaging: false
+    ai_inference: false
+    multi_tenancy: false
+    batch_processing: false
+    distributed_transactions: false
+    real_time_streaming: false
+    vector_search: false
+    document_store: false
+    key_value_store: false
+    graph_database: false
+    time_series_db: false
+    oltp_workload: false
+    olap_workload: false
+nfr:
+  availability:
+    target: 0.99
+  latency:
+    p95Milliseconds: 200
+    p99Milliseconds: 500
+cost:
+  ceilings:
+    monthly_operational_usd: 100

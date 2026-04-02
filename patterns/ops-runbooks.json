@@ -1,0 +1,246 @@
+{
+  "id": "ops-runbooks",
+  "version": "1.0.0",
+  "title": "Operational Runbooks",
+  "description": "Standard runbooks for incidents and routine ops; reduces MTTR and on-call stress.",
+  "types": [
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Operational runbooks are primarily documentation and process artifacts stored in version control or wiki systems. Min $0 assumes free tier of existing platforms (GitHub wiki, Confluence free tier, or git repositories). Max $500 accounts for dedicated runbook management platforms (PagerDuty Runbook Automation ~$19/user/month for 10-20 users, or OpsGenie ~$9-29/user/month), plus documentation hosting services like Confluence Standard ($5.75/user/month for ~50 users = ~$290/month) or Notion Team plan (~$15/user/month). Most organizations will use existing tools, keeping costs near the minimum. Costs scale primarily with team size and whether dedicated runbook automation platforms are adopted.",
+      "adoptionCost": "Medium-high complexity due to organizational and knowledge work required. Initial effort includes: (1) Cataloging common incidents and operational procedures (20-40 hours), (2) Writing comprehensive runbooks with clear step-by-step instructions, decision trees, and escalation paths (40-80 hours for 10-20 core runbooks), (3) Creating templates and standards for consistent formatting (8-16 hours), (4) Integrating runbooks with alerting systems and incident management tools (16-24 hours), (5) Team training and socialization (8-16 hours). Total estimated 92-176 hours at blended rate of $75-150/hour (junior-to-senior ops/SRE) = $6,900-26,400. However, with AI coding assistants helping draft initial runbooks from existing tribal knowledge, reducing documentation time by 40-50%, and templating assistance, realistic estimate is $2,500. Complexity comes from cross-team coordination and knowledge extraction rather than technical implementation.",
+      "licenseCost": "Open source and free solutions dominate this space. Runbooks can be maintained in standard Markdown/AsciiDoc files in Git repositories (free), GitHub/GitLab wikis (free with standard accounts), or basic Confluence/Notion instances that organizations typically already have. While premium runbook automation platforms exist (PagerDuty Runbook Automation, Cutover, Transposit), these are recurring SaaS costs captured in monthly estimates, not one-time licenses. Most organizations start with zero-cost documentation tools and only upgrade to specialized platforms after demonstrating ROI. No specialized licenses are required for the pattern itself.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "incident-runbooks",
+      "confidence": "high",
+      "reasoning": "This pattern provides standardized procedures for incident response, which is a core purpose of the pattern focused on reducing MTTR through documented incident procedures."
+    },
+    {
+      "capability": "operational-procedures",
+      "confidence": "high",
+      "reasoning": "The pattern provides documented procedures for routine operational tasks beyond just incidents, capturing the broader operational guidance aspect for day-to-day operations."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "structured-logging",
+      "confidence": "high",
+      "reasoning": "Runbooks require access to logs for troubleshooting and root cause analysis during incident response, providing detailed information needed to execute diagnostic steps.",
+      "optional": false
+    },
+    {
+      "capability": "incident-management",
+      "confidence": "medium",
+      "reasoning": "Runbooks typically integrate with incident tracking systems like PagerDuty or Jira to coordinate incident response and track resolution progress.",
+      "optional": true
+    },
+    {
+      "capability": "alerting",
+      "confidence": "high",
+      "reasoning": "Runbooks need alerting capabilities to trigger their execution when incidents or operational events occur that require procedural response.",
+      "optional": true
+    },
+    {
+      "capability": "automation",
+      "confidence": "medium",
+      "reasoning": "Modern runbooks often include automated remediation steps and orchestration of response actions, requiring automation capabilities to execute programmatic procedures.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "curated"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Operational Runbooks document and standardise operational procedures that generate audit trail events; the pattern applies regardless of formal audit logging requirements and provides the procedural context for audit log interpretation."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR-regulated systems benefit from documented Operational Runbooks for data access requests, breach response, supervisory authority notification procedures, and audit-ready operational evidence."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA-regulated systems benefit from documented Operational Runbooks covering consumer data request handling, deletion procedures, opt-out workflows, and data subject rights fulfilment processes."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA requires documented operational procedures; Operational Runbooks directly satisfy this requirement for incident response, PHI access controls, workforce sanctions, and breach notification procedures."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance requires documented and tested IT operational controls; Operational Runbooks are a direct evidence artifact for SOX audits covering change management, access provisioning, and incident response procedures."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Operational runbooks are cloud-agnostic documentation and can be applied to any cloud or on-premises environment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Operational runbooks are documentation patterns independent of programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "agnostic",
+        "n/a"
+      ],
+      "reason": "Operational runbooks apply to all platform types including web, mobile, API, batch, and data pipelines."
+    }
+  ],
+  "defaultConfig": {
+    "runbook_format": "markdown",
+    "incident_severity_levels": 4,
+    "escalation_policy": "tiered",
+    "automation_integration": "manual",
+    "review_frequency": "quarterly"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "runbook_format": {
+        "type": "string",
+        "enum": [
+          "markdown",
+          "wiki",
+          "structured_yaml",
+          "ticketing_system"
+        ],
+        "description": "Format for storing runbooks. Markdown for version control, wiki for collaboration, structured YAML for automation integration, ticketing system for incident management tools."
+      },
+      "incident_severity_levels": {
+        "type": "integer",
+        "enum": [
+          3,
+          4,
+          5
+        ],
+        "description": "Number of incident severity levels (3: Critical/Major/Minor, 4: adds Warning, 5: adds Informational). More levels provide granularity but increase complexity."
+      },
+      "escalation_policy": {
+        "type": "string",
+        "enum": [
+          "tiered",
+          "follow_the_sun",
+          "flat",
+          "hybrid"
+        ],
+        "description": "Escalation strategy. Tiered: L1->L2->L3 support levels. Follow-the-sun: geographic handoffs. Flat: all responders equal priority. Hybrid: combines approaches."
+      },
+      "automation_integration": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "semi_automated",
+          "fully_automated"
+        ],
+        "description": "Level of automation. Manual: human-executed steps. Semi-automated: runbooks trigger scripts/workflows. Fully-automated: self-healing with runbooks as fallback documentation."
+      },
+      "review_frequency": {
+        "type": "string",
+        "enum": [
+          "monthly",
+          "quarterly",
+          "biannual",
+          "post_incident"
+        ],
+        "description": "How often runbooks are reviewed and updated. More frequent reviews keep runbooks current but require more effort. Post-incident ensures learning from real events."
+      }
+    }
+  },
+  "warn_nfr": []
+}

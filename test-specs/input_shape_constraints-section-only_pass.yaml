@@ -1,0 +1,23 @@
+# Input Shape - Constraints Section Only
+#
+# An e-commerce API spec that provides constraints including a feature flag
+# (caching: true) but omits the nfr body. This tests that the compiler
+# correctly handles a spec that has constraints but no explicit nfr values.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - caching-related patterns are selected due to caching feature flag
+#   - compiler tolerates empty nfr section
+
+project:
+  name: My API
+  domain: ecommerce
+functional:
+  summary: Product API
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+  features:
+    caching: true
+nfr: {}

@@ -1,0 +1,47 @@
+# Full Specification - All Sections Explicit
+#
+# A comprehensive e-commerce API spec with all major sections populated:
+# constraints including feature flags and tenant count, nfr covering
+# availability, PII, security (auth, audit logging, tenant isolation), and
+# latency targets, plus cost ceilings and operating model. This exercises
+# the compiler across all gating dimensions simultaneously.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - multi-tenancy, oauth2_oidc auth, and audit logging patterns are selected
+#   - schema-per-tenant isolation pattern is selected
+#   - patterns incompatible with the explicit constraints are filtered out
+
+project:
+  name: My API
+  domain: ecommerce
+functional:
+  summary: Product API
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+  tenantCount: 50
+  features:
+    caching: true
+    async_messaging: false
+    ai_inference: false
+    multi_tenancy: true
+nfr:
+  availability:
+    target: 0.99
+  data:
+    pii: false
+  security:
+    auth: oauth2_oidc
+    audit_logging: true
+    tenant_isolation: schema-per-tenant
+  latency:
+    p95Milliseconds: 200
+cost:
+  ceilings:
+    monthly_operational_usd: 500
+operating_model:
+  on_call: true
+  deploy_freq: daily
+  ops_team_size: 5

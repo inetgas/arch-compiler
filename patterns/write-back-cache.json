@@ -1,0 +1,412 @@
+{
+  "id": "write-back-cache",
+  "version": "1.0.0",
+  "title": "Write-Back Cache",
+  "description": "Writes go to cache first and flush asynchronously; higher perf but higher risk without durable flushing.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 20.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Write-back cache requires infrastructure for caching layer and persistent storage. Minimum represents small-scale deployment with cache.t3.micro Redis/Memcached ($15-20/month) plus minimal database costs ($10-15/month for managed DB like RDS t3.micro or equivalent). Maximum represents production-grade setup with multi-node Redis cluster with persistence ($1000-2000/month), primary database with replica sets ($2000-3000/month), and monitoring/logging infrastructure ($500-1000/month). The pattern requires durable storage backend since writes must eventually be flushed, plus the cache layer itself. Costs scale significantly with throughput requirements, write frequency, cache size, and data durability guarantees needed.",
+      "adoptionCost": "Write-back cache is high complexity due to multiple critical factors: (1) Complex implementation requiring careful handling of asynchronous write flushing logic, dirty data tracking, and cache invalidation strategies (40-60 hours), (2) Significant risk mitigation work including failure scenarios, data consistency guarantees, and recovery procedures (30-40 hours), (3) Thorough testing requirements for race conditions, crash recovery, and data loss scenarios (20-30 hours), (4) Monitoring and observability setup to track write queue depth, flush latency, and failure rates (10-15 hours). Despite AI coding assistance for boilerplate, the architectural decisions, error handling edge cases, and production hardening require senior engineering expertise. Total 100-145 hours at blended rate of $75-100/hour for senior engineers, though AI can reduce implementation time by 20-30%.",
+      "licenseCost": "Write-back cache pattern is typically implemented using open-source technologies. Popular cache solutions like Redis (BSD license), Memcached (BSD license), and Hazelcast (Apache 2.0) are free. Application-level implementation uses standard language libraries and frameworks. While commercial caching solutions exist (e.g., Redis Enterprise, Hazelcast Enterprise), the core pattern can be fully implemented with OSS tools. Enterprise versions offering advanced features like active-active replication or enhanced durability would add $5,000-50,000+ annually but aren't required for basic pattern implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "write-latency-reduction",
+      "confidence": "high",
+      "reasoning": "This is the core benefit of write-back cache - by writing to fast cache first and deferring slower persistent storage writes, it directly reduces write operation latency from the client perspective."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "high",
+      "reasoning": "Write-back cache inherently creates a window where cache and backing store are inconsistent until flush completes, providing eventual consistency between cache and persistent storage."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "key-value-store",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Write-back cache fundamentally requires a fast temporary storage layer (cache) to buffer writes before they are flushed to persistent storage. This is the primary mechanism that enables the pattern."
+    },
+    {
+      "capability": "durable-flush-mechanism",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Since writes are initially only in volatile cache, the pattern requires a reliable mechanism to asynchronously flush cached writes to durable storage. Without this, data loss is guaranteed on cache failure."
+    },
+    {
+      "capability": "data-loss-risk",
+      "confidence": "high",
+      "reasoning": "The pattern needs strategies to handle cache failures before flush (write-ahead logging, replication, etc.) as there is inherent risk of data loss if the cache fails before writes are persisted.",
+      "optional": true
+    },
+    {
+      "capability": "cache-invalidation",
+      "confidence": "medium",
+      "reasoning": "Stale reads can occur if the cache isn't properly managed alongside the write-back mechanism, requiring a strategy to maintain cache coherency and invalidate outdated entries.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "cache-aside",
+      "cache-aside--redis",
+      "write-through-cache"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cache",
+    "performance",
+    "risk"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "defaultConfig": {
+    "flush_interval_seconds": 60,
+    "max_memory_mb": 512,
+    "flush_strategy": "time-based",
+    "failure_handling": "retry-with-backoff",
+    "max_pending_writes": 10000,
+    "durability_mode": "eventual"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "flush_interval_seconds": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3600,
+        "description": "Interval between cache flushes to backing store. Lower values reduce data loss risk but increase I/O overhead; higher values improve performance but increase potential data loss window."
+      },
+      "max_memory_mb": {
+        "type": "integer",
+        "minimum": 128,
+        "maximum": 16384,
+        "description": "Maximum memory allocation for cache in MB. Higher values allow more writes to be buffered but consume more resources."
+      },
+      "flush_strategy": {
+        "type": "string",
+        "enum": [
+          "time-based",
+          "size-based",
+          "hybrid",
+          "write-coalescing"
+        ],
+        "description": "Strategy for flushing writes to backing store. time-based: flush at intervals; size-based: flush when buffer fills; hybrid: both conditions; write-coalescing: merge duplicate key writes before flushing."
+      },
+      "failure_handling": {
+        "type": "string",
+        "enum": [
+          "retry-with-backoff",
+          "dead-letter-queue",
+          "fail-fast",
+          "write-through-fallback"
+        ],
+        "description": "How to handle flush failures. retry-with-backoff: exponential retry; dead-letter-queue: move failed writes to DLQ; fail-fast: propagate errors immediately; write-through-fallback: switch to synchronous writes on failure."
+      },
+      "max_pending_writes": {
+        "type": "integer",
+        "minimum": 100,
+        "maximum": 1000000,
+        "description": "Maximum number of pending writes before applying backpressure. Prevents unbounded memory growth under high write load."
+      },
+      "durability_mode": {
+        "type": "string",
+        "enum": [
+          "eventual",
+          "wal-protected",
+          "replicated"
+        ],
+        "description": "Durability guarantee level. eventual: accept data loss risk; wal-protected: write-ahead log before cache; replicated: replicate to multiple cache nodes for fault tolerance."
+      }
+    }
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.95,
+      "reason": "Write-back cache supports availability up to 95% due to async flush risks and potential data loss windows."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Write-back cache achieves p95 latency of at least 1ms for in-memory cache writes."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Write-back cache achieves p99 latency of at least 5ms accounting for cache contention and flush coordination."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Write-back cache supports RTO of at least 5 minutes due to cache rebuild and flush recovery processes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Write-back cache supports RPO of at least 1 minute due to data loss window between cache writes and async flushes."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">=",
+      "value": 500,
+      "reason": "Write-back cache is only worth the complexity and data loss risk at high write QPS (500+) where write batching provides benefit."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can support GDPR compliance with proper cache invalidation and right-to-be-forgotten mechanisms."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can support HIPAA compliance with encryption at rest and in transit plus audit logging of cache operations."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can support CCPA compliance with proper data deletion and access control mechanisms."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can support SOX compliance with appropriate audit logging and data integrity controls."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can provide read-your-writes consistency by reading from cache after write, though eventual consistency to backing store."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": false,
+      "reason": "Write-back cache is incompatible with strict durability requirements due to inherent async flush and data loss window."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Write-back cache is a cloud-agnostic pattern implementable on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Write-back cache is a language-agnostic architectural pattern implementable in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Write-back cache is a platform-agnostic pattern applicable to any system requiring write performance optimization."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "==",
+      "value": true,
+      "reason": "Write-back cache pattern explicitly requires caching as its core architectural component."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Write-back cache requires asynchronous background flush mechanism to persist cached writes to backing store."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache is compatible with both AI inference and non-AI workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache supports both single-tenant and multi-tenant architectures with appropriate cache partitioning."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can be used with both batch and real-time processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Write-back cache is incompatible with strict distributed transactions due to eventual consistency and async flush semantics."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache supports both real-time streaming and non-streaming data processing patterns."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can be applied to both vector search and non-vector workloads."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache works with document stores and other database types for improved write performance."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can be implemented with key-value stores or other storage backends."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can improve write performance for both graph and non-graph databases."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can be applied to time-series and non-time-series data storage patterns."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Write-back cache is incompatible with OLTP workloads requiring immediate consistency and strict durability guarantees."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-back cache can support OLAP workloads and other analytical processing patterns with eventual consistency."
+    }
+  ],
+  "warn_nfr": []
+}

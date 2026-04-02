@@ -1,0 +1,477 @@
+{
+  "id": "db-timeseries--timescale-cloud",
+  "version": "1.0.0",
+  "title": "Time-Series Database (Timescale Cloud)",
+  "description": "Timescale Cloud is managed TimescaleDB \u2014 a PostgreSQL extension optimized for time-series data. Combines relational SQL familiarity with time-series performance via hypertables, continuous aggregates, and compression. Key advantage: run SQL queries with time-series optimizations. Best for: teams familiar with PostgreSQL, mixed relational+time-series data, IoT, monitoring.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-timeseries--timescaledb",
+      "db-timeseries--influxdb",
+      "db-timeseries--influxdb-cloud",
+      "db-timeseries--timestream"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "timeseries-database",
+      "confidence": "high",
+      "reasoning": "Timescale Cloud is a managed time-series database built on TimescaleDB, providing hypertables, continuous aggregates, and time-series optimized storage as core functionality."
+    },
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "Timescale Cloud is built on PostgreSQL and provides full relational database capabilities including SQL, joins, foreign keys, and ACID transactions alongside time-series features."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "medium",
+      "reasoning": "Timescale Cloud provides managed scaling with automated resource allocation and dynamic compute scaling based on workload demands."
+    },
+    {
+      "capability": "query-api",
+      "confidence": "high",
+      "reasoning": "Timescale Cloud exposes standard PostgreSQL SQL with time-series extension functions, enabling external services to interact with the database via PostgreSQL protocol."
+    },
+    {
+      "capability": "compression",
+      "confidence": "high",
+      "reasoning": "Timescale Cloud provides automatic column-oriented compression on time-series chunks, typically achieving 90-95% storage reduction for time-series data."
+    },
+    {
+      "capability": "continuous-aggregates",
+      "confidence": "high",
+      "reasoning": "Continuous aggregates are a core TimescaleDB feature providing automatically refreshed materialized views for fast analytical queries over historical time-series data."
+    },
+    {
+      "capability": "xa-protocol",
+      "confidence": "medium",
+      "reasoning": "Timescale Cloud runs on PostgreSQL and supports XA distributed transactions via two-phase commit as noted in its distributed transaction constraint reasoning."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "reasoning": "As a cloud-managed SaaS service, Timescale Cloud requires internet connectivity for applications to access the database and management interfaces.",
+      "optional": true
+    },
+    {
+      "capability": "postgresql-client",
+      "confidence": "high",
+      "reasoning": "TimescaleDB is accessed via the standard PostgreSQL wire protocol, requiring a PostgreSQL-compatible client driver in the application.",
+      "optional": true
+    }
+  ],
+  "preferredProviders": [
+    "timescale-cloud"
+  ],
+  "defaultConfig": {
+    "provider": "timescale-cloud",
+    "retention_days": 90,
+    "enable_compression": true,
+    "compression_interval": "7 days",
+    "enable_continuous_aggregates": false,
+    "replication": true,
+    "ssl_mode": "require"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "timescale-cloud"
+        ],
+        "description": "Managed cloud provider for Timescale Cloud service"
+      },
+      "retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3650,
+        "description": "Data retention period. Older data is automatically dropped. Affects storage costs."
+      },
+      "enable_compression": {
+        "type": "boolean",
+        "description": "Enable automatic chunk compression. Typically achieves 90-95% compression ratio for time-series data."
+      },
+      "compression_interval": {
+        "type": "string",
+        "description": "Compress data older than this interval (e.g., '7 days', '30 days'). Balance query performance vs storage cost."
+      },
+      "enable_continuous_aggregates": {
+        "type": "boolean",
+        "description": "Pre-compute and materialize aggregations for faster analytical queries over historical data."
+      },
+      "replication": {
+        "type": "boolean",
+        "description": "Enable high-availability replication for durability and automatic failover. Increases cost but provides data redundancy."
+      },
+      "ssl_mode": {
+        "type": "string",
+        "enum": [
+          "require",
+          "verify-full"
+        ],
+        "description": "Timescale Cloud enforces SSL on all connections."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 600.0
+    },
+    "adoptionCost": 1000.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Timescale Cloud offers a 30-day free trial for new accounts, making min $0 appropriate for evaluation and development. Low production usage starts around $50-100/month for small workloads (16GB storage, low compute). A typical mid-production IoT or monitoring workload with moderate ingestion, ~100GB storage, compression enabled, and continuous aggregates runs $200-400/month. Max $600 represents a larger production deployment with high ingestion rates, significant storage (500GB+), and HA replication enabled. Large enterprise deployments with multi-TB storage and dedicated compute can exceed this range.",
+      "adoptionCost": "Lower adoption cost than InfluxDB Cloud or standalone TimescaleDB for teams already familiar with PostgreSQL. Teams need to understand hypertable concepts, compression policies, continuous aggregates setup, and data retention policies. The PostgreSQL familiarity significantly reduces the learning curve compared to purpose-built time-series databases with proprietary query languages. Estimated 20-40 hours for a PostgreSQL-familiar team to properly implement, test, and optimize. Adoption cost is lower than self-hosted TimescaleDB since infrastructure management is eliminated.",
+      "licenseCost": "Timescale Cloud is a fully managed SaaS service with no upfront license fees. Built on TimescaleDB open source (Apache 2.0 core), with proprietary managed service features included in the usage-based pricing. No per-core, per-seat, or annual license required for base tier. Enterprise features and compliance certifications are included in higher usage tiers.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "time-series",
+    "timescale",
+    "postgresql",
+    "managed",
+    "hypertables",
+    "iot",
+    "monitoring",
+    "saas"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Timescale Cloud managed service with HA replication supports up to 99.99% availability with automated failover."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "PostgreSQL-based database achieves p95 latency floor of 5ms for optimized time-series queries via hypertable indexes."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "PostgreSQL query processing and hypertable chunking overhead result in p99 latency floor of 20ms for time-series workloads."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Managed service with automated failover and health monitoring achieves RTO of at least 1 minute through auto-recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "TimescaleDB hypertable ingestion pipeline supports write ceiling of 100k QPS with batching and optimized chunk inserts."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Time-series database with continuous aggregates and hypertable indexes supports read query ceiling of 50k QPS."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "TimescaleDB can handle up to 100k inserts/second (360M writes/hour) with optimized hypertable partitioning."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed service provides audit logging for data access and configuration changes as an optional feature configurable per deployment."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Timescale Cloud supports multiple tenant isolation strategies inherited from PostgreSQL: row-level security, schema isolation, and database-per-tenant."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud can store any data type including PII with encryption at rest and in transit, column-level security, and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud supports GDPR compliance through data residency options, encryption, retention policies, and data deletion APIs."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Paid tier provides HIPAA compliance with BAA agreements, encryption at rest and in transit, and audit logging capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Data access controls, retention policies, and deletion capabilities support CCPA consumer privacy requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Audit logging, access controls, and data retention policies support SOX compliance for financial time-series data."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL-based Timescale Cloud provides strong read-your-writes consistency guarantees for real-time dashboard use cases."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud implements strict durability with PostgreSQL WAL, synchronous replication, and automated backups for committed writes."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Timescale Cloud is a managed SaaS accessible from any cloud environment via standard PostgreSQL protocol over the internet."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Timescale Cloud is accessible from any language with a PostgreSQL client driver, covering all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "web",
+        "mobile",
+        "iot"
+      ],
+      "reason": "Time-series database supports any platform architecture requiring time-series data storage and PostgreSQL-compatible querying."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically provides time-series database capability and requires this feature flag to be active for selection."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "timescale-cloud"
+      ],
+      "reason": "Pattern specifically requires timescale-cloud as the managed database service provider."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud supports both OLTP and non-OLTP workloads as a full PostgreSQL database service."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud supports analytical queries on time-series data with continuous aggregates and columnar compression."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud can leverage pgvector extension for combined time-series and vector similarity search in a single PostgreSQL instance."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Database pattern is compatible with applications that use or do not use separate caching layers for query optimization."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud works with both synchronous and asynchronous data ingestion patterns including streaming and batch writes."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Database can store time-series metrics from AI inference workloads or serve as feature store for ML pipelines."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud supports multi-tenant architectures through PostgreSQL row-level security, schema isolation, and database-per-tenant."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud supports batch processing workloads for time-series aggregation, compression policies, and data loading."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud supports distributed transactions via PostgreSQL two-phase commit when cross-service coordination is required."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud handles real-time streaming data ingestion with low-latency writes and serves as storage backend for streaming analytics."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud supports JSONB columns for document storage alongside time-series data in hybrid relational+time-series models."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud can serve key-value access patterns using PostgreSQL indexing capabilities alongside time-series data."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timescale Cloud can coexist with or leverage PostgreSQL graph extensions for polyglot persistence architectures."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 10,
+      "reason": "Timescale Cloud has managed service overhead (network latency, cloud billing granularity). At <10 writes/sec, simpler storage (plain PostgreSQL with a timestamp column) may be more cost-effective.",
+      "message": "db-timeseries--timescale-cloud: peak write QPS is {actual} req/s (<10). Managed time-series DB overhead may not be justified; consider plain PostgreSQL or a simpler storage solution."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 3600,
+      "reason": "At <1 write/sec (3600/hour), Timescale Cloud's hypertable partitioning and continuous aggregate features are underutilized. Low-volume periodic writes do not benefit from time-series optimization.",
+      "message": "db-timeseries--timescale-cloud: peak jobs per hour is {actual} (<3600, or ~1/sec). Low write volume may not justify managed time-series DB costs; consider standard PostgreSQL."
+    }
+  ]
+}

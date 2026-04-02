@@ -1,0 +1,36 @@
+# Feature - Key-Value Store Feature Flag
+#
+# A session management service on AWS with Python and key_value_store: true
+# feature flag. The use case requires fast session lookups and ephemeral data
+# storage with TTL-based expiration. The key_value_store feature activates
+# key-value database patterns (generic Redis, Redis Cloud, DynamoDB KV, etc.).
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - key-value store patterns are selected
+#   - Redis or equivalent fast in-memory/KV patterns are included
+
+project:
+  name: Session Management Service
+  domain: identity
+functional:
+  summary: User session storage and management with fast key-value lookups
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+  features:
+    key_value_store: true
+    caching: true
+nfr:
+  data:
+    pii: true
+  security:
+    audit_logging: true
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 10
+cost:
+  ceilings:
+    monthly_operational_usd: 500

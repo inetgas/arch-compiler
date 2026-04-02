@@ -1,0 +1,275 @@
+{
+  "id": "obs-open-telemetry-baseline",
+  "version": "1.0.0",
+  "title": "OpenTelemetry Baseline Instrumentation",
+  "description": "Standardize traces/metrics/log correlation via OpenTelemetry; export to vendor or OSS backends.",
+  "types": [
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "OpenTelemetry itself is free, but costs come from backend observability platforms and data volume. Min ($100): Small application with 1-2 services, ~10GB traces/month, using managed backends like AWS X-Ray (~$5/million traces), CloudWatch Logs (~$0.50/GB ingestion), or Grafana Cloud free tier with modest overage. Max ($5000): Production environment with 10-20 microservices generating 500GB-1TB of telemetry data monthly, using commercial backends like Datadog ($15/host/month \u00d7 50 hosts + $0.10/GB ingested), New Relic, or self-hosted solutions (Tempo, Loki, Prometheus) on $500-1000/month infrastructure with dedicated storage. High-traffic systems with extensive sampling and long retention periods can exceed this range significantly.",
+      "adoptionCost": "Medium-high complexity. Implementation requires: (1) Instrumenting existing codebase with OpenTelemetry SDKs across multiple services (20-40 hours), (2) Configuring collectors, sampling strategies, and export pipelines (15-25 hours), (3) Setting up backend infrastructure (managed or self-hosted) and dashboards (10-20 hours), (4) Establishing correlation patterns between traces, metrics, and logs (10-15 hours), (5) Team training on OpenTelemetry concepts and observability best practices (15-20 hours). Total: 70-120 hours at $50-100/hour blended rate = $3,500-12,000. Modern AI coding assistants can reduce instrumentation time by 30-40% with auto-generated spans and context propagation code, bringing realistic estimate to $3,500 for medium-sized applications. Additional complexity for polyglot environments or legacy systems.",
+      "licenseCost": "OpenTelemetry is 100% open source (Apache 2.0 license) with no licensing costs. All SDKs, collectors, and instrumentation libraries are free. However, backend storage/visualization platforms have separate costs: OSS options (Jaeger, Prometheus, Grafana, Tempo, Loki) are free but require infrastructure costs (captured in monthly range). Commercial SaaS backends (Datadog, New Relic, Honeycomb, Lightstep) have subscription costs that are usage-based and included in estimatedMonthlyRangeUsd rather than one-time license fees. Some vendors offer OpenTelemetry-native plans starting free with pay-as-you-grow pricing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "distributed-tracing",
+      "confidence": "high",
+      "reasoning": "OpenTelemetry's core function is providing distributed tracing across services, correlating spans to track requests through the entire system. This is the primary capability that enables complete request flow visibility."
+    },
+    {
+      "capability": "metrics-collection",
+      "confidence": "high",
+      "reasoning": "OpenTelemetry provides standardized metrics collection and instrumentation across applications and infrastructure. This pattern implements consistent metric gathering with standard naming and semantic conventions."
+    },
+    {
+      "capability": "log-correlation",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly enables traces/metrics/log correlation via OpenTelemetry's context propagation mechanisms. This allows logs to be associated with specific traces and spans for comprehensive debugging."
+    },
+    {
+      "capability": "telemetry-instrumentation",
+      "confidence": "high",
+      "reasoning": "OpenTelemetry provides standardized instrumentation libraries and SDKs that enable automatic and manual instrumentation of applications. This foundational capability allows applications to emit telemetry data in a consistent format."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "telemetry-backend",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "OpenTelemetry is a data collection and instrumentation layer that requires a backend system to store, query, and visualize the telemetry data. Supported backends include vendor solutions like Datadog or OSS options like Jaeger and Prometheus."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "ops-low-cost-observability"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "observability",
+    "otel",
+    "dotnet",
+    "go",
+    "java",
+    "node",
+    "python"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OpenTelemetry instrumentation is compatible with or without audit logging requirements; it is an application-level concern independent of that policy."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.9,
+      "reason": "OpenTelemetry instrumentation applies from 90% availability upward; below that threshold the application itself needs stabilization before adding telemetry."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "OTel collector restart and SDK reconnect takes <5 minutes; this pattern supports RTO targets of 5 minutes or greater."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 1000000,
+      "reason": "OpenTelemetry with sampling handles high-throughput systems; tail-sampling or head-sampling at 1-5% keeps backend volume manageable."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "OTel instrumentation is non-blocking; trace sampling and batched metric export scale to high write QPS without limiting throughput."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OTel instrumentation is GDPR-compatible when span attributes are configured to exclude PII from trace data."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OpenTelemetry can be deployed in HIPAA environments when trace/metric data is restricted from containing PHI."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OTel telemetry pipelines are compatible with CCPA requirements when personal data is excluded from telemetry."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OpenTelemetry instrumentation supports SOX audit readiness through consistent transaction tracing and error tracking."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "OpenTelemetry is cloud-agnostic and works across all cloud providers and on-premises environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala"
+      ],
+      "reason": "OpenTelemetry provides officially supported SDKs for all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "OpenTelemetry instrumentation is platform-agnostic and works across all application types."
+    }
+  ],
+  "defaultConfig": {
+    "export_backend": "otlp",
+    "trace_sampling_strategy": "parent-based",
+    "trace_sampling_rate": 1.0,
+    "metrics_export_interval": 60,
+    "log_correlation": true,
+    "resource_detection": true,
+    "propagation_format": "w3c-tracecontext"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "export_backend": {
+        "type": "string",
+        "enum": [
+          "otlp",
+          "jaeger",
+          "zipkin",
+          "prometheus",
+          "datadog",
+          "newrelic",
+          "honeycomb"
+        ],
+        "description": "Backend to export telemetry data. OTLP is vendor-neutral and recommended for flexibility; specific exporters lock you into a vendor but may offer optimized features."
+      },
+      "trace_sampling_strategy": {
+        "type": "string",
+        "enum": [
+          "always-on",
+          "always-off",
+          "parent-based",
+          "trace-id-ratio"
+        ],
+        "description": "Sampling strategy for traces. Always-on captures everything (high cost/volume), parent-based respects upstream decisions (distributed systems), trace-id-ratio samples by percentage (cost control)."
+      },
+      "trace_sampling_rate": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0,
+        "description": "Percentage of traces to sample (0.0-1.0). Lower values reduce costs and storage but may miss rare issues. Only applies to trace-id-ratio strategy."
+      },
+      "metrics_export_interval": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 300,
+        "description": "Interval in seconds for exporting metrics. Lower values provide real-time visibility but increase network/backend load; higher values reduce overhead but delay alerting."
+      },
+      "log_correlation": {
+        "type": "boolean",
+        "description": "Automatically inject trace/span IDs into application logs for correlation. Enables jumping from traces to logs but requires structured logging support."
+      },
+      "resource_detection": {
+        "type": "boolean",
+        "description": "Auto-detect resource attributes (cloud provider, container, host metadata). Enriches telemetry context but adds startup overhead and may expose sensitive environment info."
+      },
+      "propagation_format": {
+        "type": "string",
+        "enum": [
+          "w3c-tracecontext",
+          "b3",
+          "jaeger",
+          "multi"
+        ],
+        "description": "Context propagation format for distributed tracing. W3C is the standard; B3 for Zipkin compatibility; Jaeger for legacy systems; multi supports multiple formats (overhead)."
+      }
+    }
+  },
+  "warn_nfr": []
+}

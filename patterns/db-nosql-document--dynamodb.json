@@ -1,0 +1,453 @@
+{
+  "id": "db-nosql-document--dynamodb",
+  "version": "1.0.0",
+  "title": "NoSQL Document Store (DynamoDB)",
+  "description": "AWS DynamoDB is a fully-managed serverless NoSQL database. Offers single-digit millisecond latency, automatic scaling, and global tables. Best for: high-throughput applications, serverless architectures, key-based access patterns. Optimized for simple queries with well-designed partition keys.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-nosql-document--mongodb-atlas"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "nosql-database",
+      "confidence": "high",
+      "reasoning": "DynamoDB is fundamentally a NoSQL database service, providing non-relational data storage as its primary function."
+    },
+    {
+      "capability": "document-store",
+      "confidence": "high",
+      "reasoning": "DynamoDB natively stores data as JSON-like documents with flexible schema, supporting complex nested attributes and data structures up to 400KB per item."
+    },
+    {
+      "capability": "key-value-store",
+      "confidence": "high",
+      "reasoning": "DynamoDB primarily operates as a key-value store using partition keys and optional sort keys for data access, which is its core access pattern."
+    },
+    {
+      "capability": "low-latency-database",
+      "confidence": "high",
+      "reasoning": "DynamoDB is specifically designed to provide single-digit millisecond response times for read and write operations at any scale through its distributed architecture and SSD storage."
+    },
+    {
+      "capability": "multi-region-replication",
+      "confidence": "high",
+      "reasoning": "DynamoDB Global Tables provides fully managed multi-region, multi-active replication with automatic conflict resolution and synchronization across AWS regions."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "DynamoDB provides automatic scaling of read and write throughput capacity based on demand, eliminating the need for manual capacity planning."
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "high",
+      "reasoning": "DynamoDB is a fully-managed serverless database service where AWS handles all infrastructure, patching, and operational tasks."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "aws-account",
+      "confidence": "high",
+      "reasoning": "DynamoDB is an AWS service and requires an active AWS account to provision and use the database service.",
+      "optional": true
+    },
+    {
+      "capability": "iam-authentication",
+      "confidence": "high",
+      "reasoning": "DynamoDB requires AWS IAM roles and policies to control access, authentication, and authorization for all database operations.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "consistency_level": "eventual",
+    "billing_mode": "PAY_PER_REQUEST",
+    "point_in_time_recovery": true,
+    "encryption_at_rest": true,
+    "global_tables": false,
+    "stream_enabled": false,
+    "ttl_enabled": false,
+    "service_auth_method": "iam_role"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "consistency_level": {
+        "type": "string",
+        "enum": [
+          "eventual",
+          "strong"
+        ],
+        "description": "Read consistency model. Eventual=lower latency and cost, better availability. Strong=guaranteed up-to-date reads, higher latency and cost (2x read capacity)"
+      },
+      "billing_mode": {
+        "type": "string",
+        "enum": [
+          "PAY_PER_REQUEST",
+          "PROVISIONED"
+        ],
+        "description": "Billing model. PAY_PER_REQUEST=serverless on-demand pricing, no capacity planning. PROVISIONED=reserved capacity with auto-scaling, cost-effective for predictable workloads"
+      },
+      "point_in_time_recovery": {
+        "type": "boolean",
+        "description": "Enable continuous backups with 35-day retention for point-in-time recovery. Adds ~20% to storage costs but provides protection against accidental deletes/writes"
+      },
+      "encryption_at_rest": {
+        "type": "boolean",
+        "description": "Encrypt data at rest using AWS KMS. Recommended for compliance (HIPAA, PCI-DSS). Minimal performance impact, adds KMS costs"
+      },
+      "global_tables": {
+        "type": "boolean",
+        "description": "Enable multi-region replication for global applications. Provides low-latency local reads/writes and disaster recovery. Increases costs (replicated storage and cross-region transfer)"
+      },
+      "stream_enabled": {
+        "type": "boolean",
+        "description": "Enable DynamoDB Streams to capture item-level changes. Required for event-driven architectures, CDC patterns, Lambda triggers, and real-time analytics"
+      },
+      "ttl_enabled": {
+        "type": "boolean",
+        "description": "Enable Time-To-Live to automatically delete expired items. Useful for session data, temporary records, and compliance requirements. No additional cost"
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "iam_role",
+          "iam_user"
+        ],
+        "description": "DynamoDB uses AWS IAM for access control. 'iam_role' (EC2/ECS/Lambda execution role) is strongly preferred over static IAM user credentials."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "DynamoDB pricing based on: (1) Min $0: AWS Free Tier includes 25GB storage, 25 WCU, 25 RCU (sufficient for small apps, prototypes, and low-traffic applications with <200K requests/month). (2) Max $500: Represents a moderate production workload with ~500GB storage ($125), provisioned capacity of 100 WCU + 300 RCU ($140), on-demand backup ($50), and Point-in-Time Recovery ($100). Higher traffic applications (millions of requests) or global tables could reach $1000-$5000+, but $500 represents a typical mid-sized application baseline.",
+      "adoptionCost": "Medium-high complexity adoption. Key factors: (1) Learning curve for NoSQL data modeling paradigm shift from relational databases (single-table design, partition key optimization). (2) Schema design requires upfront planning for access patterns to avoid expensive scans. (3) Understanding capacity modes (on-demand vs provisioned), GSI/LSI strategies, and DynamoDB Streams. (4) Integration with AWS SDK and IAM permissions setup. (5) Testing and optimization for hot partition issues. Estimated 40-60 hours of learning, design, and initial implementation for a team new to DynamoDB.",
+      "licenseCost": "AWS DynamoDB is a fully-managed cloud service with pay-as-you-go pricing. No upfront license fees, no software to purchase. Costs are purely consumption-based (storage, throughput, features). Free tier available permanently for qualifying usage. No vendor lock-in licensing costs, though AWS account and payment method required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "nosql",
+    "document-store",
+    "flexible-schema"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99999,
+      "reason": "DynamoDB with Global Tables provides up to 99.999% availability across multiple regions."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "DynamoDB typically achieves single-digit millisecond latency with a floor around 10ms for p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "DynamoDB p99 latency floor is around 50ms accounting for network overhead and occasional throttling."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "DynamoDB as a managed service enables rapid recovery with automatic failover achieving RTO of at least 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 99999,
+      "reason": "DynamoDB supports extremely high read query throughput with auto-scaling up to the platform ceiling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 99999,
+      "reason": "DynamoDB supports extremely high write query throughput with auto-scaling up to the platform ceiling."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB integrates with CloudTrail for audit logging which can be enabled or disabled."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "DynamoDB supports all tenant isolation models from row-level with partition keys to per-tenant tables."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB supports PII storage with encryption at rest via KMS and encryption in transit."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB supports GDPR compliance with encryption, access controls, and data residency options."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB is HIPAA eligible with encryption at rest and in transit and BAA support available."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB supports CCPA requirements through fine-grained access control, encryption, and data deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB provides audit trails via CloudTrail, encryption, and access controls needed for SOX compliance."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB supports both strongly consistent reads for read-your-writes and eventually consistent reads."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB provides 11 nines durability through automatic replication across multiple availability zones."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "DynamoDB is an AWS-specific managed service available only on Amazon Web Services."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "DynamoDB is a database infrastructure pattern accessible via AWS SDKs available in all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "DynamoDB is a backend database service that can be accessed from any platform type."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "==",
+      "value": true,
+      "reason": "DynamoDB is a document-oriented NoSQL database that stores JSON-like documents with flexible schema."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB can be used with or without an additional caching layer like DAX or ElastiCache."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB works with or without async messaging and supports DynamoDB Streams for event-driven patterns."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB can store data for AI inference workloads or general-purpose applications."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB supports both single-tenant and multi-tenant architectures with partition key strategies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB supports both real-time and batch processing workloads with BatchGetItem and BatchWriteItem APIs."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB supports ACID transactions within a single region and can be used in distributed transaction patterns."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB Streams enables real-time streaming of data changes but the database itself works without streaming."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB can store vector embeddings but requires external services or custom logic for vector search."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "==",
+      "value": true,
+      "reason": "DynamoDB excels at key-value access patterns with partition keys providing fast lookups."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB can model graph relationships using adjacency list patterns but is not optimized for graph queries."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB can store time-series data with TTL support but is not specifically optimized for time-series workloads."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "DynamoDB is optimized for OLTP workloads with consistent low latency and high throughput for transactional operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "DynamoDB can export data to S3 for OLAP analysis but is primarily designed for OLTP workloads."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 5,
+      "reason": "DynamoDB is a managed service with provisioning overhead and costs. At very low QPS (<5 req/s), simpler database solutions may be more cost-effective.",
+      "message": "db-nosql-document--dynamodb: peak read QPS is {actual} req/s (<5). DynamoDB's provisioning and cost model may not be optimal for very low throughput workloads; consider simpler alternatives."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 2,
+      "reason": "DynamoDB write capacity units and costs are optimized for higher throughput scenarios. Very low write rates may not justify the service complexity.",
+      "message": "db-nosql-document--dynamodb: peak write QPS is {actual} req/s (<2). DynamoDB's cost structure is optimized for higher write throughput; consider whether a simpler database would suffice."
+    }
+  ]
+}

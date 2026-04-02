@@ -1,0 +1,24 @@
+# Cost Ceiling - Modest $100/Month Budget
+#
+# An API spec with a modest $100/month budget and 95% availability target.
+# No specific cloud or language is set, testing that the compiler handles
+# unconstrained cloud/language with a low but non-zero budget ceiling.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns compatible with agnostic cloud and low budget are selected
+#   - cost ceiling of $100 is recorded in the compiled output
+
+constraints:
+  platform: api
+cost:
+  ceilings:
+    monthly_operational_usd: 100
+nfr:
+  availability:
+    target: 0.95
+project:
+  name: Modest Budget ($100/month)
+  domain: test
+functional:
+  summary: 'Test scenario: Modest Budget ($100/month)'

@@ -1,0 +1,394 @@
+{
+  "id": "ui-cross-platform--flutter",
+  "version": "1.0.0",
+  "title": "Flutter: Cross-Platform UI Framework",
+  "description": "Single codebase for iOS, Android, Web, and Desktop; Dart language; Google-backed; excellent performance and developer experience.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 100.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "flutter"
+    ],
+    "costCeilingCompatibleUsd": 100,
+    "costNotes": "Primary costs are development labor, not infrastructure. App store fees are unavoidable for mobile distribution.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Flutter is a client-side framework with no inherent server infrastructure costs. Min=$0 represents desktop/mobile-only apps with direct distribution (no app stores, using TestFlight/sideloading). Max=$100 represents: web hosting on CDN ($10-50/mo for Firebase Hosting/Netlify), Apple Developer Program ($99/yr = $8.25/mo), Google Play Store ($25 one-time \u2248 $2/mo amortized over 1 year). Heavy web traffic could push CDN costs slightly higher but typically stays under $100/mo for most applications.",
+      "adoptionCost": "High complexity adoption due to: (1) Learning Dart language if team comes from JavaScript/Swift/Kotlin background (1-2 weeks, ~$2000 in developer time), (2) Understanding Flutter's reactive widget architecture and state management patterns (BLoC, Provider, Riverpod) which differs significantly from native development (2-3 weeks, ~$3000), (3) Setting up cross-platform build pipelines for iOS, Android, Web, Desktop (1 week, ~$1500), (4) Learning platform-specific integration patterns for native features (1 week, ~$1000). Total represents ~6-8 weeks of learning curve for a mid-level developer at $100-150/hr. AI coding assistants like Copilot help with syntax but don't eliminate the conceptual learning needed for Flutter's unique paradigms. Reduces to $1500-2000 if team already knows Dart.",
+      "licenseCost": "Flutter is completely free and open source under BSD 3-Clause license with no restrictions on commercial use. No licensing fees for the framework, SDK, or tooling (Android Studio, VS Code extensions are also free). Only external costs are optional: Apple Developer Program ($99/yr) and Google Play Store ($25 one-time) for mobile distribution, but these are distribution fees not Flutter license costs. All Flutter packages on pub.dev are predominantly open source (MIT, Apache, BSD licenses).",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cross-platform-ui",
+      "confidence": "strong",
+      "reasoning": "Flutter's core value proposition is building UI from a single codebase that runs on multiple platforms (iOS, Android, Web, Desktop)."
+    },
+    {
+      "capability": "mobile-ui",
+      "confidence": "strong",
+      "reasoning": "Flutter provides native mobile UI capabilities for both iOS and Android platforms."
+    },
+    {
+      "capability": "web-ui",
+      "confidence": "medium",
+      "reasoning": "Flutter supports web compilation, allowing the same codebase to generate web applications."
+    },
+    {
+      "capability": "desktop-ui",
+      "confidence": "medium",
+      "reasoning": "Flutter provides desktop UI support for Windows, macOS, and Linux platforms."
+    },
+    {
+      "capability": "hot-reload",
+      "confidence": "strong",
+      "reasoning": "Flutter's hot reload is a key developer experience feature that enables rapid UI iteration without full app restart."
+    },
+    {
+      "capability": "ui-component-library",
+      "confidence": "high",
+      "reasoning": "Flutter provides Material Design and Cupertino widget libraries out of the box, offering comprehensive UI components for building applications."
+    },
+    {
+      "capability": "ui-rendering-engine",
+      "confidence": "high",
+      "reasoning": "Flutter includes its own Skia-based rendering engine, which is a significant provided capability differentiating it from other cross-platform frameworks."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "dart-expertise",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Flutter applications are written in Dart, so development teams need Dart language knowledge."
+    },
+    {
+      "capability": "mobile-build-pipeline",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Flutter apps require platform-specific build processes (iOS requires Xcode/CocoaPods, Android requires Gradle) to compile to native binaries."
+    },
+    {
+      "capability": "platform-specific-testing",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Despite cross-platform code, apps must be tested on each target platform due to platform-specific behaviors and UI differences."
+    },
+    {
+      "capability": "native-toolchain",
+      "confidence": "high",
+      "reasoning": "Flutter requires platform-specific SDKs and toolchains (Android SDK, Xcode for iOS) to build platform binaries.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "ui-cross-platform",
+      "ui-cross-platform--react-native",
+      "ui-cross-platform--xamarin"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ui",
+    "frontend",
+    "mobile",
+    "cross-platform",
+    "flutter",
+    "dart",
+    "web",
+    "desktop"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Flutter is open source; pattern documentation freely available."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Client-side framework availability limited by device issues, OS fragmentation, and app crashes beyond framework control."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 60,
+      "reason": "Flutter mobile apps require app store review for updates (iOS: 24-48hrs, Android: faster but still hours minimum)."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can be configured to support GDPR compliance through data handling practices, privacy controls, and backend integration."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can support HIPAA compliance through secure storage, encryption packages, and integration with HIPAA-compliant backends."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can implement CCPA requirements through data access controls, privacy policy screens, and backend data deletion APIs."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can support SOX compliance through audit trails, access controls, and integration with compliant backend systems."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Flutter is cloud-agnostic; it builds client applications that can connect to backends on any cloud or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "==",
+      "value": "dart",
+      "reason": "Flutter is a UI framework that exclusively uses Dart as its programming language for all application logic and UI code."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop"
+      ],
+      "reason": "Flutter is a cross-platform UI framework that compiles to native code for iOS/Android/Web/Desktop from a single codebase."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter supports client-side caching through packages like hive, shared_preferences, and sqflite for both cached and non-cached applications."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can consume async messaging and real-time updates via WebSocket, Firebase, MQTT packages, or operate without messaging."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can integrate with AI/ML services through platform channels, TensorFlow Lite, or REST APIs for AI-enabled and standard apps."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter client applications can support multi-tenant architectures through backend API integration and tenant-aware UI state management."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can trigger or monitor batch processing jobs through backend API integrations or operate without batch processing features."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter clients can participate in distributed transactions through backend coordination or operate with simple single-resource transactions."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter supports real-time streaming through WebSocket connections, Server-Sent Events, Firebase Realtime Database, or static data display."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter applications can consume vector search APIs from backend services for AI-powered search or operate without vector search features."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can integrate with document-oriented databases through backend APIs or local packages like Hive for document-based or other storage."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter supports local key-value storage through shared_preferences and can interact with backend key-value stores via APIs."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter applications can consume graph database queries through backend API integration or operate without graph data requirements."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can display and interact with time-series data through charts and backend APIs or present non-time-series data."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter client applications commonly interact with OLTP backends for transactional operations or display static/analytical data."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Flutter can display analytical dashboards and reports by consuming OLAP query results or handle purely transactional workloads."
+    }
+  ],
+  "defaultConfig": {
+    "target_platforms": [
+      "mobile",
+      "web"
+    ],
+    "rendering_engine": "skia",
+    "state_management": "provider",
+    "navigation_approach": "navigator_2",
+    "web_renderer": "canvaskit",
+    "enable_desktop": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "target_platforms": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "mobile",
+            "web",
+            "desktop"
+          ]
+        },
+        "description": "Which platforms to build for. Mobile (iOS/Android) has best maturity, web is stable, desktop is production-ready but newer. More platforms increase maintenance complexity."
+      },
+      "rendering_engine": {
+        "type": "string",
+        "enum": [
+          "skia",
+          "impeller"
+        ],
+        "description": "Rendering backend. Skia is stable and battle-tested. Impeller is newer with better performance and reduced jank, currently recommended for iOS, in preview for Android."
+      },
+      "state_management": {
+        "type": "string",
+        "enum": [
+          "provider",
+          "bloc",
+          "riverpod",
+          "getx",
+          "mobx"
+        ],
+        "description": "State management approach. Provider is official and simple. Bloc is structured for complex apps. Riverpod is modern provider evolution. GetX is all-in-one. MobX is reactive."
+      },
+      "navigation_approach": {
+        "type": "string",
+        "enum": [
+          "navigator_1",
+          "navigator_2",
+          "go_router"
+        ],
+        "description": "Navigation architecture. Navigator 1.0 is simple imperative. Navigator 2.0 is declarative with deep linking support. GoRouter is community package simplifying Navigator 2.0."
+      },
+      "web_renderer": {
+        "type": "string",
+        "enum": [
+          "canvaskit",
+          "html"
+        ],
+        "description": "Web rendering mode. CanvasKit uses WebAssembly for consistent rendering but larger bundle (~2MB). HTML uses browser DOM for smaller size but potential inconsistencies."
+      },
+      "enable_desktop": {
+        "type": "boolean",
+        "description": "Enable Windows/macOS/Linux desktop support. Adds platform-specific dependencies and build complexity but enables native desktop distribution."
+      }
+    }
+  },
+  "warn_nfr": []
+}

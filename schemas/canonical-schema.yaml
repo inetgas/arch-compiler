@@ -1,0 +1,470 @@
+$schema: http://json-schema.org/draft-07/schema#
+type: object
+required:
+- project
+additionalProperties: true
+properties:
+  project:
+    type: object
+    required:
+    - name
+    - domain
+    properties:
+      name:
+        type: string
+      domain:
+        type: string
+    additionalProperties: false
+  functional:
+    type: object
+    required:
+    - summary
+    properties:
+      summary:
+        type: string
+      users:
+        type: array
+        items:
+          type: object
+          required:
+          - role
+          - goals
+          properties:
+            role:
+              type: string
+            goals:
+              type: array
+              items:
+                type: string
+          additionalProperties: false
+      workflows:
+        type: array
+        items:
+          type: object
+          required:
+          - name
+          - steps
+          properties:
+            name:
+              type: string
+            steps:
+              type: array
+              items:
+                type: string
+          additionalProperties: false
+      entities:
+        type: array
+        items:
+          type: string
+    additionalProperties: false
+  constraints:
+    type: object
+    properties:
+      cloud:
+        type: string
+        enum:
+        - agnostic
+        - aws
+        - azure
+        - gcp
+        - on-prem
+        - n/a
+      language:
+        type: string
+        enum:
+        - agnostic
+        - python
+        - typescript
+        - javascript
+        - java
+        - go
+        - csharp
+        - rust
+        - kotlin
+        - sql
+        - dart
+        - swift
+        - php
+        - ruby
+        - scala
+        - objective-c
+        - c
+        - cpp
+        - n/a
+      saas-providers:
+        type: array
+        description: 'Optional list of acceptable SaaS providers for the application.
+
+          Used to select provider-specific pattern variants.
+
+          '
+        items:
+          type: string
+          enum:
+          - fal
+          - replicate
+          - huggingface
+          - openai
+          - anthropic
+          - render
+          - railway
+          - flyio
+          - digitalocean-app-platform
+          - supabase
+          - planetscale
+          - neon
+          - mongodb-atlas
+          - pinecone
+          - neo4j-aura
+          - redis-cloud
+          - snowflake
+          - timescale-cloud
+          - influxdb-cloud
+          - netlify
+          - vercel
+          - cloudflare-pages
+          - datadog
+          - grafana-cloud
+          - auth0
+          - okta
+      disallowed-saas-providers:
+        type: array
+        description: |
+          Providers explicitly excluded from selection. Any provider-specific
+          pattern variant that requires a provider on this list will be rejected,
+          even if that provider also appears in saas-providers (the compiler
+          will flag that contradiction as a compilation error).
+        items:
+          type: string
+          enum:
+          - fal
+          - replicate
+          - huggingface
+          - openai
+          - anthropic
+          - render
+          - railway
+          - flyio
+          - digitalocean-app-platform
+          - supabase
+          - planetscale
+          - neon
+          - mongodb-atlas
+          - pinecone
+          - neo4j-aura
+          - redis-cloud
+          - snowflake
+          - timescale-cloud
+          - influxdb-cloud
+          - netlify
+          - vercel
+          - cloudflare-pages
+          - datadog
+          - grafana-cloud
+          - auth0
+          - okta
+      platform:
+        type: string
+        enum:
+        - web
+        - mobile
+        - desktop
+        - api
+        - worker
+        - batch
+        - data-pipeline
+        - ml-training
+        - ml-inference
+        - iot
+        - library
+        - cli
+        - agnostic
+        - n/a
+      tenantCount:
+        type: integer
+        minimum: 0
+      features:
+        type: object
+        description: Feature toggles for opt-in capabilities
+        additionalProperties: false
+        properties:
+          caching:
+            type: boolean
+            description: Application uses caching layer
+          async_messaging:
+            type: boolean
+            description: Application uses message queues or event streaming
+          ai_inference:
+            type: boolean
+            description: Application includes AI/ML inference
+          multi_tenancy:
+            type: boolean
+            description: Application supports multiple tenants
+          batch_processing:
+            type: boolean
+            description: Application includes batch jobs
+          distributed_transactions:
+            type: boolean
+            description: Application requires distributed transaction coordination
+          real_time_streaming:
+            type: boolean
+            description: Application requires real-time data streaming
+          vector_search:
+            type: boolean
+            description: Application requires vector/embedding search (e.g., for AI/ML)
+          document_store:
+            type: boolean
+            description: Application uses document-oriented NoSQL database
+          key_value_store:
+            type: boolean
+            description: Application uses key-value store for fast lookups
+          graph_database:
+            type: boolean
+            description: Application requires graph database for relationship queries
+          time_series_db:
+            type: boolean
+            description: Application stores and queries time-series data
+          oltp_workload:
+            type: boolean
+            description: Application has Online Transaction Processing workload
+          olap_workload:
+            type: boolean
+            description: Application has Online Analytical Processing workload
+          cold_archive_tiering:
+            type: boolean
+            description: Application moves infrequently-accessed data to cold/archive storage tiers to reduce cost
+          messaging_delivery_guarantee:
+            anyOf:
+            - type: string
+              enum:
+              - at-most-once
+              - at-least-once
+              - exactly-once
+            - type: "null"
+            description: Message delivery guarantee for async messaging (null when async_messaging is not enabled)
+    additionalProperties: false
+  nfr:
+    type: object
+    properties:
+      availability:
+        type: object
+        properties:
+          target:
+            type: number
+            minimum: 0
+            maximum: 1
+        additionalProperties: false
+      rpo_minutes:
+        type: integer
+        minimum: 0
+      rto_minutes:
+        type: integer
+        minimum: 0
+      latency:
+        type: object
+        properties:
+          p95Milliseconds:
+            oneOf:
+            - type: number
+              minimum: 0
+            - type: string
+              enum:
+              - n/a
+          p99Milliseconds:
+            oneOf:
+            - type: number
+              minimum: 0
+            - type: string
+              enum:
+              - n/a
+          jobStartP95Seconds:
+            type: number
+            minimum: 0
+          jobStartP99Seconds:
+            type: number
+            minimum: 0
+        additionalProperties: false
+      throughput:
+        type: object
+        properties:
+          peak_jobs_per_hour:
+            type: integer
+            minimum: 0
+          peak_query_per_second_read:
+            type: number
+            minimum: 0
+            description: Peak read queries per second for OLTP workloads (e.g. SELECT, GET operations)
+          peak_query_per_second_write:
+            type: number
+            minimum: 0
+            description: Peak write queries per second for OLTP workloads (e.g. INSERT, UPDATE, DELETE)
+        additionalProperties: false
+      data:
+        type: object
+        properties:
+          retention_days:
+            type: integer
+            minimum: 0
+          pii:
+            type: boolean
+          compliance:
+            type: object
+            description: Regulatory compliance requirements
+            additionalProperties: false
+            properties:
+              gdpr:
+                type: boolean
+                description: Must comply with EU GDPR (General Data Protection Regulation)
+              ccpa:
+                type: boolean
+                description: Must comply with California Consumer Privacy Act
+              hipaa:
+                type: boolean
+                description: Must comply with HIPAA (Health Insurance Portability and Accountability Act)
+              sox:
+                type: boolean
+                description: Must comply with Sarbanes-Oxley Act (financial data)
+              gdpr_rtbf:
+                type: boolean
+                description: Must implement GDPR Article 17 Right to be Forgotten (erasure workflows)
+        additionalProperties: false
+      consistency:
+        type: object
+        properties:
+          needsReadYourWrites:
+            type: boolean
+        additionalProperties: false
+      durability:
+        type: object
+        properties:
+          strict:
+            type: boolean
+        additionalProperties: false
+      security:
+        type: object
+        properties:
+          auth:
+            type: string
+            enum:
+            - oauth2_oidc
+            - api_key
+            - jwt
+            - mtls
+            - saml
+            - password
+            - n/a
+          tenant_isolation:
+            type: string
+            enum:
+            - shared-db-row-level
+            - schema-per-tenant
+            - per-tenant-db
+            - n/a
+            - unknown
+          audit_logging:
+            type: boolean
+        additionalProperties: false
+    additionalProperties: false
+  operating_model:
+    type: object
+    properties:
+      on_call:
+        type: boolean
+      deploy_freq:
+        type: string
+        enum:
+        - on-demand
+        - daily
+        - weekly
+        - biweekly
+        - monthly
+        - quarterly
+        - n/a
+      ops_team_size:
+        type: integer
+        minimum: 0
+        description: Number of operations engineers (0 = no dedicated ops)
+      single_resource_monthly_ops_usd:
+        type: number
+        minimum: 0
+        description: Monthly cost per operations engineer (USD)
+      amortization_months:
+        type: integer
+        minimum: 1
+        description: 'Amortization period for TCO calculation (default: 24)'
+    additionalProperties: false
+  cost:
+    type: object
+    properties:
+      intent:
+        type: object
+        properties:
+          priority:
+            type: string
+            enum:
+            - minimize-opex
+            - minimize-capex
+            - optimize-tco
+        additionalProperties: false
+      ceilings:
+        type: object
+        properties:
+          monthly_operational_usd:
+            oneOf:
+            - type: number
+              minimum: 0
+            - type: 'null'
+          one_time_setup_usd:
+            oneOf:
+            - type: number
+              minimum: 0
+            - type: 'null'
+        additionalProperties: false
+      preferences:
+        type: object
+        properties:
+          prefer_free_tier_if_possible:
+            type: boolean
+          prefer_saas_first:
+            type: boolean
+        additionalProperties: false
+    additionalProperties: false
+  assumptions:
+    type: object
+    description: Tracks which fields were defaulted by compiler (not user-provided)
+    properties:
+      constraints:
+        type: object
+        description: Defaulted constraint values
+        additionalProperties: true
+      nfr:
+        type: object
+        description: Defaulted NFR values
+        additionalProperties: true
+      cost:
+        type: object
+        description: Defaulted cost values
+        additionalProperties: true
+      operating_model:
+        type: object
+        description: Defaulted operating model values
+        additionalProperties: true
+      patterns:
+        type: object
+        description: Defaulted pattern-specific configuration (from pattern defaultConfig)
+        additionalProperties: true
+    additionalProperties: false
+  patterns:
+    type: object
+    description: User overrides for pattern-specific configuration
+    additionalProperties: true
+  disallowed-patterns:
+    type: array
+    description: |
+      Pattern IDs explicitly excluded from selection. Any pattern whose ID
+      appears on this list will be rejected regardless of whether its
+      supports_constraints and supports_nfr rules match the spec.
+      Use this to remove patterns that are technically applicable but
+      unwanted for this project (e.g. too complex for project scope).
+    items:
+      type: string

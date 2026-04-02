@@ -1,0 +1,256 @@
+{
+  "id": "dev-gitflow",
+  "version": "1.0.0",
+  "title": "GitFlow Branching",
+  "description": "Release branches + develop; heavier governance; can work for release trains.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "GitFlow is a branching strategy/workflow pattern with no direct infrastructure costs. It runs on existing Git infrastructure (GitHub, GitLab, Bitbucket, etc.) that organizations already have. Any Git hosting costs are attributable to the general use of version control, not specifically to GitFlow. CI/CD pipeline costs (for building/testing branches) vary by existing infrastructure and are not GitFlow-specific.",
+      "adoptionCost": "High adoption cost due to: (1) Significant organizational change management - teams must learn and internalize a complex branching model with develop, release, hotfix, and feature branches; (2) Process documentation and governance setup - creating policies for branch naming, merge approval workflows, release procedures; (3) CI/CD pipeline reconfiguration - adapting build/test/deploy pipelines for multiple long-lived branches; (4) Team training - 2-4 weeks for teams to become proficient with the workflow; (5) Potential tooling setup for automation (branch protection rules, merge checks). With AI coding assistants helping with automation scripts and documentation, the cost is reduced from the traditional $5000+ range, but remains high due to organizational/process complexity rather than pure coding effort.",
+      "licenseCost": "GitFlow is an open-source branching model/methodology with no licensing costs. It can be implemented using standard Git (free, open-source) on any Git hosting platform. Optional tooling like git-flow extensions (AVH Edition) are also open-source and free. Any costs for Git hosting platforms (GitHub, GitLab, Bitbucket) are for general version control services, not specifically for GitFlow implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "release-train-support",
+      "confidence": "high",
+      "reasoning": "GitFlow's structured branching model with dedicated release branches inherently supports coordinated release trains where multiple features are bundled into scheduled releases, enabling teams to synchronize feature delivery across defined cycles."
+    },
+    {
+      "capability": "parallel-release-management",
+      "confidence": "high",
+      "reasoning": "GitFlow allows multiple release branches to exist simultaneously, enabling teams to prepare different versions in parallel such as maintaining a v1.2 hotfix while v2.0 is in active development."
+    },
+    {
+      "capability": "branch-based-versioning",
+      "confidence": "high",
+      "reasoning": "The pattern provides explicit version control through dedicated release branches, making it clear which features belong to which version and enabling straightforward tracking of version history."
+    },
+    {
+      "capability": "hotfix-support",
+      "confidence": "high",
+      "reasoning": "GitFlow's hotfix branch workflow is a key feature that enables emergency fixes to be developed from master, tested independently, and merged back to both master and develop without disrupting ongoing feature work."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "branch-management",
+      "confidence": "high",
+      "reasoning": "GitFlow requires robust branch management capabilities in the version control system to handle multiple long-lived branches like master and develop, plus ephemeral branches for features, releases, and hotfixes.",
+      "optional": true
+    },
+    {
+      "capability": "merge-conflict-resolution",
+      "confidence": "high",
+      "reasoning": "With multiple parallel branches and frequent merging between develop, release, and master branches, the pattern requires effective conflict resolution tools and processes to maintain code integrity.",
+      "optional": true
+    },
+    {
+      "capability": "code-review",
+      "confidence": "medium",
+      "reasoning": "GitFlow's governance model typically requires code review processes, especially when merging feature branches to develop and release branches to master, to maintain quality standards.",
+      "optional": true
+    },
+    {
+      "capability": "continuous-integration",
+      "confidence": "high",
+      "reasoning": "GitFlow branches require automated testing to validate merges across the complex branching structure, ensuring that integration between develop, release, and master branches maintains system stability.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "dev-trunk-based-development"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cicd",
+    "governance"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "GitFlow's deployment cadence and manual gates limit maximum availability to 99%."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "GitFlow branching strategy is cloud-agnostic and works with any cloud provider or on-premises environment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "GitFlow is a branching strategy that applies to version control regardless of programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "GitFlow branching strategy is platform-agnostic as it governs source code management across all platforms."
+    }
+  ],
+  "defaultConfig": {
+    "main_branch": "main",
+    "develop_branch": "develop",
+    "release_branch_prefix": "release/",
+    "hotfix_branch_prefix": "hotfix/",
+    "feature_branch_prefix": "feature/",
+    "version_tag_prefix": "v",
+    "merge_strategy": "merge-commit",
+    "require_pull_requests": true,
+    "auto_delete_branches": true,
+    "release_approval_required": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "main_branch": {
+        "type": "string",
+        "description": "Name of the production-ready branch (traditionally 'master' or 'main')"
+      },
+      "develop_branch": {
+        "type": "string",
+        "description": "Name of the integration branch where features are merged before release"
+      },
+      "release_branch_prefix": {
+        "type": "string",
+        "description": "Prefix for release branches (e.g., 'release/' creates 'release/1.0.0')"
+      },
+      "hotfix_branch_prefix": {
+        "type": "string",
+        "description": "Prefix for hotfix branches that patch production issues"
+      },
+      "feature_branch_prefix": {
+        "type": "string",
+        "description": "Prefix for feature branches during development"
+      },
+      "version_tag_prefix": {
+        "type": "string",
+        "description": "Prefix for version tags (e.g., 'v' creates 'v1.0.0')"
+      },
+      "merge_strategy": {
+        "type": "string",
+        "enum": [
+          "merge-commit",
+          "squash",
+          "rebase"
+        ],
+        "description": "How to merge branches: merge-commit preserves full history, squash creates single commit, rebase creates linear history"
+      },
+      "require_pull_requests": {
+        "type": "boolean",
+        "description": "Enforce pull request reviews before merging to main/develop branches"
+      },
+      "auto_delete_branches": {
+        "type": "boolean",
+        "description": "Automatically delete feature/release branches after successful merge"
+      },
+      "release_approval_required": {
+        "type": "boolean",
+        "description": "Require manual approval before merging release branches to main (governance control)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

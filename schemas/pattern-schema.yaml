@@ -1,0 +1,273 @@
+# pattern-schema.yaml
+# Schema for design pattern JSON files
+$schema: "http://json-schema.org/draft-07/schema#"
+type: object
+required: [id, version, title, description, types, cost, provides, requires, tags, supports_nfr, supports_constraints]
+
+properties:
+  id: { type: string }
+  version: { type: string }
+  title: { type: string }
+  description: { type: string }
+
+  # NFR Support metadata (array of rules - Part 2A)
+  supports_nfr:
+    type: array
+    description: "NFR requirements this pattern supports (include-based filtering logic)"
+    items:
+      type: object
+      required: [path, op, value, reason]
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+          pattern: "^/"
+          description: "JSON pointer to NFR field in spec (e.g., /nfr/availability/target)"
+        op:
+          type: string
+          enum: ["==", "!=", ">", "<", ">=", "<=", "in", "not-in", "contains-any"]
+          description: "Comparison operator (only operators implemented in compiler)"
+        value:
+          description: "Value to compare against (any type)"
+        reason:
+          type: string
+          description: "Explanation of why this pattern requires this NFR value"
+
+  # Constraint Support metadata (array of rules - Part 2A)
+  supports_constraints:
+    type: array
+    description: "Constraint requirements this pattern supports (include-based filtering logic)"
+    items:
+      type: object
+      required: [path, op, value, reason]
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+          pattern: "^/"
+          description: "JSON pointer to constraint field in spec (e.g., /constraints/cloud)"
+        op:
+          type: string
+          enum: ["==", "!=", ">", "<", ">=", "<=", "in", "not-in", "contains-any"]
+          description: "Comparison operator (only operators implemented in compiler)"
+        value:
+          description: "Value to compare against (any type)"
+        reason:
+          type: string
+          description: "Explanation of why this pattern requires this constraint value"
+
+  # Hard NFR requirements (array of rules) — pattern rejects spec if not satisfied
+  requires_nfr:
+    type: array
+    description: "NFR rules the spec MUST satisfy when this pattern is selected. Failure rejects the spec (not just the pattern)."
+    items:
+      type: object
+      required: [path, op, value, reason]
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+          pattern: "^/"
+          description: "JSON pointer to NFR field in spec (e.g., /nfr/availability/target)"
+        op:
+          type: string
+          enum: ["==", "!=", ">", "<", ">=", "<=", "in", "not-in", "contains-any"]
+          description: "Comparison operator (only operators implemented in compiler)"
+        value:
+          description: "Value to compare against (any type)"
+        reason:
+          type: string
+          description: "Explanation of why this rule is a hard requirement"
+
+  # Hard constraint requirements (array of rules) — pattern rejects spec if not satisfied
+  requires_constraints:
+    type: array
+    description: "Constraint rules the spec MUST satisfy when this pattern is selected. Failure rejects the spec (not just the pattern)."
+    items:
+      type: object
+      required: [path, op, value, reason]
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+          pattern: "^/"
+          description: "JSON pointer to constraint field in spec (e.g., /constraints/cloud)"
+        op:
+          type: string
+          enum: ["==", "!=", ">", "<", ">=", "<=", "in", "not-in", "contains-any"]
+          description: "Comparison operator (only operators implemented in compiler)"
+        value:
+          description: "Value to compare against (any type)"
+        reason:
+          type: string
+          description: "Explanation of why this rule is a hard requirement"
+
+  # Advisory NFR warnings — pattern selected, but warning emitted if rule fails
+  warn_nfr:
+    type: array
+    description: "NFR rules where violation triggers a warning (not rejection). Pattern is still selected."
+    items:
+      type: object
+      required: [path, op, value, reason]
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+          pattern: "^/"
+          description: "JSON pointer to NFR field in spec (e.g., /nfr/throughput/peak_jobs_per_hour)"
+        op:
+          type: string
+          enum: ["==", "!=", ">", "<", ">=", "<=", "in", "not-in", "contains-any"]
+          description: "Comparison operator"
+        value:
+          description: "Expected value"
+        reason:
+          type: string
+          description: "Explanation of why this is architecturally sub-optimal"
+        message:
+          type: string
+          description: "Human-readable warning message. Use {actual} to interpolate the spec value."
+
+  # Advisory constraint warnings — pattern selected, but warning emitted if rule fails
+  warn_constraints:
+    type: array
+    description: "Constraint rules where violation triggers a warning (not rejection). Pattern is still selected."
+    items:
+      type: object
+      required: [path, op, value, reason]
+      additionalProperties: false
+      properties:
+        path:
+          type: string
+          pattern: "^/"
+          description: "JSON pointer to constraint field in spec"
+        op:
+          type: string
+          enum: ["==", "!=", ">", "<", ">=", "<=", "in", "not-in", "contains-any"]
+          description: "Comparison operator"
+        value:
+          description: "Expected value"
+        reason:
+          type: string
+          description: "Explanation of why this is architecturally sub-optimal"
+        message:
+          type: string
+          description: "Human-readable warning message. Use {actual} to interpolate the spec value."
+
+  types:
+    type: array
+    description: |
+      Pattern categorization tags. Multiple types allowed.
+
+      Type definitions:
+      - cost: Cost optimization patterns
+      - design: Architectural design patterns
+      - build: Build system patterns
+      - test: Testing strategy patterns
+      - ops: Operations/SRE patterns
+      - deploy: Deployment patterns
+      - sec/security: Security patterns
+      - data: Data architecture patterns
+      - platform: Platform engineering patterns
+      - coding: Code-level implementation patterns (NEW)
+
+      Special behavior for "coding" type:
+      - Patterns with "coding" type are excluded by default
+      - Use --include-coding-patterns compiler flag to include them
+      - Rationale: AI can implement code patterns on-demand; focus on architecture
+    items:
+      type: string
+      enum: [cost, design, build, test, ops, deploy, sec, security, data, platform, coding]
+
+  cost:
+    type: object
+    required: [adoptionCost, licenseCost, estimatedMonthlyRangeUsd, freeTierEligible]
+    properties:
+      adoptionCost: { type: number, description: "One-time cost to adopt ($0-$50K)" }
+      licenseCost: { type: number, description: "Annual license cost" }
+      estimatedMonthlyRangeUsd:
+        type: object
+        required: [min, max]
+        properties:
+          min: { type: number }
+          max: { type: number }
+      freeTierEligible: { type: boolean }
+      preferredProviders:
+        type: array
+        items: { type: string }
+      costCeilingCompatibleUsd: { type: number }
+      costNotes: { type: string }
+      provenance:
+        type: object
+        description: "LLM-generated reasoning for cost estimates (Part 0B)"
+        properties:
+          estimatedMonthlyRangeUsd: { type: string }
+          adoptionCost: { type: string }
+          licenseCost: { type: string }
+          source: { type: string }
+
+  conflicts:
+    type: object
+    properties:
+      incompatibleWithDesignPatterns:
+        type: array
+        items: { type: string }
+        description: "Pattern IDs this pattern conflicts with (must be bidirectional)"
+      incompatibleAssumptions:
+        type: array
+        items: { type: string }
+
+  provides:
+    type: array
+    description: "Capabilities this pattern provides"
+    items:
+      type: object
+      required: [capability, confidence]
+      properties:
+        capability: { type: string }
+        confidence: { type: string, enum: [low, medium, high, strong] }
+
+  requires:
+    type: array
+    description: "Capabilities this pattern requires"
+    items:
+      type: object
+      required: [capability, confidence]
+      properties:
+        capability: { type: string }
+        confidence: { type: string, enum: [low, medium, high, strong] }
+        optional: { type: boolean }
+
+  tags:
+    type: array
+    items: { type: string }
+
+  availability:
+    type: object
+    required: [tier, reason]
+    properties:
+      tier: { type: string, enum: [open, pro, enterprise] }
+      reason: { type: string }
+
+  # Configuration defaults and validation schema (Part 1.6)
+  defaultConfig:
+    type: object
+    description: |
+      Default configuration values for this pattern.
+      Used by compiler to provide sensible defaults when pattern is selected.
+      User can override these values in spec's pattern section.
+    additionalProperties: true
+
+  configSchema:
+    type: object
+    description: |
+      JSON Schema for validating user configuration overrides.
+      All properties in configSchema.properties are treated as required by the validation logic.
+      Defines allowed values (enums), ranges (min/max), types, and descriptions.
+      Enables early validation of user config changes during compilation.
+      NOTE: The "required" field was removed in Proposal 0 Task 3 - all properties are implicitly required.
+    properties:
+      type: { type: string, enum: [object] }
+      properties: { type: object }
+    additionalProperties: true
+

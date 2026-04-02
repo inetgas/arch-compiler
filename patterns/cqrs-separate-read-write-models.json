@@ -1,0 +1,422 @@
+{
+  "id": "cqrs-separate-read-write-models",
+  "version": "1.0.0",
+  "title": "CQRS (Separate Read/Write Models)",
+  "description": "Separate command/query paths; optimized read models; typically updated via events.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 150.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "CQRS requires separate infrastructure for read and write models. Minimum scenario ($150): Single write database (RDS t3.small ~$50), read replica or separate read database (~$50), message queue for event propagation (SQS/EventBridge ~$20), basic caching layer (ElastiCache t3.micro ~$15), additional compute for event handlers (~$15). Maximum scenario ($5000): Production-grade write database with multi-AZ (RDS m5.xlarge ~$500), multiple optimized read databases or specialized stores like Elasticsearch for queries (~$800), high-throughput message broker (MSK/EventBridge ~$300), distributed cache cluster (ElastiCache m5.large ~$400), event store if using event sourcing (~$500), additional compute for CQRS synchronization handlers (~$200), monitoring and observability (~$150), data transfer and storage costs (~$300), plus overhead for running multiple data stores (~$1850 for scaling and redundancy). CQRS inherently doubles infrastructure needs compared to traditional CRUD.",
+      "adoptionCost": "CQRS is a very high complexity pattern requiring significant implementation effort. Key factors: (1) Architectural redesign - separating command and query models requires fundamental application restructuring (40-60 hours); (2) Event propagation infrastructure - implementing reliable event bus, handlers, and eventual consistency mechanisms (30-50 hours); (3) Data synchronization logic - building and testing read model updates from write model events with proper error handling and replay capabilities (40-60 hours); (4) Team learning curve - CQRS involves concepts like eventual consistency, event-driven design, and handling duplicate events that require 2-4 weeks of learning; (5) Testing complexity - need for integration tests covering eventual consistency scenarios, event replay, and read model rebuilding; (6) Migration strategy - if converting existing system, requires careful phased rollout. Even with AI coding assistants helping with boilerplate event handlers and data access layers, the architectural decisions, consistency management, and operational complexity require senior expertise. Estimate: 120-180 developer hours at $50-60/hour blended rate.",
+      "licenseCost": "CQRS is an architectural pattern implemented using standard open-source tools and frameworks. Core infrastructure components are typically open source: message brokers (RabbitMQ, Apache Kafka), databases (PostgreSQL, MongoDB), event stores (EventStoreDB has free tier, Marten is open source). Cloud-managed services (AWS SQS, EventBridge, Azure Service Bus) are pay-as-you-go with no license fees. CQRS frameworks like Axon Framework (Java) have open-source versions, MediatR (.NET) is free. Enterprise support contracts or commercial event sourcing platforms could add $5,000-20,000 annually, but the pattern itself requires no mandatory licensing costs.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "read-model-optimization",
+      "confidence": "high",
+      "reasoning": "CQRS pattern fundamentally provides optimized read models that are specifically designed and denormalized for query performance, separate from write models."
+    },
+    {
+      "capability": "write-isolation",
+      "confidence": "medium",
+      "reasoning": "CQRS explicitly isolates write operations into command handlers, preventing read concerns from affecting write model design and allowing independent scaling."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "high",
+      "reasoning": "CQRS inherently provides eventual consistency between write and read models as read models are updated asynchronously from the write side, typically through event propagation."
+    },
+    {
+      "capability": "command-query-separation",
+      "confidence": "high",
+      "reasoning": "CQRS implements the core principle of command-query separation, explicitly dividing operations that change state from operations that query state."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "read-model-optimization",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "CQRS requires a mechanism to project/synchronize changes from the write model to read models, typically through event handlers or projection builders that update denormalized views."
+    },
+    {
+      "capability": "event-streaming",
+      "confidence": "high",
+      "reasoning": "CQRS implementations typically depend on event streaming or messaging infrastructure to communicate state changes from the command side to the query side for read model updates.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "crud-single-model"
+    ],
+    "incompatibleAssumptions": [
+      "consistencyModel"
+    ]
+  },
+  "tags": [
+    "data",
+    "cqrs",
+    "events"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "CQRS eventual consistency model and dual storage complexity limits availability ceiling to three nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "CQRS adds event propagation and projection update overhead requiring at least 100ms p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Event streaming backpressure and projection rebuild scenarios require at least 1000ms p99."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "CQRS requires rebuilding read models from event store during recovery, needing at least 5 minutes RTO."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "CQRS event processing and projection update overhead limits throughput ceiling to 360M jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 1000,
+      "reason": "CQRS overhead and complexity only justified at high read scale of 1000+ QPS."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">=",
+      "value": 500,
+      "reason": "CQRS separate write model overhead only worth it at high write load of 500+ QPS."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "CQRS supports any tenant isolation strategy in both command and query models."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS supports GDPR compliance through event store auditing but does not require it."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS pattern works with or without HIPAA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS pattern is compatible with CCPA compliance but does not mandate it."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS event sourcing naturally supports SOX audit trails but pattern works without SOX requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "CQRS uses eventual consistency between command and query models, incompatible with read-your-writes guarantees."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS command persistence supports strict durability but can also work with relaxed durability."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "CQRS is an architectural pattern implementable on any cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "CQRS is a language-agnostic architectural pattern implementable in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "CQRS is a backend architectural pattern applicable to any platform type."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS read models often use caching but pattern does not mandate it."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "CQRS requires async messaging to propagate events from write model to read model projections."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS supports multi-tenancy but does not require it."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS projection updates can use batch processing but pattern works with or without batching."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS avoids distributed transactions through eventual consistency but can coexist with transactional systems."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS event propagation can use real-time streaming but also works with delayed event processing."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS read models can include vector search capabilities but pattern does not require it."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS read models can use document stores but pattern supports any storage type."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS read models can use key-value stores but pattern supports any storage type."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS read models can use graph databases but pattern supports any storage type."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS read models can use time-series databases but pattern supports any storage type."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "CQRS separates write operations which are typically transactional OLTP workloads requiring command processing."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CQRS read models can serve OLAP queries through optimized projections but primarily targets OLTP use cases."
+    }
+  ],
+  "defaultConfig": {
+    "event_propagation": "async",
+    "read_model_storage": "separate_database",
+    "consistency_model": "eventual",
+    "event_store": "enabled",
+    "read_model_update_strategy": "event_driven"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "event_propagation": {
+        "type": "string",
+        "enum": [
+          "async",
+          "sync",
+          "hybrid"
+        ],
+        "description": "How events propagate from write to read models. Async (message queue) provides better decoupling and scalability but eventual consistency. Sync (direct calls) provides immediate consistency but tighter coupling. Hybrid allows both based on use case."
+      },
+      "read_model_storage": {
+        "type": "string",
+        "enum": [
+          "separate_database",
+          "same_database_different_schema",
+          "materialized_views",
+          "cache_layer"
+        ],
+        "description": "Where read models are stored. Separate database allows independent scaling and optimization. Same database with different schema is simpler but less scalable. Materialized views leverage database features. Cache layer (Redis/Memcached) provides fastest reads."
+      },
+      "consistency_model": {
+        "type": "string",
+        "enum": [
+          "eventual",
+          "strong",
+          "bounded"
+        ],
+        "description": "Consistency guarantee between write and read models. Eventual consistency allows highest performance and availability. Strong consistency ensures immediate read-after-write accuracy but limits scalability. Bounded provides consistency within a time window."
+      },
+      "event_store": {
+        "type": "string",
+        "enum": [
+          "enabled",
+          "disabled"
+        ],
+        "description": "Whether to persist all events in an event store. Enabled provides full audit trail, event replay, and temporal queries but adds storage overhead. Disabled is simpler but loses event history."
+      },
+      "read_model_update_strategy": {
+        "type": "string",
+        "enum": [
+          "event_driven",
+          "polling",
+          "change_data_capture"
+        ],
+        "description": "How read models stay synchronized with writes. Event-driven (pub/sub) provides real-time updates with loose coupling. Polling is simpler but less efficient. Change Data Capture (CDC) leverages database logs for reliability."
+      }
+    }
+  },
+  "warn_nfr": []
+}

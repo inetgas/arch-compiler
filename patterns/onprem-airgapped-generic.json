@@ -1,0 +1,299 @@
+{
+  "id": "onprem-airgapped-generic",
+  "version": "1.0.0",
+  "title": "Generic on-premises air-gapped deployment platform",
+  "description": "Baseline infrastructure pattern for deploying applications in air-gapped, on-premises environments with no external network connectivity. Establishes network isolation, hardware-bound resource limits, local PKI, and mandatory audit trails for regulated and classified workloads.",
+  "types": [
+    "design",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 15000.0,
+    "licenseCost": 0.0,
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 500.0,
+      "max": 30000.0
+    },
+    "preferredProviders": [
+      "n/a"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Hardware procurement, colocation, and maintenance costs dominate; no cloud provider billing.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($500): Small workload on existing shared hardware with minimal dedicated infrastructure. Max ($30,000): Dedicated HA bare-metal cluster with redundant networking, enterprise storage (SAN/NAS with replication), UPS, and colocation fees for a mid-size production deployment.",
+      "adoptionCost": "High complexity: network isolation design, hardware provisioning, OS hardening, air-gapped patching workflow design and documentation, PKI bootstrap, and training. Typically 150-250 hours of senior engineering work at $75-100/hour blended rate, yielding $11,000-18,000 with AI assistance.",
+      "licenseCost": "Open-source OS and tooling (Linux, Kubernetes, containerd). No cloud-provider licensing. Commercial support contracts (RHEL, SUSE) are optional and priced separately.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "air-gapped-deployment",
+      "confidence": "high",
+      "reasoning": "Pattern establishes a fully isolated on-prem environment with no external network connectivity, directly enabling air-gapped deployment for any workload."
+    },
+    {
+      "capability": "network-isolation",
+      "confidence": "high",
+      "reasoning": "Core property of the pattern: workloads run in a physically isolated network segment with no internet egress."
+    },
+    {
+      "capability": "on-prem-hosting",
+      "confidence": "high",
+      "reasoning": "Pattern encapsulates all baseline concerns for hosting applications on customer-owned or collocated hardware."
+    },
+    {
+      "capability": "physical-infrastructure",
+      "confidence": "high",
+      "reasoning": "On-premises airgapped deployment is the pattern that establishes and owns the physical infrastructure layer."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "physical-infrastructure",
+      "confidence": "high",
+      "reasoning": "Air-gapped deployment requires customer-owned or collocated hardware rather than cloud VMs.",
+      "optional": false
+    },
+    {
+      "capability": "backup-restore",
+      "confidence": "high",
+      "reasoning": "Without cloud snapshots or managed backups, applications must rely on locally operated backup-restore procedures for disaster recovery.",
+      "optional": false
+    },
+    {
+      "capability": "audit-logging",
+      "confidence": "high",
+      "reasoning": "Regulated air-gapped environments mandate local audit log collection and immutable retention without external SIEM dependency.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "on-prem",
+    "air-gapped",
+    "infrastructure",
+    "network-isolation"
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "on-prem",
+      "reason": "This pattern is exclusively for on-premises environments; cloud or hybrid deployments are out of scope."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Infrastructure pattern independent of application programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Air-gapped hosting applies to all platform types; application type does not change the deployment environment."
+    }
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "On-prem deployment is compatible with both PII and non-PII workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Air-gapped environment with local data residency can meet GDPR requirements when properly configured."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "On-prem air-gapped environments are commonly used for HIPAA workloads due to data residency and access control requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Local data storage and access controls support CCPA compliance when the application layer enforces data subject rights."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Air-gapped platform with audit logging and change control workflows can satisfy SOX requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "On-prem platform is compatible with either read-your-writes or eventual consistency models; determined by the storage layer."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Local storage with RAID and cross-site replication can satisfy strict durability; compatibility depends on storage hardware configuration."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Generic on-prem hardware without a managed cloud SLA is bounded to three-nines (99.9%) availability. Planned maintenance windows, hardware failure response, and manual patching in air-gapped environments prevent higher guarantees without significant dedicated hot-standby investment."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 2,
+      "reason": "On-prem internal datacenter network round-trip introduces at least 2ms p95 latency even for collocated services on the same rack."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Network jitter, shared storage I/O contention, and OS interrupt latency on physical hardware result in at least 10ms p99 latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Physical hardware failure recovery (IPMI access, re-seat, failover to standby node) and manual intervention in air-gapped environments means RTO cannot be less than 15 minutes without dedicated hot-standby infrastructure and automated failover."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Local backup and replication schedules in air-gapped environments impose at least 5 minutes RPO; sub-minute RPO requires dedicated synchronous replication hardware."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Hardware-bound CPU, memory, and I/O limits on typical on-prem server clusters cap throughput at roughly 100,000 jobs/second (360M/hour). Exceeding this requires significant horizontal scaling investment."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "Air-gapped environments mandate local audit logging; without cloud-native SIEM, all security events must be captured locally for forensic capability and regulatory compliance. Applications on this platform must emit auditable events."
+    }
+  ],
+  "requires_constraints": [],
+  "defaultConfig": {
+    "deployment_model": "containerized",
+    "ha_mode": "single-site",
+    "network_isolation_level": "full-airgap",
+    "backup_strategy": "local-snapshots",
+    "patch_delivery": "manual-usb"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "deployment_model": {
+        "type": "string",
+        "enum": [
+          "bare-metal",
+          "vm",
+          "containerized"
+        ],
+        "description": "How applications are deployed on physical hardware. bare-metal: Direct OS execution, highest performance and isolation. vm: Hypervisor-based virtualization, flexible resource allocation. containerized: Container orchestration (Kubernetes/k3s), best density and portability in air-gapped environments."
+      },
+      "ha_mode": {
+        "type": "string",
+        "enum": [
+          "single-site",
+          "multi-site-active-passive",
+          "multi-site-active-active"
+        ],
+        "description": "High-availability topology. single-site: All hardware in one location (simpler but single point of failure for site disasters). multi-site-active-passive: Primary site plus warm standby (RTO ~15-30min for site failure). multi-site-active-active: Both sites active with synchronous replication (highest availability, highest cost and complexity)."
+      },
+      "network_isolation_level": {
+        "type": "string",
+        "enum": [
+          "full-airgap",
+          "partial-airgap",
+          "dmz"
+        ],
+        "description": "Degree of network isolation. full-airgap: No internet connectivity; all updates via physical media (USB/DVD). partial-airgap: Controlled one-way data diode for specific approved feeds (e.g., threat intelligence). dmz: Demilitarized zone with firewall-controlled internet access limited to approved update servers."
+      },
+      "backup_strategy": {
+        "type": "string",
+        "enum": [
+          "local-snapshots",
+          "tape-offsite",
+          "cross-site-replication"
+        ],
+        "description": "Data protection approach. local-snapshots: On-site storage snapshots (fast restore, vulnerable to site disaster). tape-offsite: Tape backups transported off-site (secure, slow restore, meets air-gap requirements). cross-site-replication: Real-time replication to second site (requires multi-site HA configuration)."
+      },
+      "patch_delivery": {
+        "type": "string",
+        "enum": [
+          "manual-usb",
+          "air-gap-jump-server",
+          "one-way-data-diode"
+        ],
+        "description": "How OS and software updates enter the air-gapped environment. manual-usb: Updates shipped on USB/DVD after offline scanning (highest isolation, most labor-intensive). air-gap-jump-server: Internet-connected staging server scans and transfers approved packages via controlled process (semi-automated). one-way-data-diode: Hardware data diode allows inbound-only transfer from approved external feed (automated, cryptographically verified)."
+      }
+    }
+  },
+  "warn_nfr": []
+}

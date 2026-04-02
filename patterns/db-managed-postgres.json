@@ -1,0 +1,503 @@
+{
+  "id": "db-managed-postgres",
+  "version": "1.0.0",
+  "title": "Managed Postgres via Low-Cost DBaaS",
+  "description": "Use low-ops managed Postgres DBaaS providers (e.g., Supabase and managed cloud Postgres offerings) to reduce DB operations overhead; validate quotas, compliance, and scale limits.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 250.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "supabase",
+      "render",
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing. Free tiers are quota-limited; production use may require paid plans and compliance agreements.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents free tier usage (Supabase free: 500MB database, 2GB bandwidth; Render free: 90-day expiry, 1GB RAM). Max $250 represents small production usage across low-cost DBaaS providers: Supabase Pro ($25/month base + ~$50-75 for compute/storage overages), Render Starter Postgres ($7-20/month), or AWS RDS t4g.micro ($15-20) + managed services overhead. Mid-range production workloads (10GB storage, moderate traffic) typically cost $50-150/month. Enterprise-grade or high-traffic scenarios exceed this pattern's scope and would require standard managed database services ($500-5000+/month).",
+      "adoptionCost": "Medium-high complexity adoption. Requires 1-3 days of engineering effort: evaluating provider quotas and compliance requirements (4-8 hours), migrating schema and data from existing database or designing new schema (8-16 hours), configuring connection pooling and backup strategies (2-4 hours), setting up monitoring and alerting (2-4 hours), and validating scale limits under load testing (4-6 hours). DBaaS platforms reduce operational complexity but require careful evaluation of vendor lock-in, compliance boundaries (SOC2, HIPAA, GDPR), quota limits, and egress costs. Team needs moderate expertise in database administration and cloud architecture. Estimated 20-30 engineering hours at $60-80/hour blended rate.",
+      "licenseCost": "No upfront license costs. All mentioned providers (Supabase, Render, AWS RDS, Azure Database, GCP Cloud SQL) operate on pay-as-you-go SaaS models with no software licensing fees. PostgreSQL itself is open source (PostgreSQL License, BSD-style). Costs are usage-based only, billed monthly. Free tiers available for development/testing across most providers.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "This pattern provides a managed PostgreSQL database, which is a relational database system. More specific than 'database' and standardized term."
+    },
+    {
+      "capability": "postgresql",
+      "confidence": "high",
+      "reasoning": "Pattern specifically provides PostgreSQL as the database implementation, which is important for compatibility and feature-specific dependencies."
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "high",
+      "reasoning": "The core value proposition is that this is a managed service (DBaaS), reducing operational overhead - this is a key differentiator from self-hosted databases."
+    },
+    {
+      "capability": "reduced-ops",
+      "confidence": "high",
+      "reasoning": "Legitimate capability representing operational simplicity through managed services, which is explicitly stated as a pattern goal and differentiates from self-managed alternatives."
+    },
+    {
+      "capability": "sql-query-interface",
+      "confidence": "high",
+      "reasoning": "Managed PostgreSQL services provide standard SQL query interfaces for database operations, which is a key capability for consuming applications."
+    },
+    {
+      "capability": "backup-restore",
+      "confidence": "high",
+      "reasoning": "Managed database services typically include automated backup and restore capabilities as part of their core offering, reducing operational burden."
+    },
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "PostgreSQL has native row-level security via CREATE POLICY and ALTER TABLE ... ENABLE ROW LEVEL SECURITY, enabling per-row access control based on session variables or JWT claims."
+    },
+    {
+      "capability": "backup-management",
+      "confidence": "high",
+      "reasoning": "Managed Postgres DBaaS providers include automated backup management \u2014 configurable retention, point-in-time recovery, and backup scheduling \u2014 as a core managed-service feature."
+    },
+    {
+      "capability": "backup-restore",
+      "confidence": "high",
+      "reasoning": "Managed Postgres DBaaS providers provide backup recovery capabilities including point-in-time restore and snapshot-based recovery, reducing the operational burden of maintaining backup infrastructure."
+    },
+    {
+      "capability": "xa-protocol",
+      "confidence": "medium",
+      "reasoning": "Generic managed PostgreSQL supports XA distributed transactions via the PREPARE TRANSACTION mechanism (two-phase commit protocol)."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "cloud-provider",
+      "confidence": "high",
+      "reasoning": "DBaaS solutions require a cloud infrastructure provider to host the managed service (Supabase, AWS RDS, Azure Database, etc.).",
+      "optional": true
+    },
+    {
+      "capability": "network-connectivity",
+      "confidence": "high",
+      "reasoning": "Applications need network access to connect to the managed database service, typically over internet or VPC peering.",
+      "optional": true
+    },
+    {
+      "capability": "cost-governance",
+      "confidence": "high",
+      "reasoning": "This is explicitly a cost-focused pattern ('cost-managed', 'lowcost' in name), requiring cost optimization as a driving constraint and selection criterion.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-managed-postgres--render",
+      "db-managed-postgres--supabase",
+      "db-managed-postgres--railway",
+      "db-managed-postgres--neon",
+      "db-managed-mysql--planetscale",
+      "arch-microservices"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "database",
+    "postgres",
+    "saas",
+    "supabase"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Low-cost managed Postgres DBaaS tiers typically cap at 99.9% availability SLA without high-availability tier upgrades."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Managed Postgres achieves at least 5ms p95 latency floor for typical SQL queries accounting for network overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Managed Postgres p99 latency floor is typically 20ms accounting for network overhead and occasional query contention."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Automated failover in low-cost managed Postgres typically completes within 5-10 minutes for instance recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000,
+      "reason": "Low-cost DBaaS tiers typically support up to 1000 queries/second (3.6M/hour) before requiring tier upgrades."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Low-cost managed Postgres tiers typically cap read throughput at around 10000 QPS before requiring read replicas or tier upgrades."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Low-cost managed Postgres tiers typically cap write throughput at around 5000 QPS due to single-writer architecture limitations."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres services include built-in audit logging capabilities that can be enabled or disabled based on requirements."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Managed Postgres supports all tenant isolation strategies from row-level security to dedicated databases per tenant."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres can store PII or non-PII data depending on application requirements and compliance posture."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Low-cost DBaaS providers offer GDPR-compliant data handling capabilities when deployed in appropriate regions."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Some low-cost managed Postgres providers offer HIPAA compliance options, though typically at higher tiers."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres services can support CCPA compliance requirements through data residency and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Low-cost DBaaS can support SOX compliance through audit logging and data integrity controls when configured appropriately."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres provides read-your-writes consistency by default and supports both strict and eventual consistency patterns."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres DBaaS provides strict durability through synchronous replication or supports relaxed durability for performance."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Low-cost DBaaS providers like Supabase, Neon, and cloud-native Postgres operate across multiple cloud platforms."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Managed Postgres DBaaS is a database infrastructure pattern accessible from any language with PostgreSQL client libraries."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Database infrastructure pattern that supports all platform types requiring relational data persistence."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres works with or without additional caching layers depending on application performance requirements."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres can store AI/ML model data and results whether or not AI inference is part of the application."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres supports both single-tenant and multi-tenant applications through various isolation strategies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres can serve as the database for both batch processing and real-time transactional workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres can participate in distributed transactions or operate as a standalone ACID-compliant database."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed Postgres supports real-time streaming through logical replication and can also serve non-streaming applications."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Some managed Postgres providers support pgvector extension for vector search, though not all low-cost tiers enable it."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Postgres supports JSONB for document storage alongside relational data, enabling hybrid document-relational patterns."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Postgres can serve simple key-value needs through single-column tables alongside relational data models."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "While not optimized for graph queries, Postgres can handle limited graph workloads using recursive CTEs and extensions."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Some managed Postgres providers offer TimescaleDB extension for time-series, though not universally available in low-cost tiers."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Managed Postgres is optimized for OLTP workloads with ACID transactions and relational integrity guarantees."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Low-cost DBaaS Postgres is not optimized for heavy OLAP workloads; consider dedicated analytical databases instead."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "supabase",
+    "instance_size": "small",
+    "storage_gb": 8,
+    "backup_retention_days": 7,
+    "connection_pooling": true,
+    "high_availability": false,
+    "ssl_mode": "require"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "supabase",
+          "neon",
+          "render",
+          "railway",
+          "digitalocean-app-platform"
+        ],
+        "description": "Low-cost managed Postgres provider. Supabase offers generous free tier with auth/storage. Neon provides serverless Postgres with scale-to-zero. Render/Railway offer simple deployment. DigitalOcean provides predictable pricing."
+      },
+      "instance_size": {
+        "type": "string",
+        "enum": [
+          "micro",
+          "small",
+          "medium",
+          "large"
+        ],
+        "description": "Database instance size affecting CPU/RAM. Micro for prototypes (<1GB RAM), Small for small apps (1-2GB), Medium for production (4GB), Large for high-traffic (8GB+). Directly impacts cost and performance."
+      },
+      "storage_gb": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 500,
+        "description": "Allocated storage in GB. Start small and scale as needed. Most providers charge per GB. Consider data growth rate and backup storage requirements."
+      },
+      "backup_retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 30,
+        "description": "Number of days to retain automated backups. Longer retention increases storage costs but provides better disaster recovery options. 7 days typical for development, 14-30 for production."
+      },
+      "connection_pooling": {
+        "type": "boolean",
+        "description": "Enable connection pooling (PgBouncer) to handle more concurrent connections efficiently. Essential for serverless/lambda functions. Adds slight latency but prevents connection exhaustion."
+      },
+      "high_availability": {
+        "type": "boolean",
+        "description": "Enable multi-zone replication for automatic failover. Significantly increases cost (2-3x) but provides 99.95%+ uptime. Required for production systems with strict SLAs."
+      },
+      "ssl_mode": {
+        "type": "string",
+        "enum": [
+          "disable",
+          "allow",
+          "prefer",
+          "require",
+          "verify-ca",
+          "verify-full"
+        ],
+        "description": "PostgreSQL SSL connection mode. 'require' enforces encrypted connections without certificate verification; 'verify-full' adds hostname verification."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 5000,
+      "reason": "Read QPS approaching low-cost tier limits (10K QPS) will require read replicas or tier upgrades, increasing costs and reducing the value of the 'low-cost' positioning.",
+      "message": "db-managed-postgres: peak read QPS is {actual} req/s (>5000). Approaching low-cost tier limits; may require read replicas or tier upgrades that increase costs significantly."
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+# NFR Durability - Strict Durability Excludes Write-Back Cache
+#
+# API with strict durability (no data loss on failure). write-back-cache requires
+# durability.strict == false because it asynchronously flushes writes and can lose
+# data on crash. With strict=true, write-back-cache is NOT selected; write-through
+# or cache-aside are the safe alternatives.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - write-back-cache is NOT selected (supports_nfr requires durability.strict == false)
+#   - write-through-cache or cache-aside may be selected instead
+
+project:
+  name: Financial Ledger API
+  domain: fintech
+functional:
+  summary: Ledger API where every write must be durable; no async cache flushing
+constraints:
+  platform: api
+  cloud: aws
+  language: java
+  features:
+    caching: true
+    oltp_workload: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 100
+    p99Milliseconds: 300
+  throughput:
+    peak_query_per_second_read: 200
+    peak_query_per_second_write: 100
+  durability:
+    strict: true
+cost:
+  ceilings:
+    monthly_operational_usd: 3000

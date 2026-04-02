@@ -1,0 +1,29 @@
+# Misc Regression - Simple API Smoke Test
+#
+# A basic AWS JavaScript REST API with PostgreSQL backend, 99% availability,
+# no PII, and a $50/month cost ceiling. This is the minimal smoke test run
+# after every compiler change to verify core functionality has not regressed.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - AWS JavaScript API patterns are selected
+#   - 99% availability patterns are included
+#   - cost ceiling is recorded in output
+
+project:
+  name: "Simple REST API"
+  domain: ecommerce
+functional:
+  summary: "Basic REST API with PostgreSQL backend"
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+nfr:
+  data:
+    pii: false
+  availability:
+    target: 0.99
+cost:
+  ceilings:
+    monthly_operational_usd: 50

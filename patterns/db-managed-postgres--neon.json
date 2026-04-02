@@ -1,0 +1,485 @@
+{
+  "id": "db-managed-postgres--neon",
+  "version": "1.0.0",
+  "title": "Serverless PostgreSQL (Neon)",
+  "description": "Serverless PostgreSQL with autoscaling compute and scale-to-zero. Key differentiator: database branching creates isolated copy-on-write database clones per branch or pull request, enabling safe schema migrations and preview environments without separate database instances.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-managed-postgres",
+      "db-managed-postgres--render",
+      "db-managed-postgres--supabase",
+      "db-managed-postgres--railway",
+      "db-managed-mysql--planetscale",
+      "arch-microservices",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "provides": [
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "Neon provides a fully-managed PostgreSQL database with ACID guarantees, standard SQL support, and all PostgreSQL extensions."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "Neon automatically scales compute units up and down based on workload demand, including scale-to-zero during inactivity."
+    },
+    {
+      "capability": "database-branching",
+      "confidence": "high",
+      "reasoning": "Neon's defining differentiator: create instant copy-on-write database branches for each git branch or PR, enabling isolated dev/preview environments without data duplication costs."
+    },
+    {
+      "capability": "connection-pooling",
+      "confidence": "high",
+      "reasoning": "Neon ships with built-in PgBouncer connection pooling, enabling serverless functions to maintain thousands of concurrent connections without overwhelming PostgreSQL."
+    },
+    {
+      "capability": "point-in-time-recovery",
+      "confidence": "high",
+      "reasoning": "Neon stores all data changes as a WAL-based history, enabling point-in-time recovery to any moment within the retention window (7 days on free tier, up to 30 days on paid)."
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "high",
+      "reasoning": "Neon is a fully managed serverless database service with no infrastructure to operate, automatic backups, and managed upgrades."
+    },
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "Neon is fully PostgreSQL-compatible; native RLS via CREATE POLICY is available without any additional configuration."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "reasoning": "As a SaaS platform, Neon requires internet connectivity to access its hosted PostgreSQL service.",
+      "optional": true
+    },
+    {
+      "capability": "postgresql-client",
+      "confidence": "high",
+      "reasoning": "Applications must use a PostgreSQL-compatible client driver to connect to Neon; any language with a standard PostgreSQL driver is compatible.",
+      "optional": true
+    }
+  ],
+  "preferredProviders": [
+    "neon"
+  ],
+  "defaultConfig": {
+    "provider": "neon",
+    "connection_pooling": true,
+    "autoscaling": true,
+    "scale_to_zero": true,
+    "min_compute_units": 0.25,
+    "max_compute_units": 4,
+    "database_branching": false,
+    "ssl_mode": "require"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "neon"
+        ],
+        "description": "Serverless PostgreSQL provider"
+      },
+      "connection_pooling": {
+        "type": "boolean",
+        "description": "Enable built-in PgBouncer connection pooling. Essential for serverless/edge functions that open many short-lived connections. Disable only for applications that require full PostgreSQL session semantics (e.g., advisory locks, prepared transactions)."
+      },
+      "autoscaling": {
+        "type": "boolean",
+        "description": "Enable automatic compute scaling based on workload. Neon adjusts CPU/memory between min and max compute units. Disable to pin to a fixed compute size for predictable latency."
+      },
+      "scale_to_zero": {
+        "type": "boolean",
+        "description": "Scale compute to zero after inactivity. Reduces costs dramatically but adds cold start latency (1-3s). Enable for dev/staging; consider disabling for production if latency SLAs are strict."
+      },
+      "min_compute_units": {
+        "type": "number",
+        "enum": [
+          0.25,
+          0.5,
+          1,
+          2,
+          4
+        ],
+        "description": "Minimum compute units (CUs) when autoscaling. 0.25 CU = 0.25 vCPU / 1 GiB RAM. Higher minimum reduces cold-start risk but increases baseline cost."
+      },
+      "max_compute_units": {
+        "type": "number",
+        "enum": [
+          1,
+          2,
+          4,
+          8,
+          10
+        ],
+        "description": "Maximum compute units for autoscaling. Caps the highest compute tier Neon can scale to. Set based on peak expected concurrency and query complexity."
+      },
+      "database_branching": {
+        "type": "boolean",
+        "description": "Enable Neon branching for isolated copy-on-write DB copies per git branch or PR. Excellent for preview environments and safely testing schema migrations before production. Disable in production environments where branches are not needed."
+      },
+      "ssl_mode": {
+        "type": "string",
+        "enum": [
+          "require",
+          "verify-full"
+        ],
+        "description": "Neon enforces SSL on all connections. 'require' is the default; 'verify-full' adds server certificate validation for maximum security."
+      }
+    }
+  },
+  "cost": {
+    "adoptionCost": 500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 200.0
+    },
+    "freeTierEligible": true,
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 0.5 GiB storage, 190 compute hours/month, 10 branches. Paid plans (Launch $19/month, Scale $69/month) unlock more storage, compute hours, and features. At $200/month you can run a well-provisioned production database with moderate traffic.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Neon free tier is $0/month covering 0.5 GiB storage and 190 compute hours. Launch plan ($19/month) adds 10 GiB storage and 300 compute hours. Scale plan ($69/month) includes 50 GiB storage and 750 compute hours. A production workload with moderate traffic (1-4 compute units, ~100 GiB storage, connection pooling) would typically run $50-$200/month. The max of $200 represents a typical production deployment; high-traffic applications may exceed this.",
+      "adoptionCost": "Low complexity adoption. Neon is standard PostgreSQL, so any developer familiar with SQL and PostgreSQL drivers can adopt it quickly. Integration involves: creating a Neon project (5 mins), connecting via standard PostgreSQL connection string (15 mins), configuring connection pooling for serverless (1-2 hours), setting up database branching for CI/CD if desired (2-4 hours). Total ~8-12 hours at $50/hour with AI assistance. The main learning curve is understanding serverless-specific patterns (connection pooling, cold starts) rather than any Neon-specific API.",
+      "licenseCost": "Neon is built on open-source PostgreSQL (PostgreSQL License) with the Neon serverless layer also open-sourced. The hosted service charges only for compute and storage consumed. No upfront license fees, no per-seat licensing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "postgresql",
+    "serverless",
+    "relational",
+    "neon",
+    "branching",
+    "autoscaling"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Neon is publicly available with a generous free tier"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Neon provides 99.99% availability SLA on paid plans. Free tier has lower effective availability (~99%) due to shared infrastructure and no SLA guarantee."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Serverless PostgreSQL with connection pooling typically achieves p95 latency of ~5ms for simple queries on warm compute; complex queries or first-connection overhead will be higher."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "p99 latency accounts for tail latency from complex queries, connection setup, and occasional autoscaling events. Scale-to-zero cold starts (1-3s) are not included here but warned separately."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Neon's storage-compute separation enables fast failover; RTO is approximately 1 minute for automated recovery from compute failures."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Neon with autoscaling up to 10 CUs supports tens of thousands of read QPS with proper indexing and connection pooling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 20000,
+      "reason": "Write throughput is bounded by WAL processing and storage I/O; 20K write QPS is achievable on larger compute tiers."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL audit logging (pgaudit extension) is available on Neon; optional based on compliance requirements."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Neon supports all PostgreSQL isolation patterns plus per-tenant database branching as an isolation model."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL with encryption at rest and in transit supports PII handling on paid plans. Free tier PII should be avoided due to lack of compliance SLA."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neon supports GDPR compliance on paid plans with data residency options. Free tier lacks formal compliance guarantees."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compliance is achievable through PostgreSQL's data access and deletion capabilities on paid plans."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Neon does not offer a HIPAA BAA on any tier; HIPAA-regulated workloads should use a provider with a signed BAA."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "==",
+      "value": false,
+      "reason": "SOX compliance requires long-term audit trails and access control guarantees that Neon does not formally certify."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Standard PostgreSQL provides read-your-writes consistency for single-region deployments within the same connection."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neon's WAL-based storage provides strict durability on paid plans; free tier has best-effort durability with 7-day PITR."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws"
+      ],
+      "reason": "Neon infrastructure runs on AWS; accessible from any cloud, on-prem, or local environment via standard PostgreSQL connection."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "c",
+        "cpp",
+        "swift",
+        "dart",
+        "elixir"
+      ],
+      "reason": "Neon is accessed via standard PostgreSQL drivers available for virtually every programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "cli"
+      ],
+      "reason": "Neon works with any platform that can open a TCP connection to PostgreSQL; especially well-suited for serverless/edge functions via its built-in connection pooler."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "neon"
+      ],
+      "reason": "Pattern specifically requires Neon as the serverless PostgreSQL provider."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Neon is designed for OLTP workloads with transactional PostgreSQL semantics; it is the primary use case."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Neon is not designed for OLAP analytical workloads; use a dedicated warehouse (BigQuery, Snowflake, Redshift) for analytics."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL can store time-series data and Neon supports TimescaleDB extension; acceptable for moderate time-series workloads."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neon supports the pgvector extension for vector similarity search and AI embeddings alongside relational data."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL JSONB columns support document-oriented data patterns alongside relational tables."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL can serve simple key-value access patterns via indexed lookup, but a dedicated KV store is more efficient at scale."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": false,
+      "reason": "Neon/PostgreSQL is not a native graph database; use a dedicated graph DB (Neo4j, Neptune) for complex relationship traversal."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neon can be used with or without an external caching layer depending on latency and throughput requirements."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neon works with both synchronous and asynchronous application patterns."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neon supports multi-tenancy through PostgreSQL RLS, schema-per-tenant, or database branching for per-tenant isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neon handles batch workloads via standard PostgreSQL; scale-to-zero may add latency for infrequent batch jobs."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Neon is a single-region PostgreSQL instance; distributed transactions across services are not natively supported."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL logical replication and WAL streaming enable real-time event patterns, though dedicated streaming platforms are more appropriate for high-volume event streaming."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Neon can store AI model metadata, embeddings (pgvector), and inference results but does not itself perform inference."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": "<",
+      "value": 60,
+      "reason": "Neon free tier only provides daily backups (~24h RPO); achieving RPO < 60 minutes requires the Neon Launch plan (~$19/month) or above for Point-in-Time Recovery (PITR).",
+      "message": "db-managed-postgres--neon: RPO target is {actual} minutes (<60min). Near-zero RPO via PITR requires Neon Launch plan (~$19/month) or above. Free tier has ~24h RPO via daily snapshots only \u2014 confirm your Neon plan supports the required RPO."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": "<",
+      "value": 100,
+      "reason": "scale_to_zero causes PostgreSQL cold starts of 1-3 seconds on first connection after inactivity. If p99 < 100ms is required, scale_to_zero should be disabled in production.",
+      "message": "db-managed-postgres--neon: p99 latency target is {actual}ms (<100ms). If scale_to_zero is enabled, cold starts (1-3s) will violate this target. Set scale_to_zero=false in defaultConfig for production."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 15000,
+      "reason": "Neon write throughput is bounded by WAL I/O on serverless compute. Above 15K write QPS, consider dedicated PostgreSQL (RDS, Cloud SQL) or a distributed database.",
+      "message": "db-managed-postgres--neon: peak write QPS is {actual} req/s (>15000). Neon serverless may hit WAL throughput limits at this scale; evaluate dedicated PostgreSQL or distributed DB."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+# Schema Validation - Negative Availability Target
+#
+# A spec with nfr.availability.target set to -0.5 and a negative cost ceiling
+# of -100. Both values are below their minimum valid values (availability must
+# be > 0, cost ceiling must be >= 0), triggering schema validation failures.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: availability target -0.5 is below minimum (0)
+#   - schema validation error: cost ceiling -100 is below minimum (0)
+
+nfr:
+  availability:
+    target: -0.5
+cost:
+  ceilings:
+    monthly_operational_usd: -100
+project:
+  name: Negative Values
+  domain: test
+functional:
+  summary: 'Test scenario: Negative Values'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

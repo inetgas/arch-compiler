@@ -1,0 +1,222 @@
+{
+  "id": "gof-command",
+  "version": "1.0.0",
+  "title": "Command",
+  "description": "Encapsulate requests as objects; supports undo/redo and queueing.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 750.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "The Command pattern is a behavioral design pattern (GoF) that encapsulates requests as objects. It is a pure code-level abstraction with no infrastructure requirements. Implementation involves creating command interfaces, concrete command classes, invokers, and receivers - all software constructs that run within existing application memory. No additional services, databases, message queues, or cloud resources are required. The pattern may increase memory usage slightly for command object storage and undo/redo stacks, but this is negligible and covered by existing application hosting costs.",
+      "adoptionCost": "Medium-low complexity adoption. Core implementation is straightforward: define a Command interface with execute() and optionally undo() methods, create concrete command classes, and implement an invoker. However, complexity increases when adding undo/redo functionality (requires state management and command history tracking), command queuing/scheduling, and transaction support. Developers need to understand command lifecycle, parameter encapsulation, and proper separation between invoker and receiver. Refactoring existing procedural code to command pattern requires careful analysis of request-response flows. Typical implementation time: 3-5 days for experienced developers, 1-2 weeks for teams new to the pattern. With AI coding assistants, boilerplate generation is faster, but architectural decisions around command granularity and undo semantics still require human expertise.",
+      "licenseCost": "The Command pattern is a public domain design pattern from the Gang of Four book (1994). No licensing fees apply. Implementation uses standard language features (interfaces, classes, polymorphism) available in all modern programming languages. No proprietary frameworks, libraries, or tools are required. Open-source implementations and examples are freely available. Any development tools used (IDEs, version control) are standard software engineering tools not specific to this pattern.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "command-encapsulation",
+      "confidence": "high",
+      "reasoning": "The Command pattern's core purpose is to encapsulate requests/actions as objects, allowing them to be parameterized, queued, and logged. This capability directly represents the pattern's primary function."
+    },
+    {
+      "capability": "undo-redo",
+      "confidence": "high",
+      "reasoning": "The Command pattern is specifically designed to support undo/redo operations by storing command history and implementing reverse operations. This is explicitly mentioned in the pattern description and is a key capability."
+    },
+    {
+      "capability": "request-queueing",
+      "confidence": "high",
+      "reasoning": "By encapsulating requests as objects, the Command pattern enables queuing and deferred execution of operations. This is a fundamental capability mentioned in the pattern description."
+    },
+    {
+      "capability": "macro-recording",
+      "confidence": "high",
+      "reasoning": "The Command pattern supports composing multiple commands into macro commands, enabling recording and playback of complex operations. This is a common use case for this pattern."
+    },
+    {
+      "capability": "transaction-logging",
+      "confidence": "medium",
+      "reasoning": "Command objects can be persisted for logging and audit trails, enabling transaction history and recovery mechanisms. This is a common application of the pattern in enterprise systems."
+    },
+    {
+      "capability": "operation-parameterization",
+      "confidence": "high",
+      "reasoning": "The pattern allows operations to be passed as parameters to other objects, enabling flexible invocation and decoupling of operation execution from operation specification."
+    }
+  ],
+  "requires": [],
+  "tags": [
+    "gof",
+    "code-pattern"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Command organises code behavior by encapsulating requests as objects, not data content; it applies regardless of whether PII is present in the system."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Command is a behavioral code pattern; GDPR compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Command is a behavioral code pattern; CCPA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of CCPA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Command is a behavioral code pattern; HIPAA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of HIPAA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Command is a behavioral code pattern; SOX compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of SOX requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Command operates below the persistence layer, encapsulating requests and supporting undo/redo in-process; read-your-writes consistency is enforced at the data store, not by this pattern."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Command does not implement persistence; strict durability guarantees are provided at the infrastructure layer and are orthogonal to this request-encapsulation pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Command pattern is a language-level design pattern that works in any cloud environment or on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Command is a Gang of Four design pattern implementable in any object-oriented or functional language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Command pattern is a general-purpose design pattern applicable to any platform that supports object-oriented programming."
+    }
+  ],
+  "defaultConfig": {
+    "undo_support": true,
+    "command_history_size": 50,
+    "execution_mode": "synchronous",
+    "logging_enabled": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "undo_support": {
+        "type": "boolean",
+        "description": "Enable undo/redo functionality. Requires commands to implement reverse operations, increasing complexity but providing user-friendly operation rollback."
+      },
+      "command_history_size": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1000,
+        "description": "Maximum number of commands to retain in history for undo/redo. Higher values consume more memory but allow deeper undo chains. Set to 0 to disable history."
+      },
+      "execution_mode": {
+        "type": "string",
+        "enum": [
+          "synchronous",
+          "asynchronous",
+          "queued"
+        ],
+        "description": "Command execution strategy. Synchronous: immediate blocking execution. Asynchronous: non-blocking concurrent execution. Queued: sequential processing with job queue for rate limiting and retry logic."
+      },
+      "logging_enabled": {
+        "type": "boolean",
+        "description": "Log all command executions for audit trail and debugging. Useful for compliance and troubleshooting but adds I/O overhead."
+      }
+    }
+  },
+  "warn_nfr": []
+}

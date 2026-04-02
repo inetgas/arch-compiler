@@ -1,0 +1,458 @@
+{
+  "id": "hosting-managed-paas--render",
+  "version": "1.0.0",
+  "title": "Managed Web/API Hosting on Render",
+  "description": "Deploy APIs and background workers on Render with automatic TLS, Git-based deployments, and Docker support. Free tier instances sleep after inactivity; paid tiers maintain always-on processes. Suited to prototypes and low-traffic services that can tolerate cold-wake latency on first request.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 100.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "render"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier is quota-limited (750 hours/month) and instances sleep after 15 minutes of inactivity. Production use typically requires Starter plan ($7/month) or higher.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents free tier usage (750 hours/month with sleep after inactivity) suitable for hobby projects, development environments, or very low-traffic APIs. Max $100 covers 1-2 Starter instances ($7/month each for always-on), plus 1-2 background workers ($7/month each), and a small managed database ($7-25/month for PostgreSQL/Redis). This range is appropriate for small production APIs serving <10K requests/day. Higher traffic would push costs beyond this range into Standard ($25/month) or Pro ($85/month) tiers per service.",
+      "adoptionCost": "Low adoption cost due to: (1) Simple Git-based deployment workflow with minimal configuration files (render.yaml), (2) Automatic build detection and Docker support reducing DevOps overhead, (3) Built-in TLS, health checks, and environment management, (4) Good documentation and standard PaaS patterns. Estimated 4-8 hours for initial setup including: connecting Git repository, configuring build settings, setting environment variables, testing deployments, and establishing basic monitoring. With AI coding assistants available to help with configuration files and deployment scripts, implementation is straightforward for developers familiar with Git workflows.",
+      "licenseCost": "No platform license or subscription fees required. Render operates on a pure usage-based pricing model where you only pay for compute resources consumed. The free tier ($0) provides 750 hours/month per account with no credit card required. Paid tiers (Starter $7/month, Standard $25/month, Pro $85/month) are pay-as-you-go with no contracts or minimum commitments. No enterprise licenses, setup fees, or platform access charges.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "This is the core offering of Render - a PaaS platform that handles deployment, scaling, and infrastructure management for APIs and web services."
+    },
+    {
+      "capability": "reduced-ops",
+      "confidence": "high",
+      "reasoning": "Render abstracts away server management, provisioning, and deployment complexity through Git-based deployments and automatic scaling, significantly reducing operational overhead."
+    },
+    {
+      "capability": "automatic-tls",
+      "confidence": "high",
+      "reasoning": "Render automatically provisions and renews TLS/SSL certificates, eliminating manual certificate management - a key feature of the platform."
+    },
+    {
+      "capability": "container-deployment",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly mentions Docker support, allowing containerized application deployment which is a core deployment method."
+    },
+    {
+      "capability": "git-based-deployment",
+      "confidence": "high",
+      "reasoning": "Git-based deployments are explicitly mentioned as a core feature, enabling CI/CD workflows directly from repository commits."
+    },
+    {
+      "capability": "background-worker-hosting",
+      "confidence": "high",
+      "reasoning": "The description explicitly mentions background workers as a deployment target alongside APIs on Render's platform."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "containerized-application",
+      "confidence": "high",
+      "reasoning": "While Render supports native runtimes, the pattern highlights Docker support, suggesting applications should be containerizable or use supported runtimes.",
+      "optional": true
+    },
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Git-based deployments require source code to be in a Git repository (GitHub, GitLab, etc.) for the deployment pipeline to function.",
+      "optional": true
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "The free tier instances sleep after inactivity and the managed nature implies ephemeral containers - applications should be designed stateless or use external state management.",
+      "optional": false
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "medium",
+      "reasoning": "Since instances are ephemeral and sleep after inactivity, applications typically need external data persistence through managed databases or storage services.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "render",
+    "api-hosting"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Render is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Free tier has sleep behavior and single-instance limitations; paid tiers support up to 99% with autoscaling but not beyond."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Render instances may experience cold starts after sleep periods (free tier) or brief startup delays affecting p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "P99 latency accounts for cold start overhead (up to several seconds on free tier) and container initialization delays."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Git-based rollback with automatic redeploy takes 2-5 minutes minimum including container rebuild and health checks."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000,
+      "reason": "With autoscaling on paid tiers, Render can scale to handle up to ~50k jobs/hour for background workers before hitting resource limits."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Render PaaS free/low-cost tiers with limited autoscaling can handle up to ~1000 read QPS before requiring dedicated infrastructure."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Write operations on free/low-cost Render instances are bounded by compute and database connection limits to ~500 write QPS."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compliance requires BAA and proper configuration; Render supports HIPAA-eligible infrastructure on paid tiers with appropriate setup."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR compliance achievable via appropriate data handling and region selection on Render."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compliance is an application-level concern; Render hosting does not constrain it."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance achievable through appropriate audit logging and access controls configured at application level."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Render is a PaaS that abstracts cloud infrastructure; applications deploy without cloud-specific dependencies."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Render supports Docker-based deployments and native buildpacks for all major languages including Python, Node.js, Go, Ruby, and Java."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Render hosts backend services including APIs, web applications, background workers, and cron jobs."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "render"
+      ],
+      "reason": "Pattern specifically requires render as the backend provider"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Can integrate with Redis or other caching via Render Redis add-on, but not required for basic API hosting."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports async messaging through background workers, but not required for stateless API hosting."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Render can host AI inference APIs via containerized deployments; supports GPU instances on paid tiers."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Application-level feature; Render hosting is agnostic to single-tenant or multi-tenant architecture."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Render supports cron jobs and background workers for batch processing, but not required for simple API hosting."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Distributed transaction coordination is an application-level pattern; Render hosting does not constrain transaction strategy."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming can be implemented via WebSockets or SSE in hosted services, but is not a platform requirement."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vector search is implemented via application code or integrated vector databases; Render hosting is agnostic."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document store usage is a database choice (MongoDB, etc.); Render hosts the application connecting to any document database."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value stores like Redis can be integrated via Render add-ons or external services, but are optional."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph database integration is an application architecture choice; Render can host applications using any graph database."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database usage is an external service integration; Render hosting does not constrain time-series requirements."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads are supported via transactional database integration; Render hosting is agnostic to workload type."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP workloads can be supported via analytics database integration; Render hosting does not constrain analytical workloads."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "render",
+    "service_type": "web-service",
+    "instance_type": "free",
+    "auto_deploy": true,
+    "health_check_path": "/health"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "render"
+        ],
+        "description": "PaaS provider for managed hosting"
+      },
+      "service_type": {
+        "type": "string",
+        "enum": [
+          "web-service",
+          "background-worker",
+          "cron-job",
+          "private-service"
+        ],
+        "description": "Type of Render service: web-service for APIs/web apps with public endpoints, background-worker for async processing, cron-job for scheduled tasks, private-service for internal services without public access"
+      },
+      "instance_type": {
+        "type": "string",
+        "enum": [
+          "free",
+          "starter",
+          "standard",
+          "pro"
+        ],
+        "description": "Render instance tier: free (750hrs/month, sleeps after inactivity), starter ($7/mo, always-on), standard ($25/mo, more resources), pro ($85/mo, high performance)"
+      },
+      "auto_deploy": {
+        "type": "boolean",
+        "description": "Automatically deploy on Git push. True enables continuous deployment, false requires manual deploys for more control"
+      },
+      "health_check_path": {
+        "type": "string",
+        "description": "HTTP endpoint path for health checks (e.g., /health, /api/health). Render uses this to determine service availability and restart unhealthy instances"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 500,
+      "reason": "Render free/low-cost tiers are optimized for low-to-moderate traffic. At >500 QPS, consider dedicated infrastructure for better cost efficiency.",
+      "message": "hosting-managed-paas--render: peak read QPS is {actual} req/s (>500). Free/low-cost PaaS may be cost-inefficient at this scale; consider dedicated infrastructure."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">",
+      "value": 25000,
+      "reason": "At >25k jobs/hour, Render's background worker pricing and resource limits become less cost-effective compared to dedicated job processing infrastructure.",
+      "message": "hosting-managed-paas--render: peak jobs/hour is {actual} (>25000). At this scale, dedicated job processing infrastructure may be more cost-effective than Render workers."
+    }
+  ]
+}

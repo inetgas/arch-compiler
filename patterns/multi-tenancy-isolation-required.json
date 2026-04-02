@@ -1,0 +1,349 @@
+{
+  "id": "multi-tenancy-isolation-required",
+  "version": "1.0.0",
+  "title": "Multi-Tenancy: Tenant Isolation Strategy Required",
+  "description": "Policy pattern that enforces an explicit tenant isolation strategy when multi-tenancy is enabled. Multi-tenant systems without a declared nfr.security.tenant_isolation value will fail compilation with an annotated error showing which field needs to be set.",
+  "types": [
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 0.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 99999,
+    "costNotes": "Meta-policy pattern with no direct cost. Actual multi-tenancy infrastructure costs are accounted for in downstream patterns: tenancy-database-per-tenant, tenancy-schema-per-tenant, tenancy-shared-db-row-level.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero cost \u2014 meta-policy pattern only. Multi-tenancy infrastructure costs are in tenancy-database-per-tenant, tenancy-schema-per-tenant, and tenancy-shared-db-row-level patterns.",
+      "adoptionCost": "Zero adoption cost \u2014 this pattern auto-detects multi_tenancy=true from the spec and enforces nfr.security.tenant_isolation as a hard compilation requirement.",
+      "licenseCost": "No license cost \u2014 policy enforcement pattern only.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "tenancy-isolation-enforcement",
+      "confidence": "high",
+      "reasoning": "Detects when multi-tenancy is enabled (constraints.features.multi_tenancy: true) and enforces nfr.security.tenant_isolation as a hard compilation gate, preventing deployment without an explicit data isolation strategy."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "multi-tenancy",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Multi-tenant systems require a downstream tenancy implementation pattern (tenancy-database-per-tenant, tenancy-schema-per-tenant, or tenancy-shared-db-row-level) that provides the actual data isolation guarantees."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "multi-tenancy",
+    "security",
+    "data-isolation",
+    "meta-policy",
+    "tenant-isolation"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural enforcement pattern applicable to any multi-tenant system"
+  },
+  "defaultConfig": {},
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies to both PII and non-PII workloads; PII workloads benefit most from per-tenant-db isolation."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenant isolation with per-tenant data boundaries aligns with GDPR data residency and right-to-erasure requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy under HIPAA typically requires stronger isolation (per-tenant-db or schema-per-tenant); downstream patterns enforce PHI isolation per tenant."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenant isolation supports CCPA right-to-delete by enabling tenant-scoped data purge without affecting other tenants."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenant isolation supports SOX audit trails when combined with tenant-scoped audit logging."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Tenant isolation strategy is compatible with both read-your-writes and eventually consistent models."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Tenant isolation strategy applies regardless of durability requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern exclusively activates when multi-tenancy is enabled. Single-tenant systems do not require tenant isolation strategy enforcement."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Pattern is cloud-agnostic; all three tenant isolation strategies are available on all major clouds and on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Pattern is language-agnostic; tenant isolation is enforced at the database and data access layer, not at the application language level."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Multi-tenancy can apply to any platform type; tenant isolation enforcement is platform-agnostic."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is compatible with both cached and non-cached architectures; tenant-scoped cache key namespacing is handled by downstream caching patterns."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is compatible with both synchronous and asynchronous messaging patterns."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies equally to AI-enabled and non-AI-enabled systems."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Tenant isolation applies to both real-time and batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Tenant isolation strategy is compatible with distributed transaction systems."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies to both streaming and non-streaming workloads."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy with vector search requires tenant-scoped index namespacing; isolation strategy is enforced downstream."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies to document store systems; strategy choice (row-level, schema, or db-per-tenant) depends on access patterns."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies to key-value store systems; tenant key namespacing is handled downstream."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies to graph database systems; tenant graph partitioning strategy is handled downstream."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies to time-series database systems; tenant metric namespacing is handled downstream."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies to OLTP workloads; row-level security or schema isolation are common choices for OLTP."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy applies to OLAP workloads; per-tenant-db or schema-per-tenant is preferred for analytical workloads with large data volumes."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db"
+      ],
+      "reason": "Multi-tenant systems must specify a tenant isolation strategy. Set nfr.security.tenant_isolation to one of: shared-db-row-level (row-level security with tenant discriminator column \u2014 lowest cost, highest sharing risk), schema-per-tenant (separate schema per tenant in shared DB \u2014 moderate isolation, moderate cost), or per-tenant-db (dedicated database per tenant \u2014 strongest isolation, highest cost)."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 5,
+      "reason": "Multi-tenancy adds data isolation overhead (query filtering, schema routing, or connection pooling). At very low QPS, a simpler single-tenant architecture may be more appropriate.",
+      "message": "multi-tenancy-isolation-required: peak read QPS is {actual} req/s (<5). Multi-tenancy overhead may not be justified at this scale; consider single-tenant architecture."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "PII in multi-tenant systems creates elevated data breach risk. Shared-db-row-level isolation increases exposure surface; schema-per-tenant or per-tenant-db provides stronger PII separation.",
+      "message": "multi-tenancy-isolation-required: spec contains PII in a multi-tenant system. Consider stronger isolation (schema-per-tenant or per-tenant-db) to minimize data breach blast radius."
+    }
+  ]
+}

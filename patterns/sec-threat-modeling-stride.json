@@ -1,0 +1,233 @@
+{
+  "id": "sec-threat-modeling-stride",
+  "version": "1.0.0",
+  "title": "Threat Modeling (STRIDE)",
+  "description": "Systematic threat modeling with STRIDE; drives mitigations and tests.",
+  "types": [
+    "ops",
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "STRIDE threat modeling is a design-time security analysis methodology, not a runtime service or infrastructure component. It involves facilitated sessions where teams systematically identify threats across six categories (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege). While some organizations may use commercial threat modeling tools (e.g., Microsoft Threat Modeling Tool is free, IriusRisk or ThreatModeler have paid tiers), the methodology itself incurs no monthly infrastructure costs. Any optional tooling costs would be minimal and covered under license costs rather than operational monthly expenses.",
+      "adoptionCost": "Medium-high complexity adoption cost due to: (1) Learning curve - team members need training on STRIDE methodology, threat identification techniques, and security principles (8-16 hours per security champion); (2) Process integration - establishing threat modeling sessions as part of SDLC, creating templates, and defining when/how to conduct reviews (20-40 hours); (3) Initial threat model creation - conducting first threat modeling sessions for existing critical systems requires facilitation skills and cross-functional participation (40-80 hours for 3-5 systems); (4) Documentation and mitigation planning - converting identified threats into actionable security requirements and test cases (20-40 hours). Assumes 2-3 security champions plus broader team participation. Lower than full security architecture overhaul but higher than simple code patterns due to organizational process change and security expertise required.",
+      "licenseCost": "Zero license cost assuming use of free/open-source tools. Microsoft Threat Modeling Tool is free and widely used. OWASP Threat Dragon is open-source. The STRIDE methodology itself is freely documented and not proprietary. However, organizations choosing commercial threat modeling platforms like IriusRisk ($10,000-50,000/year for teams), ThreatModeler ($15,000-100,000/year enterprise), or SD Elements could incur substantial costs. Setting to $0 as baseline since robust threat modeling can be performed without commercial licenses, though commercial tools provide automation, integration, and scaling benefits for larger organizations.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "threat-modeling",
+      "confidence": "high",
+      "reasoning": "This pattern directly provides threat modeling capability using the STRIDE methodology. The capability is generalized to allow interchangeability with other threat modeling approaches while fulfilling the core threat modeling requirement."
+    },
+    {
+      "capability": "security-analysis",
+      "confidence": "high",
+      "reasoning": "STRIDE threat modeling inherently provides security analysis by systematically identifying threats across six categories (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, and Elevation of Privilege)."
+    },
+    {
+      "capability": "security-requirements",
+      "confidence": "medium",
+      "reasoning": "Threat modeling generates security requirements and mitigations as outputs. The STRIDE analysis identifies threats that drive specific security requirements and test cases for the system."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "system-architecture",
+      "confidence": "high",
+      "reasoning": "STRIDE threat modeling requires understanding of the system architecture, including data flows, trust boundaries, and component interactions to effectively identify threats.",
+      "optional": true
+    },
+    {
+      "capability": "design-documentation",
+      "confidence": "high",
+      "reasoning": "Effective threat modeling needs design documentation to identify attack surfaces, data flows, and entry points. This includes diagrams, component descriptions, and architectural decisions that inform the STRIDE analysis.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "curated"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "STRIDE threat modeling requires audit logging to detect and investigate Tampering and Repudiation threats."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "STRIDE threat modeling is a cloud-agnostic security methodology applicable to any deployment environment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "STRIDE is a design-level threat modeling framework independent of implementation language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "STRIDE threat categories apply universally across all platform types and deployment models."
+    }
+  ],
+  "defaultConfig": {
+    "threat_categories": "all",
+    "analysis_depth": "standard",
+    "documentation_format": "structured",
+    "mitigation_priority": "risk_based",
+    "include_attack_trees": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "threat_categories": {
+        "type": "string",
+        "enum": [
+          "all",
+          "spoofing_tampering_only",
+          "data_focused",
+          "access_focused",
+          "custom"
+        ],
+        "description": "Which STRIDE categories to analyze. 'all' covers all six categories, 'spoofing_tampering_only' focuses on authentication and integrity, 'data_focused' emphasizes Information Disclosure and Tampering, 'access_focused' covers Spoofing and Elevation of Privilege."
+      },
+      "analysis_depth": {
+        "type": "string",
+        "enum": [
+          "lightweight",
+          "standard",
+          "comprehensive"
+        ],
+        "description": "Depth of threat analysis. 'lightweight' identifies primary threats quickly, 'standard' provides balanced coverage for most systems, 'comprehensive' includes edge cases and advanced attack scenarios for high-security requirements."
+      },
+      "documentation_format": {
+        "type": "string",
+        "enum": [
+          "structured",
+          "narrative",
+          "tabular",
+          "dfd_based"
+        ],
+        "description": "How threats are documented. 'structured' uses templates per threat, 'narrative' provides prose descriptions, 'tabular' creates threat matrices, 'dfd_based' annotates data flow diagrams with threats."
+      },
+      "mitigation_priority": {
+        "type": "string",
+        "enum": [
+          "risk_based",
+          "cost_based",
+          "compliance_driven",
+          "quick_wins"
+        ],
+        "description": "How to prioritize mitigations. 'risk_based' addresses highest impact/likelihood first, 'cost_based' considers implementation effort, 'compliance_driven' focuses on regulatory requirements, 'quick_wins' targets easy high-value fixes."
+      },
+      "include_attack_trees": {
+        "type": "boolean",
+        "description": "Whether to generate attack trees showing how threats can be exploited through multiple paths. Adds depth but increases analysis time."
+      }
+    }
+  },
+  "warn_nfr": []
+}

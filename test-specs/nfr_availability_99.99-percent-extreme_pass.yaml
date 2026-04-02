@@ -1,0 +1,24 @@
+# NFR Availability - 99.99% Target (Extreme / Four Nines)
+#
+# An agnostic API spec with an extreme 99.99% (four nines) availability target.
+# This is the highest practical SLA tier, testing that the compiler selects the
+# full set of resilience patterns required for near-zero downtime deployments,
+# including active-active failover and global redundancy patterns.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns required for >= 99.99% availability are selected
+#   - the compiled output reflects the most stringent resilience requirements
+
+nfr:
+  availability:
+    target: 0.9999
+project:
+  name: Extreme Availability (99.99%)
+  domain: test
+functional:
+  summary: 'Test scenario: Extreme Availability (99.99%)'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

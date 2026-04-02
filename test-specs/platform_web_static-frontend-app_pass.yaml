@@ -1,0 +1,22 @@
+# Platform - Static Frontend Web App
+#
+# A web platform spec for an AWS TypeScript frontend application with no
+# additional features or nfr requirements. This tests that the compiler
+# correctly identifies and selects web-specific patterns (CDN, static hosting,
+# frontend frameworks) while excluding API-only or backend patterns.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - web/frontend patterns compatible with aws + typescript are selected
+#   - API-only patterns are not selected for the web platform
+
+constraints:
+  platform: web
+  cloud: aws
+  language: typescript
+project:
+  name: Web Platform (Frontend App)
+  domain: test
+functional:
+  summary: 'Test scenario: Web Platform (Frontend App)'
+nfr: {}

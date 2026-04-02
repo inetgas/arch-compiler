@@ -1,0 +1,30 @@
+# NFR Throughput - Batch Processing Feature Without Job Throughput NFR Targets
+#
+# Batch platform with batch_processing=true activates batch-processing-required,
+# which mandates that peak_jobs_per_hour, jobStartP95Seconds, and
+# jobStartP99Seconds are all specified. Omitting these targets means the compiler
+# cannot select an appropriate batch execution strategy.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - batch-processing-required IS activated (batch_processing == true)
+#   - requires rule FAILS: peak_jobs_per_hour is null (not specified)
+#   - requires rule FAILS: jobStartP95Seconds is null (not specified)
+
+project:
+  name: Report Generation Service
+  domain: analytics
+functional:
+  summary: Scheduled report generation with batch_processing enabled but no job NFR targets
+constraints:
+  platform: batch
+  cloud: aws
+  language: python
+  features:
+    batch_processing: true
+nfr:
+  availability:
+    target: 0.99
+cost:
+  ceilings:
+    monthly_operational_usd: 500

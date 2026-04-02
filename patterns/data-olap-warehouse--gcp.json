@@ -1,0 +1,309 @@
+{
+  "id": "data-olap-warehouse--gcp",
+  "version": "1.0.0",
+  "title": "OLAP Warehouse: Google BigQuery",
+  "description": "Serverless columnar data warehouse on Google BigQuery. No infrastructure to provision \u2014 BigQuery auto-scales compute on demand and charges per TB scanned (on-demand) or per reserved slot capacity (flat-rate). Separation of compute and storage is native; data lives in Colossus distributed storage. Particularly strong for ad-hoc analytics, ML integration via BigQuery ML, and organisations already on GCP. Query latency is 200ms-10s for typical analytical queries; simple aggregations with result caching can return in under 200ms. Hard limit of 300 concurrent interactive queries per project.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 12000.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 10000,
+    "costNotes": "On-demand: $6.25/TB scanned. Flat-rate: 100 slots ~$2,000/mo, 500 slots ~$10,000/mo. Storage: $0.02/GB/mo active, $0.01/GB/mo long-term. Free tier: 1 TB queries/mo + 10 GB storage.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($0): free tier covers 1 TB/mo queries and 10 GB storage \u2014 sufficient for development. Max ($12,000): 500 reserved slots for high-concurrency dashboard workloads ($10,000/mo) + 50 TB active storage ($1,000/mo) + streaming ingestion costs. Most teams land $200-$2,000/mo on on-demand pricing.",
+      "adoptionCost": "BigQuery is operationally simple (no cluster config). Adoption cost is schema design, dbt or Dataform pipeline setup, and Looker/Looker Studio integration. Estimate 10-15 developer days at ~$160/day = $2,000.",
+      "licenseCost": "No software license. BigQuery is pay-as-you-go. GCP committed-use discounts available on flat-rate slots.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "BigQuery delivers serverless MPP columnar query execution with automatic scaling and no cluster management."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "Integrates natively with Looker, Looker Studio, Tableau, Power BI, and any JDBC-compatible BI tool via BigQuery JDBC driver."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Dataform, dbt-bigquery, and BigQuery Data Transfer Service enable ELT patterns with transformations running entirely inside BigQuery."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "BigQuery expects data via batch load jobs, Datastream CDC, Pub/Sub streaming inserts, or Data Transfer Service. Direct high-frequency row inserts are expensive per streaming insert cost."
+    },
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "BigQuery uses Colossus distributed storage internally. External tables can query GCS directly without loading."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--snowflake",
+      "data-olap-warehouse--self-hosted"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "warehouse",
+    "bigquery",
+    "gcp",
+    "serverless",
+    "columnar"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable to any GCP OLAP workload"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "BigQuery p95 is 200ms-10s. Simple cached queries return in 200-500ms; complex aggregations over large datasets take 2-30s. BigQuery BI Engine can serve repeated dashboard queries in under 100ms."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "BigQuery SLA is 99.99% for the query service. Serverless architecture with no cluster to manage provides high baseline availability."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "BigQuery is serverless with no cluster restart. RTO is effectively 1-2 minutes for GCP zone-level issues; regional failover is transparent."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "RPO is bounded by pipeline batch interval. BigQuery time-travel (7 days) enables point-in-time recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 300,
+      "reason": "BigQuery hard limit is 300 concurrent interactive queries per project. Above this, queries are queued or rejected with quota errors."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100,
+      "reason": "BigQuery streaming insert quota is 1 GB/s per project (~100 QPS for typical analytical row sizes). Above this, batch load jobs via GCS are required."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "BigQuery uses GCP IAM for access control. Supports service account keys, Workload Identity Federation, and SSO via Google Workspace SAML."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "BigQuery audit logs (data access, admin activity) export to Cloud Logging and Cloud Storage. Full query-level audit trail available."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "BigQuery supports column-level security, dynamic data masking, and row-level access policies. Compatible with PII workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when data residency controls, column masking, and right-to-erasure pipeline procedures are in place."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when warehouse-level encryption and appropriate BAA coverage are configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when consumer data deletion triggers a pipeline reprocess that excludes deleted records."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with SOX when query audit logs provide an immutable trail of data access and transformation operations."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability is handled by the underlying object storage layer (S3, GCS, ADLS). All major managed warehouses provide durable storage by default."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "gcp",
+      "reason": "Google BigQuery is a GCP-native service."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "BigQuery provides JDBC/ODBC drivers and is agnostic to language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "BigQuery serves as analytical backend for any platform."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "BigQuery is selected specifically for OLAP analytical workloads."
+    }
+  ],
+  "defaultConfig": {
+    "pricing_model": "on-demand",
+    "ingestion_mode": "batch-load-gcs",
+    "query_result_cache": true,
+    "bi_engine": false,
+    "partitioning": "date"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "pricing_model": {
+        "type": "string",
+        "enum": [
+          "on-demand",
+          "flat-rate",
+          "editions"
+        ],
+        "description": "on-demand: $6.25/TB scanned, no commitment \u2014 best for variable workloads. flat-rate: fixed slot capacity \u2014 best for predictable high-volume workloads. editions: BigQuery Editions (Standard/Enterprise/Enterprise+) \u2014 newer slot-based model with autoscaling."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "batch-load-gcs",
+          "datastream-cdc",
+          "pubsub-streaming",
+          "transfer-service"
+        ],
+        "description": "batch-load-gcs: bulk load from GCS (free, highest throughput). datastream-cdc: continuous replication from OLTP (Postgres, MySQL, Oracle). pubsub-streaming: real-time streaming inserts via Pub/Sub. transfer-service: SaaS connectors (Salesforce, Google Ads, etc.)."
+      },
+      "query_result_cache": {
+        "type": "boolean",
+        "description": "Caches results of repeated identical queries for 24 hours at no additional cost. Significantly reduces cost and latency for dashboard workloads."
+      },
+      "bi_engine": {
+        "type": "boolean",
+        "description": "In-memory analysis service for sub-second BI query response. Recommended for high-concurrency dashboard workloads with repeated queries over fixed datasets."
+      },
+      "partitioning": {
+        "type": "string",
+        "enum": [
+          "date",
+          "timestamp",
+          "integer-range",
+          "none"
+        ],
+        "description": "Table partitioning reduces bytes scanned per query. date or timestamp partitioning on event_date or created_at columns is the most common and cost-effective strategy."
+      }
+    }
+  },
+  "warn_nfr": []
+}

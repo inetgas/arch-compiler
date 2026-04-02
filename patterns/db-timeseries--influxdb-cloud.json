@@ -1,0 +1,471 @@
+{
+  "id": "db-timeseries--influxdb-cloud",
+  "version": "1.0.0",
+  "title": "Time-Series Database (InfluxDB Cloud)",
+  "description": "InfluxDB Cloud is a fully-managed serverless time-series database. Offers usage-based pricing, automatic scaling, and integrated visualization. Best for: cloud-native IoT applications, serverless architectures, rapid development without infrastructure management. Provides managed infrastructure with built-in monitoring and alerting.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-timeseries--influxdb",
+      "db-timeseries--timescaledb",
+      "db-timeseries--timestream",
+      "db-timeseries--timescale-cloud"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "timeseries-database",
+      "confidence": "high",
+      "reasoning": "InfluxDB Cloud is fundamentally a time-series database system designed for storing, querying, and managing time-stamped data with full database capabilities, not just storage."
+    },
+    {
+      "capability": "auto-scaling",
+      "description": "Automatic scaling based on workload",
+      "confidence": "medium",
+      "reasoning": "InfluxDB Cloud provides automatic scaling as a core managed service feature, handling resource allocation based on workload demands without manual intervention."
+    },
+    {
+      "capability": "data-visualization",
+      "confidence": "high",
+      "reasoning": "InfluxDB Cloud includes integrated visualization tools and dashboards for time-series data exploration, allowing users to create charts directly within the service."
+    },
+    {
+      "capability": "query-api",
+      "confidence": "high",
+      "reasoning": "InfluxDB Cloud provides query APIs (Flux and InfluxQL) for data access, enabling external services and applications to interact with the database programmatically."
+    },
+    {
+      "capability": "monitoring",
+      "confidence": "high",
+      "reasoning": "The pattern description explicitly mentions built-in monitoring as a key feature of the managed infrastructure, providing visibility into database and application metrics."
+    },
+    {
+      "capability": "alerting",
+      "confidence": "high",
+      "reasoning": "Built-in alerting is explicitly mentioned in the description and is a core feature for time-series monitoring use cases, enabling proactive notification of threshold breaches."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "reasoning": "As a cloud-based service, InfluxDB Cloud requires internet connectivity for applications to access the database and its management interfaces.",
+      "optional": true
+    }
+  ],
+  "preferredProviders": [
+    "influxdb-cloud"
+  ],
+  "defaultConfig": {
+    "provider": "influxdb-cloud",
+    "retention_days": 30,
+    "billing_model": "usage-based",
+    "query_language": "flux",
+    "data_replication": true,
+    "write_precision": "ms",
+    "service_auth_method": "token"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "influxdb-cloud"
+        ],
+        "description": "Cloud provider for managed InfluxDB service"
+      },
+      "retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3650,
+        "description": "Data retention period in days (affects storage costs; shorter retention reduces costs)"
+      },
+      "billing_model": {
+        "type": "string",
+        "enum": [
+          "usage-based",
+          "annual-contract"
+        ],
+        "description": "Billing model: usage-based for pay-as-you-go flexibility, annual-contract for discounted rates with commitment"
+      },
+      "query_language": {
+        "type": "string",
+        "enum": [
+          "flux",
+          "influxql"
+        ],
+        "description": "Query language: Flux (recommended, more powerful with functional syntax) or InfluxQL (SQL-like, familiar but limited)"
+      },
+      "data_replication": {
+        "type": "boolean",
+        "description": "Enable multi-region data replication for high durability and disaster recovery (increases costs)"
+      },
+      "write_precision": {
+        "type": "string",
+        "enum": [
+          "ns",
+          "us",
+          "ms",
+          "s"
+        ],
+        "description": "Timestamp precision: nanosecond (ns), microsecond (us), millisecond (ms), or second (s). Higher precision increases storage requirements."
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "token"
+        ],
+        "description": "InfluxDB Cloud uses token-based authentication exclusively for API access."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 800.0
+    },
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "InfluxDB Cloud offers a generous free tier (5MB writes/5min, 300MB storage, 30-day retention) suitable for small IoT projects or development. Min $0 represents free tier usage. The $800 max represents a mid-to-large production deployment with ~100GB writes/month, ~500GB storage, unlimited retention, and higher query volumes. This aligns with their Usage-Based pricing tier ($0.002/MB write, $0.25/GB storage/month). Enterprise deployments with high cardinality data and extensive retention could exceed this, but $800 represents a typical production IoT/monitoring workload.",
+      "adoptionCost": "Medium-high complexity adoption. While InfluxDB Cloud is serverless and eliminates infrastructure setup, teams need to learn InfluxQL/Flux query languages (different from SQL), understand time-series data modeling (tags vs fields, cardinality management), configure data retention policies, and integrate with existing applications. The learning curve for time-series-specific concepts (downsampling, continuous queries, bucketing) is significant. Estimated 40-60 hours for a mid-level team to properly implement, test, and optimize queries. Lower than self-hosted InfluxDB due to managed nature, but higher than traditional RDBMS due to specialized knowledge required.",
+      "licenseCost": "InfluxDB Cloud operates on a pure usage-based SaaS model with no upfront license fees. No enterprise license required - all features scale with usage. Free tier available for development/testing. Costs are entirely consumption-based (pay-as-you-go for writes, storage, and queries). No commercial licenses, seat licenses, or annual contracts required for base service.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "time-series",
+    "metrics",
+    "iot"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Managed serverless InfluxDB Cloud architecture supports up to 99.99% availability with multi-AZ deployment."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Time-series database queries achieve p95 latency floor of 5ms for optimized time-series data access patterns."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Complex aggregation queries and tail latency result in p99 floor of 20ms for time-series workloads."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Managed service with automated failover achieves RTO of 1-5 minutes through health monitoring and auto-recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Auto-scaling cloud database handles up to 100k writes/sec (360M writes/hour) at peak throughput ceiling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Time-series database optimized for append-heavy writes supports read query ceiling of 50k QPS with downsampling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Time-series optimized ingestion pipeline supports write query ceiling of 100k QPS for high-volume IoT data."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed service provides comprehensive audit logging for data access, query execution, and configuration changes as optional feature."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "InfluxDB Cloud supports tenant isolation through dedicated databases or schemas per organization with resource quotas."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database can store any data type including PII with appropriate encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud service provides GDPR compliance features including data residency, encryption, and right-to-deletion APIs."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Enterprise tier supports HIPAA compliance with BAA agreements, encryption at rest/transit, and audit logging."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Data access controls, retention policies, and deletion APIs support CCPA consumer privacy requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Audit logging, access controls, and data retention policies support SOX compliance for financial time-series data."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series writes are immediately queryable with read-your-writes consistency for real-time dashboards or eventual consistency for analytics."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB Cloud implements strict durability with write-ahead logging and multi-AZ replication for committed writes."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "InfluxDB Cloud SaaS runs on multiple cloud providers and is accessible from any cloud environment via API."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "swift",
+        "cpp"
+      ],
+      "reason": "InfluxDB Cloud provides client libraries for all major programming languages via HTTP API and native SDKs."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "web",
+        "mobile",
+        "iot",
+        "agnostic"
+      ],
+      "reason": "Time-series database supports any platform architecture requiring time-series data storage and querying capabilities."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically provides time-series database capability and requires this feature flag to be active."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "influxdb-cloud"
+      ],
+      "reason": "Pattern specifically requires influxdb-cloud as the database service"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Database pattern is compatible with applications that use or don't use separate caching layers for query optimization."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database works with both synchronous and asynchronous data ingestion patterns via HTTP or streaming protocols."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Database can store time-series metrics from AI inference workloads or other application telemetry data."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Database supports both single-tenant and multi-tenant application architectures through organization and bucket isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database supports both real-time ingestion and batch data loading workflows via bulk write APIs."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Database pattern is compatible with applications requiring or not requiring distributed transaction coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database excels at real-time streaming data ingestion but also supports batch and periodic writes."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database is compatible with applications that may use separate vector databases for embedding search."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database can coexist with document stores in hybrid data architectures for different data access patterns."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database can complement key-value stores for different data access patterns in polyglot persistence."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database can coexist with graph databases in polyglot persistence architectures for relationship queries."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database optimized for append-heavy writes supports OLTP-style ingestion patterns and point queries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database supports analytical queries over historical data with downsampling and aggregation functions."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 10,
+      "reason": "InfluxDB Cloud has overhead (managed service, network latency, billing granularity). At <10 writes/sec, simpler storage (relational DB with timestamp column) may be more cost-effective.",
+      "message": "db-timeseries--influxdb-cloud: peak write QPS is {actual} req/s (<10). Managed time-series DB overhead may not be justified; consider simpler storage."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 3600,
+      "reason": "At <1 write/sec (3600/hour), usage-based pricing and managed service overhead outweigh benefits. Time-series database features underutilized for low-volume periodic writes.",
+      "message": "db-timeseries--influxdb-cloud: peak jobs per hour is {actual} (<3600, or ~1/sec). Low write volume may not justify managed time-series DB costs."
+    }
+  ]
+}

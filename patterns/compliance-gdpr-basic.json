@@ -1,0 +1,271 @@
+{
+  "id": "compliance-gdpr-basic",
+  "version": "1.0.0",
+  "title": "GDPR Compliance (Basic)",
+  "description": "Basic GDPR (EU General Data Protection Regulation) compliance pattern. Implements data protection principles: lawful processing, purpose limitation, data minimization, accuracy, storage limitation, and security. Includes consent management, privacy notices, data subject rights (access, rectification, erasure), breach notification, and DPO appointment where required.",
+  "types": [
+    "security",
+    "ops"
+  ],
+  "provides": [
+    {
+      "capability": "gdpr-compliance",
+      "description": "Basic GDPR compliance framework",
+      "confidence": "medium",
+      "reasoning": "This is the core capability of the pattern - providing GDPR compliance framework including data protection principles, consent management, and data subject rights implementation."
+    },
+    {
+      "capability": "consent-management",
+      "description": "User consent tracking and management",
+      "confidence": "medium",
+      "reasoning": "Consent management is a fundamental GDPR requirement and a distinct capability that tracks, manages, and enforces user consent for data processing activities."
+    },
+    {
+      "capability": "data-subject-rights",
+      "description": "Handle access, rectification, erasure requests",
+      "confidence": "medium",
+      "reasoning": "Implements GDPR data subject rights (right to access, rectification, erasure, portability, restriction) which is a specific, well-defined capability required by the regulation."
+    },
+    {
+      "capability": "privacy-notice-management",
+      "confidence": "medium",
+      "reasoning": "GDPR requires transparent privacy notices which is a distinct capability from consent management, ensuring users are informed about data processing activities."
+    },
+    {
+      "capability": "data-breach-notification",
+      "confidence": "medium",
+      "reasoning": "The pattern implements breach notification processes as required by GDPR Article 33-34 for reporting breaches to authorities and affected individuals."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "audit-logging",
+      "description": "Audit logs for GDPR compliance verification",
+      "confidence": "medium",
+      "reasoning": "GDPR Article 30 requires maintaining records of processing activities, and demonstrating compliance requires comprehensive audit trails of all data operations, consent changes, and rights requests."
+    },
+    {
+      "capability": "encryption",
+      "confidence": "high",
+      "reasoning": "GDPR Article 32 requires appropriate security measures including encryption of personal data to ensure confidentiality and protect against unauthorized access.",
+      "optional": true
+    },
+    {
+      "capability": "data-retention-policies",
+      "confidence": "high",
+      "reasoning": "Storage limitation principle requires automated data retention and deletion policies to ensure personal data is not kept longer than necessary for specified purposes.",
+      "optional": true
+    },
+    {
+      "capability": "personal-data-inventory",
+      "confidence": "high",
+      "reasoning": "GDPR compliance requires knowing what personal data exists and where it's stored to fulfill subject rights requests and maintain records of processing activities.",
+      "optional": true
+    },
+    {
+      "capability": "role-based-access-control",
+      "confidence": "medium",
+      "reasoning": "GDPR requires restricting access to personal data to authorized personnel only through proper access controls to maintain data confidentiality and integrity.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "retention_days": 730,
+    "encryption_at_rest": true,
+    "encryption_in_transit": true,
+    "dpo_required": false,
+    "consent_granularity": "purpose-specific",
+    "breach_notification_hours": 72,
+    "data_subject_request_days": 30,
+    "pseudonymization_enabled": true,
+    "cross_border_transfers": "standard-contractual-clauses"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3650,
+        "description": "Data retention period in days. GDPR Article 5(1)(e) requires storage limitation - data kept only as long as necessary for processing purposes. Shorter is better for compliance."
+      },
+      "encryption_at_rest": {
+        "type": "boolean",
+        "description": "Encrypt personal data at rest. GDPR Article 32 requires appropriate technical measures including encryption. Recommended for all personal data."
+      },
+      "encryption_in_transit": {
+        "type": "boolean",
+        "description": "Encrypt personal data in transit using TLS/SSL. GDPR Article 32 security requirement. Essential for protecting data during transmission."
+      },
+      "dpo_required": {
+        "type": "boolean",
+        "description": "Data Protection Officer appointment required. GDPR Article 37 mandates DPO for public authorities, large-scale monitoring, or large-scale special category data processing."
+      },
+      "consent_granularity": {
+        "type": "string",
+        "enum": [
+          "purpose-specific",
+          "per-data-category",
+          "global"
+        ],
+        "description": "Consent management granularity. GDPR Article 7 requires specific, informed consent. Purpose-specific is best practice (separate consent per processing purpose), per-data-category groups by data type, global is least compliant."
+      },
+      "breach_notification_hours": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 72,
+        "description": "Hours to notify supervisory authority of data breach. GDPR Article 33 requires notification within 72 hours unless unlikely to result in risk. Lower values ensure faster compliance."
+      },
+      "data_subject_request_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 30,
+        "description": "Days to respond to data subject access requests (DSAR). GDPR Article 12 requires response within one month. Shorter response times improve compliance posture."
+      },
+      "pseudonymization_enabled": {
+        "type": "boolean",
+        "description": "Enable pseudonymization of personal data. GDPR Article 25 and 32 recommend pseudonymization as data protection by design measure. Reduces risk if data is breached."
+      },
+      "cross_border_transfers": {
+        "type": "string",
+        "enum": [
+          "eea-only",
+          "adequacy-decision",
+          "standard-contractual-clauses",
+          "binding-corporate-rules"
+        ],
+        "description": "Mechanism for transferring personal data outside EEA. GDPR Chapter V requirements: eea-only (no transfers), adequacy-decision (approved countries), standard-contractual-clauses (most common), binding-corporate-rules (for multinationals)."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 8000.0
+    },
+    "adoptionCost": 15000.0,
+    "licenseCost": 5000.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "GDPR compliance requires ongoing operational costs including: consent management platform ($50-$2000/month for basic to enterprise SaaS solutions like OneTrust Starter vs Enterprise), data subject request management tools ($50-$1500/month), privacy notice management systems ($20-$500/month), audit logging and monitoring infrastructure ($30-$1000/month for log retention and analysis), encrypted data storage overhead (10-20% premium on standard storage, $20-$500/month), data breach detection and monitoring tools ($30-$2000/month), and DPO services if outsourced ($0-$1500/month for part-time or fractional DPO). Minimum represents small business with basic tooling and minimal data processing; maximum represents mid-to-large enterprise with comprehensive GDPR tooling, extensive data processing, and professional DPO services.",
+      "adoptionCost": "GDPR compliance implementation is highly complex and labor-intensive. Requires: comprehensive data mapping and inventory across all systems (40-80 hours), privacy impact assessments (PIA/DPIA) for high-risk processing (20-40 hours), implementing technical controls including consent management, data encryption, access controls, and audit logging (80-120 hours), developing and documenting policies, procedures, and privacy notices (40-60 hours), configuring data subject rights workflows (access, rectification, erasure, portability) (60-100 hours), setting up breach notification procedures and systems (20-40 hours), staff training on GDPR principles and procedures (20-40 hours), and legal review of all documentation and processes (20-40 hours). Even with AI coding assistants helping with technical implementation, significant legal, compliance, and process design expertise is required. Estimated 300-480 total hours at blended rates of $50-$150/hour for mix of legal, compliance, and technical resources.",
+      "licenseCost": "Basic GDPR compliance can leverage primarily open-source tools with some commercial components. Core open-source solutions available for consent management (e.g., Klaro), data encryption libraries, and audit logging. However, most organizations invest in commercial privacy management platforms for efficiency and reduced liability. Entry-level commercial consent management platforms start at $2000-$5000 one-time setup fees (plus monthly SaaS costs). Additional one-time costs may include privacy policy generators/templates ($500-$1500), GDPR compliance assessment tools ($500-$2000), and specialized data discovery/mapping tools ($1000-$3000 setup). Organizations with minimal requirements using primarily open-source tools may have near-zero license costs, while those adopting commercial platforms will incur $5000-$15000 in initial setup and license fees.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "compliance",
+    "gdpr",
+    "privacy",
+    "data-protection"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern is only selected when GDPR compliance is explicitly required as primary regulatory obligation."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "GDPR compliance processes (consent management, data subject rights workflows) support up to four nines availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "GDPR workflow overhead (consent checks, audit logging, privacy controls) requires at least 100ms p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "Data subject rights request processing and breach notification workflows require at least 500ms p99 latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "GDPR compliance infrastructure (consent systems, privacy controls, DPO coordination) requires at least 5 minutes RTO."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "GDPR Article 30 requires records of processing activities; audit logging is mandatory for compliance."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "GDPR exclusively regulates personal data (PII); pattern only applies when PII is present."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "GDPR compliance is cloud-agnostic; regulations apply regardless of infrastructure choice."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "GDPR compliance is a legal/regulatory pattern that applies to any application handling personal data regardless of language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "GDPR compliance requirements apply to any platform that processes personal data."
+    }
+  ],
+  "warn_nfr": []
+}

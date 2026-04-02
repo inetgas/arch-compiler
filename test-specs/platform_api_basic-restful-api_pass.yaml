@@ -1,0 +1,22 @@
+# Platform - Basic RESTful API
+#
+# A standard AWS JavaScript REST API spec with no feature flags or nfr targets
+# set. This is the canonical baseline scenario for an API platform, testing
+# that the compiler correctly selects API-appropriate patterns for the given
+# cloud and language combination.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - REST API patterns compatible with aws + javascript are selected
+#   - no platform or compatibility errors
+
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+project:
+  name: API Platform (RESTful Service)
+  domain: test
+functional:
+  summary: 'Test scenario: API Platform (RESTful Service)'
+nfr: {}

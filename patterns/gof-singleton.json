@@ -1,0 +1,239 @@
+{
+  "id": "gof-singleton",
+  "version": "1.0.0",
+  "title": "Singleton",
+  "description": "Single instance with global access; convenient but harms testability/modularity.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Singleton is a pure code design pattern with no infrastructure or service dependencies. It simply ensures a class has only one instance and provides global access to it. This pattern runs within application memory and requires no external services, databases, or cloud resources. There are no recurring monthly costs associated with implementing this pattern.",
+      "adoptionCost": "Singleton is one of the simplest GOF design patterns to implement. Implementation typically requires 1-3 hours for a senior developer, including: writing the singleton class with private constructor and static instance getter (30-60 minutes), implementing thread-safe initialization if needed (30-60 minutes), writing unit tests (30-60 minutes), and code review (30 minutes). With AI coding assistants like GitHub Copilot, implementation time can be reduced by 40-50% as the pattern is well-documented and easily generated. At $100-150/hour developer rate, total cost is approximately $150-300. The pattern has minimal learning curve for experienced developers and no external dependencies or complex configuration. However, refactoring existing code to remove singletons (for better testability) can be more expensive.",
+      "licenseCost": "Singleton is a fundamental design pattern with no licensing costs. It can be implemented using any programming language's standard features (static variables, private constructors) without requiring any commercial libraries, frameworks, or tools. All resources, documentation, and examples are freely available. No proprietary software, subscriptions, or commercial licenses are needed to implement or use this pattern.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "single-instance",
+      "confidence": "high",
+      "reasoning": "The Singleton pattern's fundamental purpose is to ensure only one instance of a class exists throughout the application lifecycle. This is the core defining characteristic of the pattern."
+    },
+    {
+      "capability": "global-access-point",
+      "confidence": "high",
+      "reasoning": "Singleton provides a globally accessible instance through a static method like getInstance(). This controlled global access is a distinct capability from merely ensuring a single instance."
+    },
+    {
+      "capability": "lazy-initialization",
+      "confidence": "medium",
+      "reasoning": "Many Singleton implementations defer instance creation until first access, providing lazy initialization as a common variant of the pattern to optimize resource usage."
+    },
+    {
+      "capability": "eager-initialization",
+      "confidence": "medium",
+      "reasoning": "Some Singleton implementations create the instance at class loading time, providing eager initialization as an alternative variant that ensures thread safety at the cost of immediate resource allocation."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "class-instantiation-control",
+      "confidence": "high",
+      "reasoning": "Singleton requires the ability to control class instantiation through mechanisms like private constructors to prevent external code from creating multiple instances. This is essential for enforcing the single-instance guarantee.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "code-di-pure"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "gof",
+    "code-pattern"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Singleton organises code behavior by controlling instance creation, not data content; it applies regardless of whether PII is present in the system."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Singleton is a structural code pattern; GDPR compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Singleton is a structural code pattern; CCPA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of CCPA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Singleton is a structural code pattern; HIPAA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of HIPAA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Singleton is a structural code pattern; SOX compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of SOX requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Singleton operates below the persistence layer, managing in-process object lifecycle; read-your-writes consistency is enforced at the data store, not by this pattern."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Singleton does not implement persistence; strict durability guarantees are provided at the infrastructure layer and are orthogonal to this single-instance pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Singleton is a language-level design pattern that is fully cloud-agnostic and works in any cloud environment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Singleton is a fundamental GoF design pattern that can be implemented in any object-oriented or procedural language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Singleton is a design pattern applicable to any platform including web, mobile, desktop, API, and all other execution environments."
+    }
+  ],
+  "defaultConfig": {
+    "thread_safety": "lazy_thread_safe",
+    "initialization": "lazy",
+    "destruction_policy": "automatic",
+    "allow_subclassing": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "thread_safety": {
+        "type": "string",
+        "enum": [
+          "eager",
+          "lazy_thread_safe",
+          "lazy_unsafe",
+          "double_checked_locking"
+        ],
+        "description": "Thread safety strategy: 'eager' initializes at startup (safe but may waste resources), 'lazy_thread_safe' uses locks (safe, on-demand), 'lazy_unsafe' has no synchronization (fast but risky in multi-threaded), 'double_checked_locking' optimizes lazy locking (complex but efficient)"
+      },
+      "initialization": {
+        "type": "string",
+        "enum": [
+          "lazy",
+          "eager"
+        ],
+        "description": "When to create the instance: 'lazy' creates on first access (saves resources if never used), 'eager' creates at program start (predictable timing, avoids initialization delays)"
+      },
+      "destruction_policy": {
+        "type": "string",
+        "enum": [
+          "automatic",
+          "manual",
+          "none"
+        ],
+        "description": "How instance cleanup is managed: 'automatic' relies on language GC/destructors, 'manual' provides explicit destroy method (control over timing), 'none' never destroys (acceptable for app-lifetime singletons)"
+      },
+      "allow_subclassing": {
+        "type": "boolean",
+        "description": "Whether to allow inheritance from singleton: true enables extensibility but complicates instance management, false enforces strict single-class usage"
+      }
+    }
+  },
+  "warn_nfr": []
+}

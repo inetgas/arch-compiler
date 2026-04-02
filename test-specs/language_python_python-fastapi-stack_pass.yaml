@@ -1,0 +1,22 @@
+# Language - Python + FastAPI Stack
+#
+# An API spec with Python language and an empty saas-providers list. No cloud
+# is specified. This tests that Python-compatible patterns are selected correctly
+# and that framework-specific patterns for FastAPI or Python ASGI are available
+# in the pattern registry.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - Python-compatible API patterns are selected
+#   - no SaaS provider variant patterns are selected (empty saas-providers)
+
+constraints:
+  platform: api
+  language: python
+  saas-providers: []
+project:
+  name: Python + FastAPI
+  domain: test
+functional:
+  summary: 'Test scenario: Python + FastAPI'
+nfr: {}

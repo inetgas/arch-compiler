@@ -1,0 +1,517 @@
+{
+  "id": "arch-serverless",
+  "version": "1.0.0",
+  "title": "Serverless-First Architecture",
+  "description": "Structure the system as stateless, event-driven function handlers backed by managed services. No persistent servers \u2014 each function activates on demand, executes, and terminates. The architectural commitment is to build around events and cloud-managed primitives rather than long-running processes.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 2000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Serverless architectures have true pay-per-use pricing. Min=$0 represents development/staging environments with minimal traffic that stay within generous free tiers (AWS Lambda 1M free requests/month, API Gateway 1M calls/month first year, DynamoDB 25GB free). Max=$5000 represents a production workload with ~100M Lambda invocations/month ($20), API Gateway (~$350 for 100M requests), DynamoDB on-demand ($500-1000), S3 storage/transfer ($200-500), EventBridge ($100), Step Functions ($500), CloudWatch logs ($300), and data transfer costs ($1000-2000). High-traffic applications can exceed this, but $5000 covers most mid-scale serverless deployments processing millions of events monthly. Costs scale linearly with usage, making it cost-efficient for variable workloads but potentially expensive at very high scale compared to dedicated infrastructure.",
+      "adoptionCost": "High complexity adoption requiring significant architectural shift. Team needs to learn event-driven design patterns, function composition, cold start optimization, distributed tracing, and stateless architecture principles. Implementation involves: refactoring existing code into functions (40-80 hours), setting up event buses and message routing (20-40 hours), implementing observability/monitoring for distributed functions (20-30 hours), configuring IAM/security policies (15-25 hours), setting up CI/CD pipelines for function deployment (15-25 hours), and handling distributed debugging/testing (20-30 hours). Requires expertise in cloud provider's serverless ecosystem (Lambda/Functions, EventBridge/EventGrid, Step Functions/Logic Apps). Initial productivity drop as team adapts to function-based development. Includes potential for architectural mistakes (over-fragmentation, chatty functions) requiring rework. Estimated 130-230 engineering hours at $150/hour blended rate = $3500 average.",
+      "licenseCost": "Serverless services are consumption-based with no upfront licensing fees. AWS Lambda, Azure Functions, Google Cloud Functions, API Gateway, EventBridge, and similar managed services charge only for usage with no license costs. Open-source frameworks like Serverless Framework, AWS SAM, or Terraform for infrastructure-as-code are free. Optional commercial tools exist (Serverless.com Pro/Enterprise for teams, Datadog/New Relic for enhanced monitoring) but aren't required. The pattern itself uses cloud-native managed services that bundle licensing into per-request pricing. Organizations may choose commercial observability tools ($500-2000/month) but these are operational costs, not adoption licenses.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "low-ops",
+      "confidence": "strong",
+      "reasoning": "Serverless-first architecture minimizes operational overhead by leveraging managed services and eliminating infrastructure management, which directly provides reduced operational burden."
+    },
+    {
+      "capability": "elastic-scaling",
+      "confidence": "strong",
+      "reasoning": "Serverless functions automatically scale based on demand, from zero to high concurrency, which is a core characteristic of this pattern. This capability accurately represents the pattern's scaling behavior."
+    },
+    {
+      "capability": "event-driven",
+      "confidence": "high",
+      "reasoning": "Serverless architecture is fundamentally event-driven, with functions triggered by various event sources such as HTTP requests, message queues, database changes, and scheduled events."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "Serverless functions automatically scale up and down without manual intervention, handling varying loads from zero to high concurrency based on incoming requests and events."
+    },
+    {
+      "capability": "pay-per-use",
+      "confidence": "high",
+      "reasoning": "The serverless pattern provides cost optimization through pay-per-execution pricing model, where costs are incurred only when functions are actually invoked, including scale-to-zero capability."
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Serverless functions are inherently stateless, with each invocation being independent and ephemeral, which is a fundamental characteristic and constraint of this architectural pattern."
+    },
+    {
+      "capability": "function-as-a-service",
+      "confidence": "high",
+      "reasoning": "Serverless architecture pattern enables function-based compute without server management."
+    },
+    {
+      "capability": "managed-api-gateway",
+      "confidence": "high",
+      "reasoning": "Serverless patterns rely on a managed API gateway to route HTTP requests to functions."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "managed-services-availability",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Serverless architecture depends entirely on cloud provider managed services (Lambda, API Gateway, managed databases, etc.). Without these managed services being available, the pattern cannot be implemented."
+    },
+    {
+      "capability": "function-as-a-service",
+      "confidence": "high",
+      "reasoning": "This pattern requires a FaaS platform (such as AWS Lambda, Azure Functions, or Google Cloud Functions) as the core compute service for executing serverless functions.",
+      "optional": false
+    },
+    {
+      "capability": "managed-api-gateway",
+      "confidence": "medium",
+      "reasoning": "A managed API Gateway service is typically required to expose serverless functions via HTTP/REST APIs and handle request routing, authentication, and throttling.",
+      "optional": false
+    },
+    {
+      "capability": "external-data-persistence",
+      "confidence": "high",
+      "reasoning": "Since serverless functions cannot maintain internal state between invocations, external services like managed databases, object storage, or caches are required for any state persistence needs.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-microservices",
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "architecture",
+    "serverless",
+    "event-driven"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Serverless platforms typically achieve up to 99.99% availability but not beyond due to managed service SLAs."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Serverless p95 latency floor is 50ms due to cold starts affecting a portion of requests."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Serverless p99 latency floor is 100ms due to cold starts disproportionately affecting tail latencies."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Serverless enables 1-5 minute RTO through stateless functions that auto-restart on failure."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Serverless functions scale elastically to handle up to 100K requests/second (360M jobs/hour) within platform concurrency limits."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 60,
+      "reason": "At <60 jobs/hour (<1 per minute), serverless pay-per-invocation pricing and cold start overhead are inefficient compared to scheduled or always-on workers."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 200000,
+      "reason": "Serverless architectures handle up to 200K read QPS with elastic scaling but face platform concurrency ceilings."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Serverless write throughput ceiling at 100K QPS due to stateless coordination and downstream service limits."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless provides comprehensive audit logging through platform services but can be disabled if not required."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Serverless functions can implement any tenant isolation strategy through managed databases and function-level partitioning."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless architectures support PII handling with encryption, access controls, and compliance features regardless of PII presence."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless supports GDPR through data residency controls, encryption at rest/transit, and deletion workflows."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Major serverless platforms are HIPAA-eligible with BAAs, encryption, and audit logging for healthcare data."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless enables CCPA compliance through data access controls, deletion workflows, and consumer privacy tooling."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless platforms support SOX compliance with immutable audit logs, change tracking, and access governance."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless supports read-your-writes consistency through strongly consistent reads in managed databases like DynamoDB."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless achieves strict durability through managed services like S3 (11 9s) and DynamoDB with synchronous replication."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "The generic serverless pattern applies to cloud-agnostic specifications; use cloud-specific variants for provider-specific features."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "swift",
+        "scala",
+        "cpp",
+        "c",
+        "sql",
+        "dart",
+        "objective-c",
+        "n/a"
+      ],
+      "reason": "Serverless platforms support all major programming languages with native runtimes or custom container support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-inference",
+        "iot",
+        "desktop",
+        "library",
+        "cli",
+        "ml-training",
+        "n/a"
+      ],
+      "reason": "Serverless architecture supports all application platforms through event-driven functions and API gateways."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless can leverage managed caching services like ElastiCache or Memorystore but does not require caching."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless excels with event-driven async messaging patterns but also supports synchronous request-response workloads."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions are ideal for on-demand AI inference workloads with scale-to-zero cost optimization."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless supports multi-tenant architectures through function isolation and managed database partitioning."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions work well for scheduled or event-triggered batch processing with elastic scaling."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        false
+      ],
+      "reason": "Distributed transactions are challenging in serverless due to stateless, short-lived function execution and coordination overhead."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless supports real-time streaming via Kinesis, Event Hubs, or Dataflow triggers for event processing."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can integrate with managed vector databases like Pinecone or Weaviate for AI/ML search."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless integrates seamlessly with managed document databases like DynamoDB, Cosmos DB, or Firestore."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions work well with managed key-value stores like DynamoDB, Redis, or Memcached for fast lookups."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can query managed graph databases like Neptune or Neo4j Aura for relationship-heavy workloads."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless supports time-series workloads through managed services like Timestream, InfluxDB Cloud, or TimescaleDB."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads supported via serverless functions with managed databases like Aurora Serverless or Cosmos DB."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP queries can trigger serverless functions though cold starts may impact latency for analytical workloads."
+    }
+  ],
+  "defaultConfig": {
+    "function_runtime_model": "faas",
+    "cold_start_optimization": "minimal",
+    "state_management": "external",
+    "event_sources": "api_gateway",
+    "observability_level": "standard"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "function_runtime_model": {
+        "type": "string",
+        "enum": [
+          "faas",
+          "container_functions",
+          "hybrid"
+        ],
+        "description": "Runtime model: 'faas' for pure FaaS (Lambda/Cloud Functions), 'container_functions' for containerized serverless (Cloud Run/Fargate), 'hybrid' for mixing both based on workload needs"
+      },
+      "cold_start_optimization": {
+        "type": "string",
+        "enum": [
+          "minimal",
+          "provisioned_concurrency",
+          "keep_warm"
+        ],
+        "description": "Cold start strategy: 'minimal' accepts cold starts for cost savings, 'provisioned_concurrency' pre-warms instances for latency-sensitive workloads (higher cost), 'keep_warm' uses scheduled pings (moderate cost)"
+      },
+      "state_management": {
+        "type": "string",
+        "enum": [
+          "external",
+          "durable_functions",
+          "step_functions"
+        ],
+        "description": "How to handle stateful workflows: 'external' uses databases/caches (most flexible), 'durable_functions' for orchestrated workflows with checkpointing, 'step_functions' for visual workflow orchestration"
+      },
+      "event_sources": {
+        "type": "string",
+        "enum": [
+          "api_gateway",
+          "event_bus",
+          "stream_processing",
+          "multi_trigger"
+        ],
+        "description": "Primary event trigger pattern: 'api_gateway' for synchronous HTTP APIs, 'event_bus' for async pub/sub events, 'stream_processing' for real-time data streams, 'multi_trigger' for diverse event sources"
+      },
+      "observability_level": {
+        "type": "string",
+        "enum": [
+          "standard",
+          "enhanced",
+          "distributed_tracing"
+        ],
+        "description": "Monitoring depth: 'standard' uses basic logs and metrics, 'enhanced' adds custom metrics and structured logging, 'distributed_tracing' implements full request tracing across functions (X-Ray, OpenTelemetry)"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At very low QPS, serverless pay-per-use advantage is minimal and cold start overhead becomes significant relative to total requests.",
+      "message": "arch-serverless: peak read QPS is {actual} req/s (<1). At this low volume, serverless cold start overhead may outweigh pay-per-use benefits; consider simpler hosting."
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+# Security - OAuth vs JWT Auth Pattern Selection
+#
+# An agnostic API spec with nfr.security.auth set to oauth2_oidc. This tests
+# that the compiler selects the OAuth2/OIDC authentication pattern when that
+# auth type is explicitly requested, and does not select conflicting JWT-only
+# or other auth patterns.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - OAuth2/OIDC authentication pattern is selected
+#   - JWT-only patterns that conflict with OAuth2 are not selected
+
+nfr:
+  security:
+    auth: oauth2_oidc
+project:
+  name: OAuth vs JWT
+  domain: test
+functional:
+  summary: 'Test scenario: OAuth vs JWT'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

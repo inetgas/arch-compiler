@@ -1,0 +1,384 @@
+{
+  "id": "resilience-circuit-breaker",
+  "version": "1.0.0",
+  "title": "Circuit Breaker",
+  "description": "Stop calls to failing dependencies; half-open probing; fallback. Prevents cascading failures.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Circuit Breaker is a software design pattern implemented in application code, not an infrastructure service. It's a resilience pattern that wraps service calls with state management (closed/open/half-open). Implementation can be via lightweight libraries (Resilience4j, Polly, Hystrix) or service mesh features (Istio, Linkerd) that run within existing infrastructure. While service mesh adds ~5-15ms latency and ~50MB memory per sidecar, this doesn't create new billable infrastructure. Any costs are absorbed by existing compute resources (containers, VMs). The pattern itself adds negligible CPU/memory overhead (<1% typically) for state tracking and timing logic.",
+      "adoptionCost": "Medium-high complexity implementation. Key cost factors: (1) Learning curve - understanding state transitions, timeout configurations, failure thresholds, and half-open probe logic (8-16 hours); (2) Implementation - integrating library/framework into existing services, wrapping critical dependencies, configuring thresholds per service type (16-24 hours); (3) Testing - simulating failure scenarios, validating state transitions, testing fallback behaviors, load testing impact (16-24 hours); (4) Observability - adding metrics/dashboards for circuit state, failure rates, latency (8-12 hours). Total ~48-76 engineering hours. With AI coding assistants reducing boilerplate by 30-40% and providing configuration templates, estimate 40-50 hours at $50-75/hour blended rate = $2,000-3,750. Conservative mid-point accounts for pre-built libraries significantly reducing complexity vs custom implementation.",
+      "licenseCost": "All major circuit breaker implementations are open source with permissive licenses: Resilience4j (Apache 2.0), Polly (.NET, BSD), Hystrix (Apache 2.0, now maintenance mode), Spring Cloud Circuit Breaker (Apache 2.0), service mesh options (Istio/Envoy Apache 2.0, Linkerd Apache 2.0). No commercial licensing required for the pattern itself. Enterprise support contracts optional but not necessary for implementation (e.g., Buoyant for Linkerd $5k-50k/year, but pattern works without it). Organizations can implement completely free using open source libraries.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "circuit-breaker",
+      "confidence": "high",
+      "reasoning": "The circuit breaker pattern prevents cascading failures by tripping open when a dependency fails repeatedly, stopping calls until it recovers."
+    },
+    {
+      "capability": "fault-isolation",
+      "confidence": "high",
+      "reasoning": "Circuit breaker isolates failing dependencies, preventing them from impacting the rest of the system. This is a core capability that should be explicitly listed."
+    },
+    {
+      "capability": "graceful-degradation",
+      "confidence": "high",
+      "reasoning": "The pattern's fallback mechanism enables the system to continue operating in a degraded state rather than completely failing, which is a key resilience capability."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "timeout-handling",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Circuit breakers need timeout mechanisms to detect hanging calls and unresponsive services. Without timeouts, the circuit breaker cannot determine when to trip and would wait indefinitely."
+    },
+    {
+      "capability": "failure-detection",
+      "confidence": "high",
+      "reasoning": "The pattern requires a way to detect and count failures (e.g., error responses, exceptions) to determine when to open the circuit. This is fundamental to the pattern's operation.",
+      "optional": true
+    },
+    {
+      "capability": "metrics-collection",
+      "confidence": "high",
+      "reasoning": "Circuit breakers need to track success/failure rates, response times, and call volumes to make informed decisions about circuit state transitions (closed -> open -> half-open).",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "resilience",
+    "availability",
+    "dotnet",
+    "go",
+    "java",
+    "node",
+    "python"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.99,
+      "reason": "Circuit breaker adds complexity and operational overhead. At availability targets below 99%, simpler error handling may suffice."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Circuit breaker adds minimal latency overhead (state check) in closed state, typically sub-millisecond."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Circuit breaker state transitions and fallback logic introduce minimal latency overhead in tail cases."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Circuit breaker enables rapid recovery through half-open state probing, typically achieving sub-minute to 1-minute RTO."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 5,
+      "reason": "Circuit breaker state management and monitoring add overhead. At very low QPS, simpler retry logic may be more appropriate."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Circuit breaker is a cloud-agnostic resilience pattern applicable to any deployment environment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Circuit breaker is a design pattern that can be implemented in any programming language with libraries or custom code."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Circuit breaker pattern applies to any platform that makes external calls including APIs, workers, batch jobs, and pipelines."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker is compatible with both cached and non-cached architectures."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker applies to both synchronous request-response and asynchronous messaging patterns."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker is useful for protecting AI inference endpoints but does not require AI inference to be present."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can be applied in both single-tenant and multi-tenant architectures with per-tenant or global configuration."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can protect batch job dependencies and external service calls in batch processing workflows."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker is compatible with both distributed transaction and non-transactional architectures."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can protect streaming pipeline dependencies but does not require real-time streaming to be present."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can protect vector search service calls but does not require or exclude vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can protect document store calls but does not require or exclude document database usage."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can protect key-value store calls but does not require or exclude key-value database usage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can protect graph database calls but does not require or exclude graph database usage."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can protect time-series database calls but does not require or exclude time-series database usage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker is beneficial for protecting OLTP workloads from cascading failures but works with all workload types."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Circuit breaker can protect OLAP query dependencies but does not require or exclude analytical workloads."
+    }
+  ],
+  "defaultConfig": {
+    "failure_threshold": 5,
+    "success_threshold": 2,
+    "timeout_duration": 60,
+    "half_open_max_calls": 1,
+    "fallback_strategy": "fail_fast"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "failure_threshold": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20,
+        "description": "Number of consecutive failures before opening the circuit. Lower values trip faster but may be more sensitive to transient errors; higher values are more tolerant but slower to protect."
+      },
+      "success_threshold": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10,
+        "description": "Number of consecutive successes in half-open state before closing the circuit. Higher values ensure more confidence before resuming normal operation."
+      },
+      "timeout_duration": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 300,
+        "description": "Seconds to wait in open state before transitioning to half-open. Shorter timeouts probe recovery faster; longer timeouts give failing services more recovery time."
+      },
+      "half_open_max_calls": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10,
+        "description": "Maximum concurrent requests allowed in half-open state. Use 1 for cautious probing, higher values for faster traffic ramp-up."
+      },
+      "fallback_strategy": {
+        "type": "string",
+        "enum": [
+          "fail_fast",
+          "cached_response",
+          "default_value",
+          "alternative_service"
+        ],
+        "description": "Behavior when circuit is open. fail_fast: immediate error; cached_response: return stale data; default_value: return predetermined fallback; alternative_service: route to backup dependency."
+      }
+    }
+  },
+  "warn_nfr": []
+}

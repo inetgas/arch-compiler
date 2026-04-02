@@ -1,0 +1,455 @@
+{
+  "id": "async-event-driven--gcp",
+  "version": "1.0.0",
+  "title": "Asynchronous Event-Driven Architecture (GCP Pub/Sub)",
+  "description": "Event-driven architecture on GCP using Pub/Sub for durable publish/subscribe messaging with push and pull subscriptions. Decouples producers from consumers; embraces eventual consistency with at-least-once delivery, configurable ack deadlines, and dead-letter topics.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 10.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "GCP Pub/Sub pricing is consumption-based. Minimum ($10-50) covers small workloads: ~10M messages/month at $0.40 per million messages, plus minimal storage for retained messages. Maximum ($5000+) represents high-throughput production systems: 1B+ messages/month ($400), extended message retention ($1000+), cross-region egress ($500+), multiple topics/subscriptions with high fan-out ($1000+), Lite subscriptions for low-latency use cases ($500+), and snapshots/replay features ($500+). Mid-range ($200-800) typical for production microservices with 100M-500M messages/month. GCP offers 10GB message delivery free tier monthly which covers ~25M messages, making very light usage nearly free.",
+      "adoptionCost": "High-medium complexity pattern. Requires: (1) Architectural redesign for async thinking - 40-60 hours ($2000-3000) understanding eventual consistency, idempotency, message ordering, and failure modes; (2) Implementation effort - 20-40 hours ($1000-2000) for topic/subscription setup, dead-letter queues, retry policies, message schemas, and monitoring; (3) Testing complexity - 20-30 hours ($1000-1500) for integration testing, message flow verification, chaos testing for network failures; (4) Team training - 16-24 hours ($800-1200) on Pub/Sub semantics, best practices, debugging async systems. Lower end if team has event-driven experience; higher if migrating from synchronous architecture. AI assistants reduce implementation time by 30-40% but architectural decisions still require human expertise.",
+      "licenseCost": "GCP Pub/Sub is a fully managed service with pay-as-you-go pricing model - no upfront license fees. All costs are consumption-based (included in monthly runtime costs). No proprietary SDKs or tools required; client libraries are open source. Optional commercial tools like schema registries, enterprise monitoring (Datadog, New Relic) or event mesh platforms (Solace, Confluent) would add $5000-50000/year but are not required for core pattern implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "temporal-decoupling",
+      "confidence": "strong",
+      "reasoning": "Pub/Sub architecture inherently decouples producers and consumers in time - publishers don't need subscribers to be available when messages are sent, and subscribers process messages asynchronously at their own pace."
+    },
+    {
+      "capability": "resilience-to-spikes",
+      "confidence": "medium",
+      "reasoning": "Event-driven systems with message queuing naturally handle traffic spikes by buffering messages in the broker, allowing consumers to process at their capacity without being overwhelmed or dropping requests."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly embraces eventual consistency as described, where state changes propagate asynchronously through events and consumers eventually reach a consistent state."
+    },
+    {
+      "capability": "horizontal-scalability",
+      "confidence": "high",
+      "reasoning": "Pub/sub patterns enable independent scaling of producers and consumers - each can scale horizontally based on their specific load without affecting the other side of the communication."
+    },
+    {
+      "capability": "streaming-platform",
+      "confidence": "high",
+      "reasoning": "Google Cloud Pub/Sub provides the streaming/messaging platform for this pattern."
+    },
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "Google Cloud Pub/Sub topics serve as event sources in this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "pub-sub",
+      "confidence": "high",
+      "reasoning": "The pattern specifically uses GCP Pub/Sub as its messaging backbone, requiring pub/sub semantics (topic-based, multiple subscribers) rather than point-to-point message queuing.",
+      "optional": false
+    },
+    {
+      "capability": "idempotent-consumption",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Essential for event-driven systems where at-least-once delivery guarantees mean messages may be redelivered. Consumers must handle duplicate messages safely to maintain data consistency and avoid side effects."
+    },
+    {
+      "capability": "observability-baseline",
+      "confidence": "medium",
+      "reasoning": "Operational visibility is critical for debugging event flows and message processing in distributed async systems where understanding message propagation and consumer behavior is essential for troubleshooting.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "async-event-driven",
+      "async-event-driven--aws",
+      "async-event-driven--azure"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "integration",
+    "events",
+    "messaging",
+    "gcp"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Pattern maximum availability is 99.99% due to GCP Pub/Sub SLA and eventual consistency model."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Pattern introduces minimum p95 latency of 100ms due to async event-driven pub/sub processing overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Pattern introduces minimum p99 latency of 200ms due to tail latencies in pub/sub message delivery and processing."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Pattern achieves minimum RTO of 1 minute enabled by message persistence and fast recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Pattern supports maximum throughput of 360M jobs/hour based on GCP Pub/Sub scalability limits."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 5,
+      "reason": "Event-driven architecture adds async overhead (100ms+ latency, message routing, consumer scaling). At very low throughput, simpler synchronous request-response patterns are more appropriate."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without audit logging; GCP Pub/Sub supports audit logs as optional feature."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Event-driven pattern is compatible with any tenant isolation strategy via topic/subscription isolation."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with GDPR requirements through proper message handling and retention policies."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports HIPAA compliance when using GCP Pub/Sub with appropriate BAA and encryption."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with CCPA requirements through proper data handling in event messages."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports SOX compliance through audit trails and message durability features."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Pattern embraces eventual consistency model and does not guarantee read-your-writes semantics."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports strict durability via GCP Pub/Sub message persistence with configurable retention."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "gcp",
+      "reason": "This pattern variant is specifically designed for GCP Pub/Sub implementation."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Event-driven architecture is language-agnostic as GCP Pub/Sub provides client libraries for all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Async event-driven architecture using GCP Pub/Sub is platform-agnostic and supports all application types."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Event-driven architecture inherently requires asynchronous messaging via pub/sub mechanism."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports AI inference workloads as event consumers but does not require them."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports multi-tenancy through topic/subscription isolation strategies but works for single-tenant apps."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports batch processing as consumers can process events individually or in batches."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without distributed transactions; saga patterns can be implemented on top."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports real-time streaming via GCP Pub/Sub but also works for non-streaming use cases."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is neutral to vector search; event consumers may or may not use vector databases."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is neutral to document stores; event consumers may use any storage backend."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is neutral to key-value stores; event consumers may use any storage backend."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is neutral to graph databases; event consumers may use any storage backend."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is neutral to time-series databases; event consumers may use any storage backend."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports OLTP workloads as event consumers but works for any workload type."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports OLAP workloads as event consumers but works for any workload type."
+    }
+  ],
+  "defaultConfig": {
+    "message_retention_duration": "7d",
+    "ack_deadline": "10s",
+    "delivery_guarantee": "at-least-once",
+    "message_ordering": "false",
+    "dead_letter_topic": "false",
+    "subscription_type": "pull",
+    "retry_policy": "exponential-backoff"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "message_retention_duration": {
+        "type": "string",
+        "enum": [
+          "1d",
+          "7d",
+          "14d",
+          "30d"
+        ],
+        "description": "How long Pub/Sub retains unacknowledged messages. Longer retention increases storage costs but provides better resilience for slow consumers or system outages."
+      },
+      "ack_deadline": {
+        "type": "string",
+        "enum": [
+          "10s",
+          "30s",
+          "60s",
+          "300s",
+          "600s"
+        ],
+        "description": "Maximum time a subscriber has to acknowledge a message before it's redelivered. Shorter deadlines enable faster redelivery but may cause duplicate processing; longer deadlines suit slow processing workloads."
+      },
+      "delivery_guarantee": {
+        "type": "string",
+        "enum": [
+          "at-least-once",
+          "exactly-once"
+        ],
+        "description": "Message delivery semantics. At-least-once is standard and cost-effective but requires idempotent consumers. Exactly-once (available for specific regions) prevents duplicates but has higher latency and cost."
+      },
+      "message_ordering": {
+        "type": "string",
+        "enum": [
+          "true",
+          "false"
+        ],
+        "description": "Whether to preserve message order using ordering keys. Enabling guarantees order per key but reduces throughput and requires careful key design to avoid hotspots."
+      },
+      "dead_letter_topic": {
+        "type": "string",
+        "enum": [
+          "true",
+          "false"
+        ],
+        "description": "Whether to configure a dead-letter topic for messages that fail processing repeatedly. Enables debugging and manual intervention but adds complexity and storage costs."
+      },
+      "subscription_type": {
+        "type": "string",
+        "enum": [
+          "pull",
+          "push"
+        ],
+        "description": "How subscribers receive messages. Pull gives consumers control over rate and is suitable for batch processing. Push delivers to HTTP endpoints with lower latency but requires publicly accessible endpoints."
+      },
+      "retry_policy": {
+        "type": "string",
+        "enum": [
+          "exponential-backoff",
+          "immediate",
+          "custom"
+        ],
+        "description": "Strategy for retrying failed message deliveries. Exponential backoff prevents overwhelming downstream systems. Immediate retry suits transient failures. Custom allows fine-tuned min/max backoff configuration."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,228 @@
+{
+  "id": "gof-strategy",
+  "version": "1.0.0",
+  "title": "Strategy",
+  "description": "Encapsulate interchangeable algorithms behind an interface; select at runtime.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress). Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Strategy is a Gang of Four behavioral design pattern - a pure code organization technique with no infrastructure requirements. It involves creating an interface for interchangeable algorithms and selecting implementations at runtime. This is implemented entirely in application code without requiring additional services, databases, caching layers, or cloud resources. Monthly operational costs are $0 as it adds no infrastructure footprint.",
+      "adoptionCost": "Strategy is one of the simpler GOF patterns with low adoption cost. Implementation requires: (1) defining a strategy interface (~1 hour), (2) creating concrete strategy classes (~2-4 hours for 2-3 implementations), (3) modifying context class to accept strategy (~1 hour), (4) writing unit tests (~2 hours). Total ~6-8 hours of developer time. With modern AI coding assistants (GitHub Copilot, Cursor), boilerplate interface and implementation generation is accelerated by 40-50%. Most developers understand the concept quickly as it's intuitive (similar to dependency injection). At $75/hour blended rate: 6 hours \u00d7 $75 = $450, reduced to ~$300 with AI assistance. No specialized expertise required beyond basic OOP principles.",
+      "licenseCost": "Strategy pattern is a public domain design pattern from the Gang of Four book (1994) with no licensing restrictions. Implementation uses standard language features (interfaces, classes, polymorphism) available in any modern programming language (Java, C#, Python, TypeScript, etc.). No proprietary frameworks, libraries, or commercial tools are required. All necessary capabilities are provided by open-source language runtimes and standard libraries. Zero licensing cost.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "pluggable-behavior",
+      "confidence": "high",
+      "reasoning": "The Strategy pattern's core purpose is to enable pluggable, interchangeable algorithms/behaviors that can be selected at runtime. This capability directly describes what the pattern provides to a system."
+    },
+    {
+      "capability": "algorithm-selection",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly enables runtime selection of algorithms, allowing clients to choose which strategy implementation to use based on context or requirements."
+    },
+    {
+      "capability": "behavior-encapsulation",
+      "confidence": "high",
+      "reasoning": "Strategy encapsulates families of related algorithms behind a common interface, hiding implementation details and ensuring each algorithm variant is self-contained."
+    },
+    {
+      "capability": "open-closed-principle",
+      "confidence": "high",
+      "reasoning": "The pattern allows extending behavior by adding new strategy implementations without modifying existing client code or other strategies, adhering to the open-closed principle."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "polymorphism",
+      "confidence": "high",
+      "reasoning": "The Strategy pattern fundamentally requires polymorphism (interface/abstract class support) to define the common contract that all strategy implementations must follow. Without this language feature, the pattern cannot be properly implemented.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "gof",
+    "code-pattern",
+    "dotnet",
+    "go",
+    "java",
+    "node",
+    "python"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strategy organises code behavior by encapsulating interchangeable algorithms, not data content; it applies regardless of whether PII is present in the system."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strategy is a behavioral code pattern; GDPR compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strategy is a behavioral code pattern; CCPA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of CCPA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strategy is a behavioral code pattern; HIPAA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of HIPAA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strategy is a behavioral code pattern; SOX compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of SOX requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strategy operates below the persistence layer, selecting algorithms at runtime; read-your-writes consistency is enforced at the data store, not by this pattern."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strategy does not implement persistence; strict durability guarantees are provided at the infrastructure layer and are orthogonal to this algorithm-encapsulation pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Strategy pattern is a language-level design pattern independent of cloud infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Strategy is a Gang of Four design pattern that applies to any object-oriented or functional language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Strategy pattern is a software design pattern applicable to any platform type."
+    }
+  ],
+  "defaultConfig": {
+    "strategy_selection": "runtime",
+    "interface_style": "explicit",
+    "context_management": "injected"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "strategy_selection": {
+        "type": "string",
+        "enum": [
+          "runtime",
+          "compile_time",
+          "configuration"
+        ],
+        "description": "When strategy is selected: runtime (dynamic selection based on conditions), compile_time (dependency injection/factory at startup), or configuration (externalized in config files)"
+      },
+      "interface_style": {
+        "type": "string",
+        "enum": [
+          "explicit",
+          "functional",
+          "duck_typed"
+        ],
+        "description": "How strategies are defined: explicit (formal interface/abstract class), functional (function/lambda passing), or duck_typed (implicit interface via structural typing)"
+      },
+      "context_management": {
+        "type": "string",
+        "enum": [
+          "injected",
+          "self_contained",
+          "registry"
+        ],
+        "description": "How context manages strategies: injected (strategy passed to context constructor), self_contained (context creates strategies internally), or registry (lookup from strategy registry/factory)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,248 @@
+{
+  "id": "gof-decorator",
+  "version": "1.0.0",
+  "title": "Decorator",
+  "description": "Wrap objects to add behavior without inheritance; cross-cutting composition.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "The Decorator pattern is a pure code design pattern (Gang of Four) that adds no infrastructure or service costs. It involves wrapping objects with decorator classes to extend behavior at runtime. There are no servers, databases, APIs, or third-party services required. Implementation exists entirely in application code regardless of language or platform. Monthly costs remain zero whether decorating one object or thousands - the pattern adds minimal memory overhead (extra object references) and negligible CPU impact (one additional method call per decorator layer).",
+      "adoptionCost": "Decorator is a low-complexity GoF pattern with straightforward adoption. Factors: (1) Learning curve is minimal - the pattern is well-documented with abundant examples in every major language. (2) Implementation time is 2-4 hours for typical use cases (logging, caching, validation decorators). (3) Requires understanding of interfaces/abstract classes and composition over inheritance, which most developers already know. (4) With AI coding assistants, generating decorator boilerplate is trivial. (5) Testing is straightforward - decorators can be tested in isolation. Main cost is initial design (identifying where decorators fit) and refactoring existing inheritance hierarchies if migrating from subclass-based extension. Suitable for mid-level developers with minimal mentoring.",
+      "licenseCost": "The Decorator pattern requires no licenses, tools, or commercial software. It is a programming technique implemented using standard language features (classes, interfaces, inheritance) available in all modern languages. No frameworks, libraries, or IDE plugins are required, though optional tools like UML designers or refactoring tools (all commonly free or included in standard IDEs like VS Code, IntelliJ Community, Eclipse) may assist. Pattern is language-agnostic and works identically in Java, C#, Python, TypeScript, Go, etc. No runtime dependencies, no commercial patterns libraries needed.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "behavior-composition",
+      "confidence": "high",
+      "reasoning": "The Decorator pattern fundamentally provides the ability to compose behaviors dynamically at runtime by wrapping objects with additional functionality without modifying their structure or using inheritance."
+    },
+    {
+      "capability": "runtime-extensibility",
+      "confidence": "high",
+      "reasoning": "Decorator enables adding or removing responsibilities to objects at runtime, which is a core capability this pattern provides beyond simple behavior composition."
+    },
+    {
+      "capability": "transparent-wrapping",
+      "confidence": "high",
+      "reasoning": "Decorators maintain the same interface as the wrapped object, providing transparent enhancement - clients don't need to know whether they're working with decorated or base objects."
+    },
+    {
+      "capability": "cross-cutting-concerns",
+      "confidence": "high",
+      "reasoning": "The pattern description mentions 'cross-cutting composition' which is a key use case for handling aspects like logging, caching, or validation that span multiple components."
+    },
+    {
+      "capability": "single-responsibility-adherence",
+      "confidence": "high",
+      "reasoning": "The pattern allows separating concerns into individual decorator classes, with each decorator responsible for a single aspect of behavior enhancement, promoting cleaner code organization."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "interface-compliance",
+      "confidence": "high",
+      "reasoning": "The Decorator pattern requires that decorators implement the same interface as the components they wrap, ensuring type compatibility and transparency.",
+      "optional": true
+    },
+    {
+      "capability": "object-delegation",
+      "confidence": "high",
+      "reasoning": "Decorators must be able to delegate calls to the wrapped object while adding behavior before/after delegation, which is fundamental to how the pattern works.",
+      "optional": true
+    },
+    {
+      "capability": "common-interface",
+      "confidence": "high",
+      "reasoning": "The underlying language/system must support a common interface or polymorphism capability to enable decorators and decorated objects to be used interchangeably.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "gof",
+    "code-pattern"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Decorator organises code behavior by composing object responsibilities, not data content; it applies regardless of whether PII is present in the system."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Decorator is a structural code pattern; GDPR compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Decorator is a structural code pattern; CCPA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of CCPA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Decorator is a structural code pattern; HIPAA compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of HIPAA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Decorator is a structural code pattern; SOX compliance obligations apply to the system, not to this pattern specifically \u2014 it is applicable regardless of SOX requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Decorator operates below the persistence layer, adding behavior through object wrapping; read-your-writes consistency is enforced at the data store, not by this pattern."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Decorator does not implement persistence; strict durability guarantees are provided at the infrastructure layer and are orthogonal to this behavior-composition pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "Decorator is a general-purpose structural design pattern that is fully cloud-agnostic."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Decorator is a fundamental Gang of Four design pattern applicable to all object-oriented languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Decorator is a design pattern applicable to any platform where object-oriented code runs."
+    }
+  ],
+  "defaultConfig": {
+    "decorator_style": "class_based",
+    "component_interface": "explicit",
+    "decorator_chaining": "enabled",
+    "transparency_level": "full"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "decorator_style": {
+        "type": "string",
+        "enum": [
+          "class_based",
+          "function_based",
+          "annotation_based"
+        ],
+        "description": "Implementation approach: class_based (traditional OOP with wrapper classes), function_based (higher-order functions/closures), or annotation_based (language decorators/attributes where supported)"
+      },
+      "component_interface": {
+        "type": "string",
+        "enum": [
+          "explicit",
+          "implicit"
+        ],
+        "description": "Interface definition: explicit (formal interface/abstract class that decorators implement) vs implicit (duck typing/structural compatibility)"
+      },
+      "decorator_chaining": {
+        "type": "string",
+        "enum": [
+          "enabled",
+          "disabled"
+        ],
+        "description": "Whether to support multiple decorators wrapping the same component. Enabled allows flexible composition but increases complexity; disabled simplifies but limits extensibility"
+      },
+      "transparency_level": {
+        "type": "string",
+        "enum": [
+          "full",
+          "partial",
+          "opaque"
+        ],
+        "description": "How much the decorator exposes the wrapped component: full (decorator is transparent, exposes all original methods), partial (selective forwarding), opaque (completely hides wrapped object)"
+      }
+    }
+  },
+  "warn_nfr": []
+}

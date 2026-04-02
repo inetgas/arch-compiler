@@ -1,0 +1,26 @@
+# Security - OIDC Auth0 Provider Selection
+#
+# A spec with nfr.security.auth: oauth2_oidc and saas-providers: [auth0].
+# Tests that idp-oidc--auth0 is selected when Auth0 is the declared provider,
+# and that idp-oidc--okta (requires saas-providers: [okta]) is excluded.
+# idp-oidc--cognito is also excluded because cloud is agnostic, not aws.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - idp-oidc--auth0 is selected
+#   - idp-oidc--okta and idp-oidc--cognito are NOT selected
+
+project:
+  name: OIDC Auth0 Provider
+  domain: test
+functional:
+  summary: 'Test scenario: OIDC with Auth0 provider'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic
+  saas-providers:
+    - auth0
+nfr:
+  security:
+    auth: oauth2_oidc

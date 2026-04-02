@@ -1,0 +1,457 @@
+{
+  "id": "arch-serverless-pay-per-use--gcp-cloud-functions",
+  "version": "1.0.0",
+  "title": "Serverless Pay-Per-Use Compute with GCP Cloud Functions",
+  "description": "Cost optimisation pattern that eliminates idle infrastructure spend by running workloads on GCP Cloud Functions\u2019 per-invocation billing model. Supports both 1st-gen and 2nd-gen (Cloud Run-backed) runtimes. Well-suited to bursty or unpredictable workloads; accepts cold-start latency as the trade-off.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "gcp-cloud-functions"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 2M invocations/month, 400,000 GB-seconds, 200,000 GHz-seconds.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents small applications staying within the generous free tier (2M invocations, 400K GB-seconds, 200K GHz-seconds monthly). This covers typical development, testing, and low-traffic production workloads. Max $500 represents moderate production usage scenarios: ~10M invocations/month with 512MB memory, 0.5-second execution time, resulting in approximately $40 for invocations + $200 for compute time + $100 for networking/outbound data transfer. High-traffic scenarios (50M+ invocations) could exceed this range. Costs scale with: invocation count ($0.40 per million beyond free tier), GB-seconds ($0.0000025), GHz-seconds ($0.0000100), and networking ($0.12/GB egress).",
+      "adoptionCost": "Medium-high complexity adoption cost. Requires understanding event-driven architecture, function lifecycle, cold starts, and state management patterns. Development team needs to learn: function deployment/configuration (4-8 hours), event triggers and integrations (8-12 hours), monitoring/logging with Cloud Logging (4-6 hours), IAM and security best practices (6-10 hours), CI/CD pipeline setup (8-16 hours), and architectural refactoring from traditional apps to serverless patterns (16-24 hours). Total estimated 46-76 hours at $50-75/hour blended rate. With AI coding assistants reducing implementation time by 30-40%, practical cost is $1500. Additional complexity from managing function cold starts, connection pooling, and stateless design patterns.",
+      "licenseCost": "GCP Cloud Functions is a fully managed pay-per-use service with no upfront license fees, subscription costs, or minimum commitments. Pricing is purely consumption-based (invocations + compute resources). No additional commercial licenses required for the core service. Teams only pay for actual usage beyond the free tier limits. Optional observability tools (beyond included Cloud Logging/Monitoring) or third-party APM solutions would be separate costs but are not required for basic operation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "GCP Cloud Functions inherently provides automatic scaling from zero to handle varying loads without manual intervention, scaling up during traffic spikes and down to zero during idle periods."
+    },
+    {
+      "capability": "reduced-idle-cost",
+      "confidence": "high",
+      "reasoning": "The pay-per-use model with automatic scale-to-zero means no charges during idle periods, directly providing cost reduction when functions are not invoked."
+    },
+    {
+      "capability": "event-driven-compute",
+      "confidence": "high",
+      "reasoning": "Cloud Functions is fundamentally an event-driven platform that executes code in response to events from various GCP services and HTTP requests."
+    },
+    {
+      "capability": "serverless-compute",
+      "confidence": "high",
+      "reasoning": "This pattern provides serverless compute infrastructure where users deploy code without managing servers, which is the fundamental value proposition of Cloud Functions."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "Cloud Functions requires event sources (HTTP triggers, Pub/Sub, Cloud Storage, Firestore, etc.) to invoke the functions. Without event sources, the functions cannot execute.",
+      "optional": false
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Cloud Functions are designed for stateless operations. Applications must be architected to be stateless or use external state management, as function instances are ephemeral and may be terminated at any time.",
+      "optional": false
+    },
+    {
+      "capability": "cold-start-latency",
+      "confidence": "high",
+      "reasoning": "Cloud Functions experience cold starts when scaling from zero or deploying new instances, making them unsuitable for latency-sensitive applications that cannot tolerate startup delays.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-microservices",
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "serverless",
+    "gcp",
+    "cloud-functions"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "GCP Cloud Functions is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "GCP Cloud Functions as a managed serverless platform typically achieves 99.9-99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Serverless functions include network overhead, invocation processing, and potential cold start latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "p99 latency includes cold start scenarios (1-3 seconds for most runtimes) plus event processing overhead."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Managed service automatically detects and recovers from instance failures within 1-2 minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "Default quota of 1000 concurrent instances with 60s max duration limits throughput to approximately 36M jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Serverless compute handles moderate read query throughput up to 50K QPS with auto-scaling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 20000,
+      "reason": "Serverless compute handles moderate write query throughput up to 20K QPS with auto-scaling."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GCP provides GDPR-compliant infrastructure; pattern is compatible with or without GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GCP offers HIPAA-compliant services including Cloud Functions under BAA; pattern supports both compliant and non-compliant workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with CCPA compliance requirements when paired with appropriate data handling practices."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Functions can support SOX compliance when combined with audit logging and access controls."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Stateless functions cannot maintain consistency guarantees; read-your-writes requires external coordination via databases."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": false,
+      "reason": "Cloud Functions are ephemeral and stateless; strict durability requires external persistent storage."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "gcp",
+      "reason": "GCP Cloud Functions is a GCP-specific serverless compute service."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "javascript",
+        "typescript",
+        "go",
+        "java",
+        "ruby",
+        "php",
+        "csharp"
+      ],
+      "reason": "GCP Cloud Functions supports these specific runtime languages across 1st and 2nd generation environments."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Cloud Functions is event-driven serverless compute suitable for APIs, workers, lightweight batch, data pipelines, and IoT."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without caching; caching can be added via external services like Memorystore."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Functions supports both synchronous HTTP triggers and asynchronous event sources like Pub/Sub."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports AI inference workloads within execution time and memory limits for lightweight models."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can serve single-tenant or multi-tenant applications depending on application design."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Cloud Functions have execution time limits (9 minutes for 2nd gen, 60 seconds for 1st gen) unsuitable for long-running batch jobs."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Serverless functions are stateless and ephemeral, not suitable for coordinating distributed transactions."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Functions can process real-time streaming events from sources like Pub/Sub but are not themselves streaming infrastructure."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compute-agnostic and can integrate with external vector search services but does not provide vector capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Stateless compute pattern integrates with external document stores like Firestore but does not provide storage."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Functions can integrate with key-value stores like Memorystore but do not provide storage themselves."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports integration with external graph databases but does not provide graph capabilities."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can process time-series data and integrate with time-series databases but do not provide storage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Functions can serve OLTP workloads via API triggers but also support analytical and batch event processing."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can support lightweight OLAP workloads within execution time limits but is primarily optimized for transactional patterns."
+    }
+  ],
+  "defaultConfig": {
+    "generation": "2nd",
+    "memory_mb": 256,
+    "timeout_seconds": 60,
+    "min_instances": 0,
+    "max_instances": 100,
+    "concurrency": 80,
+    "trigger_type": "http"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "generation": {
+        "type": "string",
+        "enum": [
+          "1st",
+          "2nd"
+        ],
+        "description": "Cloud Functions generation. 2nd gen offers longer timeouts (60min vs 9min), more instance sizes, traffic splitting, and Cloud Run integration. 1st gen has simpler pricing and broader trigger support."
+      },
+      "memory_mb": {
+        "type": "integer",
+        "enum": [
+          128,
+          256,
+          512,
+          1024,
+          2048,
+          4096,
+          8192,
+          16384
+        ],
+        "description": "Memory allocation in MB. Higher memory also increases CPU allocation. Affects cost directly (GB-seconds pricing)."
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3600,
+        "description": "Maximum execution time. 1st gen max: 540s (9min), 2nd gen max: 3600s (60min). Longer timeouts suit batch processing but increase cost risk."
+      },
+      "min_instances": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1000,
+        "description": "Minimum instances kept warm. 0 = true serverless with cold starts. >0 reduces latency but incurs idle costs. Critical for latency-sensitive APIs."
+      },
+      "max_instances": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3000,
+        "description": "Maximum concurrent instances. Limits cost exposure and prevents downstream overload. Consider rate limits of dependencies."
+      },
+      "concurrency": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 1000,
+        "description": "Requests per instance (2nd gen only). Higher concurrency reduces cold starts and costs but requires thread-safe code. Default 80 balances efficiency and safety."
+      },
+      "trigger_type": {
+        "type": "string",
+        "enum": [
+          "http",
+          "pubsub",
+          "storage",
+          "firestore",
+          "firebase"
+        ],
+        "description": "Event trigger type. HTTP for APIs/webhooks, Pub/Sub for async messaging, Storage for file processing, Firestore/Firebase for database events."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 100,
+      "reason": "At very low job volumes (<100/hour), serverless invocation overhead and cold starts may outweigh the benefits of pay-per-use pricing compared to a simple always-on instance.",
+      "message": "arch-serverless-pay-per-use--gcp-cloud-functions: peak jobs per hour is {actual} (<100). Serverless overhead may outweigh pay-per-use savings at this low volume."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At extremely low QPS (<1 req/s), the operational overhead of serverless architecture may not be justified compared to simpler deployment models.",
+      "message": "arch-serverless-pay-per-use--gcp-cloud-functions: peak read QPS is {actual} req/s (<1). At this low traffic, simpler deployment models may be more appropriate."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 10000,
+      "reason": "At sustained high QPS (>10K req/s), serverless pay-per-execution costs may exceed reserved capacity; analyze cost vs. performance trade-offs.",
+      "message": "arch-serverless-pay-per-use: peak read QPS is {actual} req/s (>10K). At sustained high throughput, pay-per-execution costs may exceed reserved compute instances. Evaluate cost model."
+    }
+  ]
+}

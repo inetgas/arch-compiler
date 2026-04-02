@@ -1,0 +1,354 @@
+{
+  "id": "genai-inference--anthropic",
+  "version": "1.0.0",
+  "title": "Anthropic Claude: GenAI Inference API (Claude Sonnet/Opus/Haiku)",
+  "description": "State-of-the-art AI models (Claude Sonnet 4.6, Opus 4.6, Haiku 4.5) via Anthropic API; strong safety focus; excellent reasoning and coding; competitive pricing; best-in-class for long-context analysis and code generation.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 600.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 10.0,
+      "max": 8000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "anthropic"
+    ],
+    "costNotes": "Competitive pricing with tiered model options. Claude Haiku is very cost-effective for high-volume tasks; Claude Sonnet balances quality and cost; Claude Opus is premium for complex reasoning. Implement token counting, prompt caching, and usage monitoring to control costs.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Pay-as-you-go token-based pricing creates variable costs. Min ($10): Small-scale usage with Claude Haiku (~50K tokens/day at $0.00025/1K input tokens). Max ($8,000): Heavy production usage with Claude Opus or Sonnet at scale (~1M tokens/day). Typical production chatbot with Claude Sonnet handling 100K tokens/day: $50-200/month. Anthropic's prompt caching feature can reduce costs significantly for repeated context patterns.",
+      "adoptionCost": "Low-to-medium complexity integration. Clean REST API with official Python and TypeScript SDKs enables rapid implementation. Basic integration: 2-3 hours ($200-300 at $100/hr dev rate). Production-ready implementation requires: error handling, rate limiting, token counting, prompt engineering, and cost controls (additional 3-6 hours, $300-600). Total: 5-9 hours. Slightly lower than OpenAI due to simpler API surface (no image generation to handle). No specialized ML expertise required.",
+      "licenseCost": "Pure consumption-based pricing model with no upfront license fees or subscriptions. Costs are entirely usage-based (pay-per-token). No ongoing free tier for production API use. Enterprise customers may negotiate volume discounts.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "genai-inference",
+      "confidence": "strong",
+      "reasoning": "Core capability - this pattern provides generative AI inference services via Anthropic's API including Claude Sonnet, Opus, and Haiku models."
+    },
+    {
+      "capability": "text-generation",
+      "confidence": "strong",
+      "reasoning": "Specific capability provided by all Claude models for generating text content across various use cases and formats."
+    },
+    {
+      "capability": "chat-completion",
+      "confidence": "strong",
+      "reasoning": "Conversational AI capability provided by Claude models for interactive dialogue and multi-turn conversations."
+    },
+    {
+      "capability": "embeddings",
+      "confidence": "high",
+      "reasoning": "Anthropic Claude models support semantic understanding and can be used in conjunction with embedding workflows for similarity and retrieval tasks."
+    },
+    {
+      "capability": "function-calling",
+      "confidence": "strong",
+      "reasoning": "Claude supports structured tool use (Anthropic's term for function calling) which enables the model to invoke external tools and return structured data."
+    },
+    {
+      "capability": "document-analysis",
+      "confidence": "strong",
+      "reasoning": "Claude models have strong vision and document reading capability, excelling at long-context document analysis, PDF processing, and structured data extraction."
+    },
+    {
+      "capability": "embedding-generation",
+      "confidence": "high",
+      "reasoning": "Anthropic's API can be used as part of embedding generation pipelines for semantic understanding and retrieval-augmented generation workflows."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "http-client",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "HTTP/REST client needed to communicate with Anthropic's API endpoints for all model interactions."
+    },
+    {
+      "capability": "secrets-management",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "API keys must be securely stored and retrieved to authenticate with Anthropic services and prevent unauthorized access."
+    },
+    {
+      "capability": "token-counting",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Token tracking is essential for cost management and staying within model context limits. Claude models have large context windows (up to 200K tokens) that require monitoring."
+    },
+    {
+      "capability": "cost-visibility",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Consumption-based pricing requires tracking API usage costs to prevent budget overruns and optimize spending across model tiers."
+    },
+    {
+      "capability": "rate-limiting",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Anthropic API has rate limits that need to be handled to prevent throttling and ensure smooth operation."
+    },
+    {
+      "capability": "error-handling",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "API calls may fail due to various reasons and need proper retry strategies and error recovery mechanisms."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "genai-inference--openai",
+      "genai-inference--fal",
+      "genai-inference--huggingface",
+      "genai-inference--replicate"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ai",
+    "genai",
+    "inference",
+    "claude",
+    "anthropic",
+    "text-generation",
+    "reasoning",
+    "coding",
+    "saas"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Pattern for public SaaS with widespread adoption; documentation freely available."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Anthropic's managed API service provides up to 99.99% availability SLA for production workloads."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "Anthropic API typical p95 latency for Claude Sonnet/Haiku inference is 500ms-2s; Haiku is faster, Opus is slower."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1500,
+      "reason": "Anthropic API p99 latency for complex Claude requests typically ranges 1.5-8 seconds depending on token count, model tier, and load."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Anthropic's global infrastructure and automatic failover enables recovery within 1-5 minutes for API service disruptions."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000,
+      "reason": "Anthropic API enterprise tier supports up to 1000 requests/second (3.6M per hour) with rate limit quotas."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Anthropic API is cloud-based SaaS accessible from any cloud provider or on-premises environments via HTTP."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "swift",
+        "dart",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Anthropic provides official SDKs for Python and TypeScript with community libraries available for all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-inference",
+        "cli"
+      ],
+      "reason": "Anthropic API is HTTP-based and callable from any platform that can make REST requests over HTTPS."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "anthropic"
+      ],
+      "reason": "Pattern specifically requires Anthropic as the backend provider."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern is specifically designed for AI/ML inference using Anthropic Claude models and requires this capability."
+    }
+  ],
+  "defaultConfig": {
+    "primary_model": "claude-sonnet-4-6",
+    "fallback_model": "claude-haiku-4-5",
+    "max_tokens": 8192,
+    "temperature": 1.0,
+    "enable_streaming": true,
+    "timeout_seconds": 60,
+    "retry_strategy": "exponential-backoff",
+    "service_auth_method": "api_key"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "primary_model": {
+        "type": "string",
+        "enum": [
+          "claude-opus-4-6",
+          "claude-sonnet-4-6",
+          "claude-haiku-4-5"
+        ],
+        "description": "Primary text generation model. claude-opus-4-6: highest quality for complex reasoning, most expensive; claude-sonnet-4-6: best performance/cost balance for most use cases; claude-haiku-4-5: fastest and cheapest for high-volume simple tasks."
+      },
+      "fallback_model": {
+        "type": "string",
+        "enum": [
+          "claude-haiku-4-5",
+          "none"
+        ],
+        "description": "Fallback model if primary fails or rate-limited. claude-haiku-4-5: fast and cheap fallback; none: fail without fallback."
+      },
+      "max_tokens": {
+        "type": "integer",
+        "minimum": 256,
+        "maximum": 8192,
+        "description": "Maximum tokens per response. Higher values allow longer responses but increase cost and latency. Claude models support large context windows up to 200K input tokens."
+      },
+      "temperature": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Sampling temperature (0-1). Anthropic recommends 1.0 as default. Lower values (0-0.3): deterministic, factual responses; Higher values (0.7-1.0): more varied and creative outputs."
+      },
+      "enable_streaming": {
+        "type": "boolean",
+        "description": "Stream responses token-by-token for better UX in interactive applications. Disable for batch processing or when full response needed before processing."
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 300,
+        "description": "API request timeout in seconds. Longer timeouts for complex prompts or long-context analysis; shorter for interactive applications."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "exponential-backoff",
+          "fixed-delay",
+          "none"
+        ],
+        "description": "Retry strategy for rate limits and transient failures. exponential-backoff: recommended for production; fixed-delay: simpler but less efficient; none: fail immediately."
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "api_key"
+        ],
+        "description": "Service credential method used to authenticate to the LLM provider API. Always api_key \u2014 stored in environment variable, never in code."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "Anthropic API has consumption-based pricing. At <10 jobs/hour, consider whether a cheaper or self-hosted alternative is more cost-effective.",
+      "message": "genai-inference--anthropic: peak_jobs_per_hour is {actual} (<10). Low-volume usage may not justify Anthropic API costs; consider cheaper alternatives or local models."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "Anthropic processes data on external servers. Sending PII to third-party APIs may violate compliance requirements (GDPR, HIPAA).",
+      "message": "genai-inference--anthropic: spec indicates PII handling, but Anthropic API processes data externally which may violate data residency or compliance requirements."
+    }
+  ]
+}

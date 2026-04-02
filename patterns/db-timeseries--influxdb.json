@@ -1,0 +1,488 @@
+{
+  "id": "db-timeseries--influxdb",
+  "version": "1.0.0",
+  "title": "Time-Series Database (InfluxDB)",
+  "description": "InfluxDB is a purpose-built open-source time-series database with high write throughput. Offers InfluxQL and Flux query languages, native downsampling, and retention policies. Best for: IoT telemetry, real-time analytics, monitoring systems, self-hosted deployments. Optimized for time-stamped data with tags and fields.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-timeseries--influxdb-cloud",
+      "db-timeseries--timescaledb",
+      "db-timeseries--timestream",
+      "db-timeseries--timescale-cloud"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "timeseries-database",
+      "confidence": "high",
+      "reasoning": "InfluxDB is a purpose-built time-series database system that stores, indexes, and queries time-stamped data with tags and fields, offering complete database capabilities beyond just storage."
+    },
+    {
+      "capability": "flux-query-language",
+      "confidence": "high",
+      "reasoning": "InfluxDB natively supports Flux as a functional data scripting language for querying, analyzing, and transforming time-series data, mentioned explicitly in the pattern description."
+    },
+    {
+      "capability": "influxql-query-language",
+      "confidence": "high",
+      "reasoning": "InfluxDB provides InfluxQL as an SQL-like query language for time-series data, explicitly mentioned alongside Flux in the pattern description as a core query capability."
+    },
+    {
+      "capability": "data-retention-policies",
+      "confidence": "high",
+      "reasoning": "InfluxDB offers native retention policies for automatic time-based data lifecycle management, explicitly highlighted in the pattern description as a key feature."
+    },
+    {
+      "capability": "data-downsampling",
+      "confidence": "high",
+      "reasoning": "Native downsampling capability is explicitly mentioned in the pattern description, allowing automatic reduction of data resolution over time for efficient storage and querying."
+    },
+    {
+      "capability": "continuous-queries",
+      "description": "Automatic downsampling with continuous queries",
+      "confidence": "medium",
+      "reasoning": "InfluxDB supports continuous queries for automatic downsampling and pre-aggregation of time-series data, enabling real-time data transformation and summarization."
+    },
+    {
+      "capability": "high-write-throughput",
+      "confidence": "high",
+      "reasoning": "The pattern description explicitly highlights high write throughput as a key characteristic, optimized for ingesting large volumes of time-stamped data from IoT telemetry and monitoring systems."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "persistent-storage",
+      "confidence": "high",
+      "reasoning": "InfluxDB requires underlying storage infrastructure to durably persist time-series data across database operations and restarts.",
+      "optional": false
+    },
+    {
+      "capability": "compute",
+      "confidence": "high",
+      "reasoning": "Database workloads require CPU and memory resources for data ingestion, query processing, compaction, and downsampling operations.",
+      "optional": false
+    }
+  ],
+  "preferredProviders": [
+    "influxdb-cloud"
+  ],
+  "defaultConfig": {
+    "deployment_type": "self-hosted",
+    "retention_days": 90,
+    "shard_duration_hours": 168,
+    "compression_enabled": true,
+    "query_language": "flux",
+    "replication_factor": 1,
+    "write_consistency": "one",
+    "service_auth_method": "token"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "deployment_type": {
+        "type": "string",
+        "enum": [
+          "self-hosted",
+          "influxdb-cloud"
+        ],
+        "description": "Self-hosted for full control and cost optimization, or InfluxDB Cloud for managed service with automatic scaling"
+      },
+      "retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3650,
+        "description": "Data retention policy duration in days. Shorter retention reduces storage costs, longer retention enables historical analysis"
+      },
+      "shard_duration_hours": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 8760,
+        "description": "Shard group duration in hours (typically 1 week = 168). Shorter shards improve deletion performance, longer shards reduce metadata overhead"
+      },
+      "compression_enabled": {
+        "type": "boolean",
+        "description": "Enable TSI (Time Series Index) compression to reduce disk usage at slight CPU cost for reads/writes"
+      },
+      "query_language": {
+        "type": "string",
+        "enum": [
+          "flux",
+          "influxql"
+        ],
+        "description": "Flux is modern functional language with advanced transformations; InfluxQL is SQL-like legacy language, simpler but less powerful"
+      },
+      "replication_factor": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 5,
+        "description": "Number of data copies across cluster nodes. Higher values increase availability and read performance but consume more storage"
+      },
+      "write_consistency": {
+        "type": "string",
+        "enum": [
+          "one",
+          "quorum",
+          "all"
+        ],
+        "description": "Write acknowledgment level: 'one' for speed, 'quorum' for balance, 'all' for maximum durability"
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "token",
+          "username_password"
+        ],
+        "description": "InfluxDB authentication method. 'token' (API token) is recommended; 'username_password' is legacy InfluxDB 1.x style."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 for self-hosted InfluxDB OSS on existing infrastructure or InfluxDB Cloud free tier (up to 30 days retention, limited write/query limits). Max $500 represents mid-sized production deployments: self-hosted on cloud VMs ($100-200 for r5.large/similar with storage) or InfluxDB Cloud usage-based pricing for moderate IoT/monitoring workloads (10-50GB data retention, 100K-500K writes/sec). Enterprise production scenarios with high cardinality data and large clusters can exceed $2000+/month but $500 captures typical SMB monitoring/IoT use cases.",
+      "adoptionCost": "Medium-high complexity. Requires learning time-series concepts (tags vs fields, measurement schemas, retention policies), InfluxQL or Flux query language (different from SQL), and understanding cardinality implications for performance. Setup involves configuring retention policies, continuous queries/tasks for downsampling, and integration with collectors (Telegraf, custom agents). Data modeling is critical - poor schema design causes severe performance issues. Team needs 2-4 weeks for proper implementation including monitoring migration, query optimization, and establishing best practices. Higher than standard SQL databases due to specialized domain knowledge.",
+      "licenseCost": "InfluxDB OSS is open-source (MIT license) with no licensing costs. InfluxDB Enterprise and Cloud offer commercial features (clustering, high availability, enhanced security) but free tier and OSS version are production-capable for most use cases. No upfront license purchase required - Cloud operates on consumption-based pricing included in monthly costs, Enterprise uses annual subscription but not mandatory.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "time-series",
+    "metrics",
+    "iot"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "InfluxDB Enterprise clustering with automated failover achieves up to 99.9% availability as a ceiling."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "InfluxDB as a time-series database achieves p95 latency of at least 5ms for write and query operations."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "InfluxDB p99 latency is at least 20ms under typical time-series workload conditions."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "InfluxDB Enterprise with automated failover achieves 5-10 minute RTO for recovery from node failures."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "InfluxDB Enterprise with synchronous replication across nodes achieves near-zero RPO of approximately 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "InfluxDB supports high write throughput up to 100k writes/second (360M per hour) as a ceiling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "InfluxDB handles up to 50k read queries per second for time-series analytical queries."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "InfluxDB is optimized for high write throughput up to 100k writes per second for time-stamped data ingestion."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": false,
+      "reason": "InfluxDB Enterprise provides comprehensive audit logging for queries, writes, and configuration changes, but OSS version does not."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "InfluxDB supports multi-tenancy through database-per-tenant or tag-based row-level isolation for time-series data segmentation."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB can store any data including PII with appropriate security controls and encryption at rest and in transit."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB supports GDPR compliance through retention policies, data deletion APIs, and access controls for time-series data."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB can meet HIPAA requirements with encryption at rest and in transit, audit logging, and access controls when properly configured."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB supports CCPA compliance through data retention policies, user data deletion capabilities, and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB supports SOX compliance through audit logging, data immutability features, and access control mechanisms for financial time-series data."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB provides eventual consistency by default but supports read-your-writes through single-node writes and consistent query routing."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB provides strict durability through write-ahead log (WAL) with fsync before acknowledging writes when configured."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "InfluxDB can be self-hosted on any cloud provider or on-premises infrastructure as a portable time-series database."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "InfluxDB is a database infrastructure component accessed via HTTP API and client libraries available for all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "web",
+        "mobile",
+        "iot",
+        "agnostic"
+      ],
+      "reason": "InfluxDB is a backend time-series database suitable for API services, IoT telemetry, batch processing, and data pipeline workloads."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": true,
+      "reason": "InfluxDB is specifically a time-series database and requires the time_series_db feature flag to be true for activation."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB can be used with or without external caching layers depending on application read patterns and query frequency."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB works with both synchronous write patterns and async messaging systems like Kafka for time-series data ingestion."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB can store time-series data for AI/ML training and inference workloads or be used independently of AI features."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB supports multi-tenant deployments through database-per-tenant or tag-based isolation, but also works for single-tenant applications."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB supports both real-time and batch ingestion of time-series data through continuous queries and bulk write APIs."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB does not natively support distributed transactions but can participate in eventual consistency patterns with other systems."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB excels at real-time streaming data ingestion for IoT and monitoring use cases but also supports batch workloads."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB is a time-series database and does not provide vector search capabilities but can coexist with vector databases."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB is a time-series database, not a document store, but can coexist with document databases in polyglot persistence architectures."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB is a time-series database with tag-based indexing, not a key-value store, but can complement key-value stores in architectures."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB is a time-series database without graph query capabilities but can coexist with graph databases for relationship data."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB is optimized for time-series writes and queries, not traditional OLTP, but can support transactional inserts alongside OLAP queries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "InfluxDB supports analytical queries over time-series data with downsampling and aggregations, fitting OLAP patterns, but also handles operational writes."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 10,
+      "reason": "InfluxDB is optimized for high-volume time-series ingestion. At <10 writes/s, a simpler general-purpose database may be more appropriate.",
+      "message": "db-timeseries--influxdb: peak write QPS is {actual} writes/s (<10). InfluxDB's time-series optimizations may be overkill for this low write volume; consider a simpler database."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 36000,
+      "reason": "InfluxDB excels at high-frequency data ingestion. At <10 writes/s (36k/hour), operational overhead may outweigh benefits.",
+      "message": "db-timeseries--influxdb: peak ingestion is {actual} writes/hour (<36k, or ~10/s). Time-series database overhead may not be justified at this scale."
+    }
+  ]
+}

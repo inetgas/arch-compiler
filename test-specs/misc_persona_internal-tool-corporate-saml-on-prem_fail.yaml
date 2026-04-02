@@ -1,0 +1,26 @@
+# Misc Persona - Internal Tool on Corporate Network (SAML + On-Prem)
+#
+# An internal HR web app on an on-premise deployment with TypeScript and SAML
+# authentication, 95% availability. On-prem deployments require audit logging
+# to be enabled, which is not set in this spec. Additionally, SAML auth on
+# on-prem without proper security configuration may trigger compiler rejections.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - on-prem cloud requires audit_logging to be enabled
+#   - compiler rejects due to missing mandatory security configuration for on-prem
+
+project:
+  name: Employee Directory
+  domain: hr
+functional:
+  summary: Internal HR system
+constraints:
+  platform: web
+  cloud: on-prem
+  language: typescript
+nfr:
+  availability:
+    target: 0.95
+  security:
+    auth: saml

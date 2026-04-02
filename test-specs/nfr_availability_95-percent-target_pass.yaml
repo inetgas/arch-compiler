@@ -1,0 +1,24 @@
+# NFR Availability - 95% Target (Low)
+#
+# An agnostic API spec with a low 95% availability target. This is below the
+# threshold for high-availability patterns, testing that the compiler selects
+# only baseline reliability patterns and does not require HA infrastructure
+# when availability requirements are modest.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - basic availability patterns are selected
+#   - high-availability patterns requiring >= 99.9% are not selected
+
+nfr:
+  availability:
+    target: 0.95
+project:
+  name: Low Availability (95%)
+  domain: test
+functional:
+  summary: 'Test scenario: Low Availability (95%)'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

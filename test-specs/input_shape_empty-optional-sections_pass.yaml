@@ -1,0 +1,20 @@
+# Input Shape - Empty Optional Sections
+#
+# A spec with all optional sections (constraints, nfr, cost) present but
+# completely empty ({}). This exercises the compiler's handling of empty
+# section objects versus missing sections, which should be treated as
+# equivalent to defaults for all fields within those sections.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - compiler treats empty sections as all-defaults
+#   - no schema errors for empty but present sections
+
+constraints: {}
+nfr: {}
+cost: {}
+project:
+  name: Empty Sections
+  domain: test
+functional:
+  summary: 'Test scenario: Empty Sections'

@@ -1,0 +1,437 @@
+{
+  "id": "async-event-driven--azure",
+  "version": "1.0.0",
+  "title": "Asynchronous Event-Driven Architecture (Azure Service Bus/Event Grid)",
+  "description": "Event-driven architecture on Azure using Service Bus (reliable message queuing and topics with sessions) and Event Grid (event routing from Azure resources). Decouples producers from consumers via managed messaging; embraces eventual consistency with configurable dead-letter and retry policies.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 3000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "azure"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Azure Service Bus and Event Grid pricing varies significantly by throughput and features. Minimum ($50): Basic tier Service Bus with low message volume (~1M messages/month) or Event Grid with minimal custom topics (~100K operations). Maximum ($3000): Standard tier Service Bus with high throughput (100M+ messages/month), premium namespaces for critical workloads, multiple Event Grid domains with high event volume (1B+ operations), plus storage costs for dead-letter queues and message retention. Additional costs include: Service Bus messaging operations ($0.05 per million), Event Grid operations ($0.60 per million), storage for event schemas, and data transfer egress. Production workloads typically run $200-800/month for mid-scale applications.",
+      "adoptionCost": "High-medium complexity pattern requiring significant architectural changes. Implementation involves: (1) Refactoring synchronous code to asynchronous event-driven model (40-80 hours), (2) Designing event schemas and contracts (16-24 hours), (3) Implementing publishers and subscribers with proper error handling, retry logic, and dead-letter queue management (40-60 hours), (4) Setting up monitoring, distributed tracing, and debugging infrastructure for async flows (24-32 hours), (5) Team training on eventual consistency patterns and debugging distributed systems (16-24 hours). Total: ~150-220 hours at blended rate of $50-75/hour with AI assistance = $3000-4000. Complexity factors include paradigm shift from request-response to fire-and-forget, handling message ordering and idempotency, and debugging non-linear execution flows.",
+      "licenseCost": "Azure Service Bus and Event Grid are pay-as-you-go PaaS services with no upfront licensing fees. No commercial software licenses required - all costs are consumption-based and included in monthly runtime costs. Organizations may optionally purchase Azure support plans ($29-1000/month) but these are not mandatory for pattern adoption.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "temporal-decoupling",
+      "confidence": "strong",
+      "reasoning": "Event-driven architectures inherently provide temporal decoupling by allowing producers and consumers to operate independently without requiring both to be active simultaneously. Messages are persisted in the broker until consumed."
+    },
+    {
+      "capability": "resilience-to-spikes",
+      "confidence": "medium",
+      "reasoning": "The asynchronous nature with message queuing provides natural buffering against traffic spikes, allowing consumers to process messages at their own pace without overwhelming downstream systems."
+    },
+    {
+      "capability": "pub-sub",
+      "confidence": "high",
+      "reasoning": "This pattern fundamentally delivers publish/subscribe capabilities, enabling one-to-many event distribution where publishers emit events without knowledge of subscribers, and multiple subscribers can independently consume the same events."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "high",
+      "reasoning": "Event-driven architectures embrace eventual consistency by design, as events propagate asynchronously through the system and different components reach a consistent state over time rather than immediately."
+    },
+    {
+      "capability": "streaming-platform",
+      "confidence": "high",
+      "reasoning": "Azure Service Bus/Event Grid/Event Hubs provide the streaming platform for this pattern."
+    },
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "Azure Event Grid and Event Hubs serve as event sources in this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "message-queue",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Azure Service Bus and Event Grid are message brokers that are fundamental infrastructure requirements for this pattern. Without a broker, there's no mechanism to route events between publishers and subscribers."
+    },
+    {
+      "capability": "idempotent-consumption",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Event-driven systems must handle duplicate message delivery scenarios (at-least-once delivery semantics). Consumers need idempotent processing logic to ensure correctness when messages are redelivered due to failures or retries."
+    },
+    {
+      "capability": "dead-letter-queue",
+      "confidence": "high",
+      "reasoning": "Production-grade event-driven systems require dead-letter queues to handle poison messages and processing failures, ensuring messages that cannot be processed don't block the system and can be investigated separately.",
+      "optional": false
+    },
+    {
+      "capability": "observability-baseline",
+      "confidence": "high",
+      "reasoning": "Tracking message flow, identifying bottlenecks, and debugging failures in async systems is significantly more complex than synchronous patterns, making comprehensive observability critical for operational success.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "async-event-driven",
+      "async-event-driven--aws",
+      "async-event-driven--gcp"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "integration",
+    "events",
+    "messaging",
+    "azure"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Azure Service Bus Premium with zone redundancy can achieve up to 99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Event-driven architecture introduces message broker latency and async processing overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Tail latencies include queue backpressure, retry logic, and message broker delays."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Async event-driven systems require time for queue recovery, consumer restart, and message replay."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Azure Service Bus Premium tier can handle up to 100k messages/second which equals 360M jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 5,
+      "reason": "Event-driven architecture adds async overhead (100ms+ latency, message routing, consumer scaling). At very low throughput, simpler synchronous request-response patterns are more appropriate."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports optional audit logging through Azure Monitor and diagnostic settings."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Event-driven architecture supports all tenant isolation models through topic filtering and routing."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Service Bus supports GDPR compliance with data residency, encryption, and deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Service Bus is HIPAA compliant when configured with BAA and appropriate security controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports CCPA compliance through Azure's data protection and privacy features."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Service Bus supports SOX compliance with audit trails and immutable message logging."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Event-driven pub/sub architecture inherently provides eventual consistency without read-your-writes guarantees."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both strict durability with persistent queues and relaxed durability with in-memory options."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "azure",
+      "reason": "Pattern is Azure-specific, requiring Azure Service Bus and Azure Event Grid services."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Azure messaging SDKs support all major programming languages for event producers and consumers."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Event-driven architecture is a universal integration pattern supporting all platform types."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern fundamentally requires async messaging as it is built on Azure Service Bus and Event Grid."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven systems can trigger AI inference workloads or operate without them."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both single-tenant and multi-tenant scenarios with topic-based routing."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Consumers can process events individually or batch them for efficiency."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both eventual consistency and distributed transaction patterns like sagas."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure Event Grid provides real-time event streaming while Service Bus supports traditional queuing."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may include vector search capabilities but pattern does not require them."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may persist to document stores but pattern does not dictate storage technology."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may use key-value stores for state management but it is optional."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event processing may involve graph databases but pattern does not require them."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event data may be stored in time-series databases but pattern is storage-agnostic."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may handle OLTP workloads but pattern supports all workload types."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event streams can feed OLAP systems for analytics but pattern does not require them."
+    }
+  ],
+  "defaultConfig": {
+    "messaging_service": "service-bus",
+    "message_pattern": "pub-sub",
+    "delivery_guarantee": "at-least-once",
+    "dead_letter_enabled": true,
+    "session_enabled": false,
+    "partitioning_enabled": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "messaging_service": {
+        "type": "string",
+        "enum": [
+          "service-bus",
+          "event-grid",
+          "event-hubs"
+        ],
+        "description": "Azure messaging service: Service Bus for enterprise messaging with queues/topics, Event Grid for lightweight event routing with filtering, Event Hubs for high-throughput streaming scenarios"
+      },
+      "message_pattern": {
+        "type": "string",
+        "enum": [
+          "pub-sub",
+          "queue",
+          "competing-consumers"
+        ],
+        "description": "Messaging pattern: pub-sub for broadcast to multiple subscribers, queue for point-to-point delivery, competing-consumers for load distribution across workers"
+      },
+      "delivery_guarantee": {
+        "type": "string",
+        "enum": [
+          "at-least-once",
+          "at-most-once",
+          "exactly-once"
+        ],
+        "description": "Message delivery semantics: at-least-once ensures reliability but requires idempotency, at-most-once for best-effort delivery, exactly-once for Service Bus sessions with duplicate detection"
+      },
+      "dead_letter_enabled": {
+        "type": "boolean",
+        "description": "Enable dead-letter queue for messages that fail processing after max delivery attempts, essential for debugging and handling poison messages"
+      },
+      "session_enabled": {
+        "type": "boolean",
+        "description": "Enable sessions for ordered message processing and stateful workflows (Service Bus only), adds overhead but guarantees FIFO ordering per session"
+      },
+      "partitioning_enabled": {
+        "type": "boolean",
+        "description": "Enable partitioning for higher throughput and availability across multiple message brokers, but prevents ordered delivery and sessions"
+      }
+    }
+  },
+  "warn_nfr": []
+}

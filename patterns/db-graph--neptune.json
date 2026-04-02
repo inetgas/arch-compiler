@@ -1,0 +1,473 @@
+{
+  "id": "db-graph--neptune",
+  "version": "1.0.0",
+  "title": "Graph Database (Amazon Neptune)",
+  "description": "Amazon Neptune is a fully-managed graph database supporting both property graphs (Gremlin) and RDF graphs (SPARQL).",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-graph--neo4j-aura"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "graph-database",
+      "confidence": "high",
+      "reasoning": "Amazon Neptune is fundamentally a fully-managed graph database service, providing graph database functionality as its core offering."
+    },
+    {
+      "capability": "graph-storage",
+      "description": "AWS managed graph storage with Gremlin and SPARQL support",
+      "confidence": "medium",
+      "reasoning": "Amazon Neptune provides the underlying storage mechanism for graph data structures with vertices and edges, managing both property graphs and RDF graphs."
+    },
+    {
+      "capability": "gremlin-api",
+      "confidence": "high",
+      "reasoning": "Amazon Neptune natively supports Apache TinkerPop Gremlin for property graph queries, this is a key capability consumers would depend on."
+    },
+    {
+      "capability": "sparql-api",
+      "confidence": "high",
+      "reasoning": "Amazon Neptune supports SPARQL for RDF graph queries, enabling semantic web applications - this is a distinct query capability."
+    },
+    {
+      "capability": "high-availability",
+      "confidence": "high",
+      "reasoning": "Amazon Neptune automatically replicates data across multiple Availability Zones within a region, providing built-in high availability with automatic failover to read replicas."
+    },
+    {
+      "capability": "read-replicas",
+      "description": "Up to 15 read replicas for query scaling",
+      "confidence": "medium",
+      "reasoning": "Amazon Neptune supports up to 15 read replicas for scaling read operations, enabling horizontal read scalability."
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "high",
+      "reasoning": "As a fully-managed service, Neptune handles provisioning, patching, backup, and recovery, eliminating operational overhead."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "vpc-network",
+      "confidence": "high",
+      "reasoning": "Amazon Neptune runs within a VPC and requires VPC configuration for network isolation and security.",
+      "optional": true
+    },
+    {
+      "capability": "iam-authentication",
+      "confidence": "high",
+      "reasoning": "Amazon Neptune integrates with AWS IAM for database authentication and access control.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "query_language": "gremlin",
+    "instance_type": "db.r5.large",
+    "read_replicas": 1,
+    "backup_retention_days": 7,
+    "high_availability": true,
+    "encryption_at_rest": true,
+    "service_auth_method": "iam_role",
+    "ssl_enforced": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "query_language": {
+        "type": "string",
+        "enum": [
+          "gremlin",
+          "sparql",
+          "both"
+        ],
+        "description": "Query language support: Gremlin for property graphs (labeled nodes/edges), SPARQL for RDF graphs (semantic triples), or both for dual-model workloads"
+      },
+      "instance_type": {
+        "type": "string",
+        "enum": [
+          "db.t3.medium",
+          "db.r5.large",
+          "db.r5.xlarge",
+          "db.r5.2xlarge",
+          "db.r5.4xlarge",
+          "db.r5.8xlarge"
+        ],
+        "description": "Amazon Neptune instance type: t3 for dev/test (burstable), r5 for production (memory-optimized). Larger instances support more concurrent queries and graph traversals"
+      },
+      "read_replicas": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 15,
+        "description": "Number of read replica instances for scaling read throughput and improving availability across AZs"
+      },
+      "backup_retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 35,
+        "description": "Automatic backup retention period in days. Longer retention increases storage costs but provides more recovery options"
+      },
+      "high_availability": {
+        "type": "boolean",
+        "description": "Enable multi-AZ deployment with automatic failover. Recommended for production workloads requiring 99.99% availability"
+      },
+      "encryption_at_rest": {
+        "type": "boolean",
+        "description": "Enable encryption at rest using AWS KMS. Required for compliance with security standards (HIPAA, PCI-DSS)"
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "iam_role",
+          "iam_user"
+        ],
+        "description": "Amazon Neptune uses IAM database authentication. 'iam_role' (EC2/Lambda execution role) is preferred over static IAM user credentials."
+      },
+      "ssl_enforced": {
+        "type": "boolean",
+        "enum": [
+          true
+        ],
+        "description": "Neptune enforces TLS/SSL on all connections. Cannot be disabled."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 340.0,
+      "max": 8500.0
+    },
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Amazon Neptune pricing: Min represents smallest production setup with db.t3.medium instance ($0.348/hr \u00d7 730hrs = $254) + 100GB storage ($0.10/GB = $10) + I/O costs ($0.20/million requests \u2248 $76) totaling ~$340/month. Max represents production cluster with db.r5.2xlarge primary ($2.90/hr = $2,117) + 2 read replicas ($2.90/hr \u00d7 2 = $4,234) + 1TB storage ($100) + backup storage 500GB ($50) + higher I/O costs ($1,999) totaling ~$8,500/month. Neptune has no free tier and requires 24/7 runtime. Dev environments typically $340-700/month, production $2,000-8,500/month depending on scale.",
+      "adoptionCost": "High complexity adoption: Graph database expertise is specialized - team needs to learn graph modeling concepts (vertices, edges, properties), Gremlin/SPARQL query languages (steep learning curve, 40-60 hours training), data migration from relational to graph structures (complex transformation, 60-100 hours), AWS Neptune-specific features (IAM integration, VPC setup, backup strategies, 20-30 hours). Schema design for graphs differs fundamentally from relational databases. Implementation includes: proof-of-concept (80 hours), production setup with high availability (40 hours), query optimization (40 hours), monitoring setup (20 hours). Total ~240-280 hours at $100-150/hour blended rate = $3,000-4,000. Graph databases represent paradigm shift requiring significant learning investment.",
+      "licenseCost": "No separate license cost - Neptune is a fully-managed AWS service with pay-as-you-go pricing model. All costs are usage-based (compute, storage, I/O) included in monthly operational expenses. No upfront licenses, enterprise agreements, or per-user fees required. AWS account is the only prerequisite.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "graph",
+    "relationships",
+    "traversal"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Amazon Neptune managed service with Multi-AZ deployment supports up to 99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Graph database queries have inherent traversal complexity requiring at least 50ms p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Complex graph traversals and network overhead establish a minimum 200ms p99 latency floor."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 3,
+      "reason": "Amazon Neptune automated Multi-AZ failover typically completes in 3-5 minutes for write instance recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "Amazon Neptune instance capacity limits peak throughput to approximately 10,000 queries per second or 36M per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Amazon Neptune graph database can handle up to approximately 5,000 read queries per second with read replicas."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Amazon Neptune supports up to approximately 10,000 write queries per second on the primary instance."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune integrates with CloudWatch Logs and CloudTrail for audit logging when enabled."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Amazon Neptune supports all tenant isolation strategies from row-level security to separate database instances."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports PII storage with encryption at rest via KMS and encryption in transit via TLS."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports GDPR compliance with encryption, data retention controls, and right to deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune is HIPAA eligible with proper configuration including encryption at rest and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports CCPA compliance requirements through encryption, access controls, and data deletion features."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports SOX compliance through encryption, audit logging, and access control mechanisms."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports read-your-writes consistency when reading from the writer instance or eventually consistent reads from replicas."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune provides strict durability through synchronous Multi-AZ replication and continuous S3 backups."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "Amazon Neptune is an AWS-specific managed graph database service."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Amazon Neptune is accessible via Gremlin and SPARQL APIs from any programming language with appropriate client libraries."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Amazon Neptune is a backend database service accessible from any platform type via network connections."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune can be used with or without an external caching layer depending on application read patterns."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune can be integrated with async messaging systems or used synchronously depending on architecture."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune can store graph data for AI/ML applications or be used for non-AI workloads."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports both single-tenant and multi-tenant application architectures with various isolation strategies."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune can handle both real-time queries and batch graph processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports ACID transactions within a single graph and can participate in distributed patterns."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports change streams for real-time data synchronization and can be used without streaming."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune can be used alongside vector search systems or independently for graph-only workloads."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune is a graph database but can coexist with document stores in hybrid architectures."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune focuses on graph relationships but can be used alongside key-value stores in polyglot persistence."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": true,
+      "reason": "Amazon Neptune is specifically a graph database requiring the graph_database feature flag to be enabled."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune can model time-series data in graphs or be used for non-temporal graph data."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports transactional graph queries (OLTP) and analytical graph workloads."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Amazon Neptune supports both analytical graph queries (OLAP) and transactional workloads depending on use case."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "Graph databases have operational overhead (Multi-AZ, managed infrastructure); at very low QPS, simpler relational or NoSQL solutions may be more cost-effective.",
+      "message": "db-graph--neptune: peak read QPS is {actual} req/s (<1). Amazon Neptune's infrastructure overhead may not be justified at this scale; consider simpler storage options."
+    }
+  ]
+}

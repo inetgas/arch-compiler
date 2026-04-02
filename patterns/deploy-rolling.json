@@ -1,0 +1,375 @@
+{
+  "id": "deploy-rolling",
+  "version": "1.0.0",
+  "title": "Rolling Deployment",
+  "description": "Gradually replace instances; simplest for stateless services; requires backward-compatible changes.",
+  "types": [
+    "deploy",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Rolling deployment is a deployment strategy pattern, not infrastructure. It describes how to update running instances gradually (replace 1-2 instances at a time) rather than all at once. The actual infrastructure costs (compute, load balancers, orchestration) are the same whether you use rolling, blue-green, or recreate deployments. The pattern itself adds no incremental monthly cost - you pay for the base infrastructure regardless of deployment strategy. During deployments, there may be brief periods of running both old and new versions simultaneously, but this is temporary (minutes to hours) and typically covered by existing capacity buffers.",
+      "adoptionCost": "Rolling deployment is relatively straightforward but requires proper implementation of health checks, graceful shutdown, and deployment orchestration. Implementation complexity: (1) Configure deployment tool (Kubernetes rolling update, AWS ECS rolling deployment, or CI/CD pipeline) - 4-8 hours; (2) Implement proper health check endpoints and readiness probes - 4-6 hours; (3) Configure graceful shutdown handling to drain connections - 4-6 hours; (4) Set up backward-compatible API versioning strategy - 6-10 hours; (5) Test rollback procedures and create runbooks - 4-6 hours. Total: 22-36 hours at $50-100/hour blended rate with AI assistance = $800 average. Requires understanding of container orchestration or deployment tools but is simpler than blue-green or canary deployments since it doesn't require duplicate infrastructure.",
+      "licenseCost": "Rolling deployment is a native feature in open-source orchestration platforms (Kubernetes, Docker Swarm, Nomad) and cloud-native services (AWS ECS, Azure App Service, GCP App Engine). No additional license required. Cloud providers include rolling deployment capabilities in standard service pricing. CI/CD tools that support rolling deployments (GitLab CI, GitHub Actions, Jenkins) are either open-source or include this feature in base pricing without additional licensing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "zero-downtime-deployment",
+      "confidence": "high",
+      "reasoning": "Rolling deployments gradually replace instances while keeping other instances running, ensuring the service remains available throughout the deployment process. Traffic is continuously served by healthy instances during the rollout."
+    },
+    {
+      "capability": "gradual-rollout",
+      "confidence": "high",
+      "reasoning": "This pattern involves incremental replacement of instances in phases, making it a gradual deployment strategy. Instances are replaced one or a few at a time rather than all at once."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "backward-compatibility",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Rolling deployments require new and old versions to coexist temporarily during the rollout, making backward-compatible changes essential for proper operation."
+    },
+    {
+      "capability": "health-check",
+      "confidence": "high",
+      "reasoning": "Rolling deployments must verify that new instances are healthy and ready to serve traffic before terminating old instances and proceeding with the next replacement.",
+      "optional": true
+    },
+    {
+      "capability": "load-balancing",
+      "confidence": "high",
+      "reasoning": "A load balancer is required to route traffic away from instances being replaced and distribute it to healthy instances during the rolling deployment process.",
+      "optional": false
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Rolling deployments are simplest and most effective for stateless services where instances can be replaced without concern for maintaining session state or data consistency.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "deploy-blue-green",
+      "deploy-canary"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "deploy",
+    "release"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Rolling deployment can achieve up to four nines availability with proper health checks and load balancing."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Rolling deployment can detect issues and rollback within 5-30 minutes depending on health check intervals."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Rolling deployment suitable for throughput up to 100k jobs/hour; higher throughput may require canary or blue-green."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Rolling deployment is a deployment strategy that works across all cloud providers and on-premises environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Rolling deployment is a deployment strategy pattern that works with any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Rolling deployments work for stateless or near-stateless services that can run multiple instances concurrently."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without caching layers."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without async messaging systems."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works for AI inference services as long as they are stateless and backward-compatible."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without multi-tenancy features."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Rolling deployment is designed for long-running services, not batch jobs which have discrete start/end lifecycles."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Rolling deployment requires backward-compatible changes; distributed transactions make version compatibility extremely difficult."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without real-time streaming features."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without document store databases."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without key-value store databases."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without graph databases."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without time-series databases."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without OLTP workloads."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Rolling deployment works with or without OLAP workloads."
+    }
+  ],
+  "defaultConfig": {
+    "batch_size": "25_percent",
+    "health_check_grace_period": 30,
+    "rollback_on_failure": true,
+    "deployment_strategy": "replace_one_by_one",
+    "max_unavailable": "0_percent"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "batch_size": {
+        "type": "string",
+        "enum": [
+          "10_percent",
+          "25_percent",
+          "50_percent",
+          "one_at_a_time",
+          "all_at_once"
+        ],
+        "description": "How many instances to replace simultaneously. Smaller batches = safer but slower; larger batches = faster but riskier. 'one_at_a_time' is safest for critical services."
+      },
+      "health_check_grace_period": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 300,
+        "description": "Seconds to wait for new instances to pass health checks before proceeding. Longer periods reduce false failures but slow deployment."
+      },
+      "rollback_on_failure": {
+        "type": "boolean",
+        "description": "Automatically revert to previous version if health checks fail. Recommended for production; disable for testing/staging environments."
+      },
+      "deployment_strategy": {
+        "type": "string",
+        "enum": [
+          "replace_one_by_one",
+          "rolling_batch",
+          "canary_first"
+        ],
+        "description": "Replacement pattern: 'replace_one_by_one' for maximum safety, 'rolling_batch' for balanced speed/safety, 'canary_first' to test one instance before full rollout."
+      },
+      "max_unavailable": {
+        "type": "string",
+        "enum": [
+          "0_percent",
+          "10_percent",
+          "25_percent"
+        ],
+        "description": "Maximum percentage of instances that can be unavailable during deployment. '0_percent' maintains full capacity but requires extra resources; higher values allow faster deploys with temporary capacity reduction."
+      }
+    }
+  },
+  "warn_nfr": []
+}

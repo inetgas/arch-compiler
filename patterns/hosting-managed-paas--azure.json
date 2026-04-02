@@ -1,0 +1,450 @@
+{
+  "id": "hosting-managed-paas--azure",
+  "version": "1.0.0",
+  "title": "Managed Web/API Hosting on Azure App Service",
+  "description": "Deploy APIs and background workers on Azure App Service with automatic scaling, deployment slots for zero-downtime releases, and built-in CI/CD integration. Supports Windows and Linux runtimes, custom domains, and App Service Environment for vnet isolation.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 150.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "azure"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier (F1) includes 60 CPU minutes/day and 1GB disk; suitable only for development/testing. Basic tier (~$13/month) required for always-on production apps.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 represents Azure App Service Free tier (F1) with 60 CPU minutes/day, 1GB RAM, and 1GB disk - suitable only for development/testing or very low-traffic hobby projects. Max $150 represents a production setup with Basic B2 tier (~$55/month for 2 cores, 3.5GB RAM) or Standard S1 tier (~$70/month for 1 core, 1.75GB RAM with staging slots) plus additional costs for deployment slots ($10-20), custom domains/SSL, and Application Insights monitoring ($20-40). For typical small to medium API workloads, expect $13-70/month range (Basic B1 to Standard S1). Scaling to Standard S2 or S3 for higher traffic would push costs to $140-280/month, but this estimate caps at $150 for a single production instance with monitoring.",
+      "adoptionCost": "Medium-high adoption cost driven by Azure-specific concepts and operational maturity requirements. Team needs to learn: (1) Azure Portal navigation and resource management ($200 equivalent in learning time), (2) App Service deployment methods including ZIP deploy, Git integration, and Azure DevOps pipelines ($300 for CI/CD setup), (3) Configuration management with app settings, connection strings, and Key Vault integration ($150), (4) Deployment slots and traffic routing strategies ($100), (5) Monitoring with Application Insights and log analytics ($50). While App Service abstracts infrastructure, production-ready deployment requires understanding health checks, scaling rules, and Azure networking concepts. AI coding assistants can help with deployment scripts and configuration templates, reducing what would be $1200-1500 down to $800.",
+      "licenseCost": "Azure App Service is a platform service with no separate licensing fees. Costs are purely consumption-based through the hosting plan tier selected (Free, Shared, Basic, Standard, Premium, Isolated). No proprietary software licenses, IDE requirements, or third-party tools are mandatory. Optional tools like Visual Studio Enterprise or Azure DevOps advanced features have separate costs but are not required - VS Code (free) and basic Azure DevOps pipelines (free tier available) are sufficient for deployment.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "managed-web-hosting",
+      "confidence": "high",
+      "reasoning": "Azure App Service provides managed hosting for web applications with automatic infrastructure management, making this a core capability of the pattern."
+    },
+    {
+      "capability": "managed-api-hosting",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly supports API deployment with managed infrastructure, scaling, and deployment features."
+    },
+    {
+      "capability": "managed-background-workers",
+      "confidence": "high",
+      "reasoning": "Pattern description mentions background workers as a supported workload type on App Service."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "Azure App Service provides automatic horizontal and vertical scaling capabilities, which is a key feature of this managed platform."
+    },
+    {
+      "capability": "deployment-slots",
+      "confidence": "high",
+      "reasoning": "Deployment slots are explicitly mentioned and are a native App Service feature for blue-green deployments and staging environments."
+    },
+    {
+      "capability": "continuous-deployment",
+      "confidence": "high",
+      "reasoning": "Built-in CI/CD is mentioned in the description, enabling automated deployment pipelines."
+    },
+    {
+      "capability": "reduced-operations",
+      "confidence": "high",
+      "reasoning": "As a managed PaaS, this pattern reduces operational overhead by handling infrastructure management, patching, and maintenance."
+    },
+    {
+      "capability": "managed-ssl-certificates",
+      "confidence": "high",
+      "reasoning": "App Service includes automatic SSL/TLS certificate management and free managed certificates for custom domains."
+    },
+    {
+      "capability": "load-balancing",
+      "confidence": "high",
+      "reasoning": "App Service includes built-in load balancing across instances when scaled to multiple instances."
+    },
+    {
+      "capability": "health-monitoring",
+      "confidence": "high",
+      "reasoning": "App Service includes built-in health checks and monitoring capabilities for application availability and performance."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "application-code",
+      "confidence": "high",
+      "reasoning": "App Service requires deployable application code (web app, API, or worker) to host.",
+      "optional": true
+    },
+    {
+      "capability": "azure-subscription",
+      "confidence": "high",
+      "reasoning": "Azure App Service requires an active Azure subscription to provision and operate.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "arch-serverless--gcp",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "hosting-managed-paas--vercel",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "paas",
+    "azure",
+    "api-hosting",
+    "app-service"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Azure App Service is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Azure App Service Free/Basic tier single-region deployment provides up to 99.9% availability without multi-region redundancy."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Managed PaaS introduces network overhead and shared infrastructure resulting in minimum p95 latency of 50ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Tail latencies on shared infrastructure with cold starts and resource contention require p99 of at least 200ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Deployment slots enable rapid rollback achieving minimum RTO of 2-3 minutes via traffic swap."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000,
+      "reason": "Free tier CPU minute limitations and Basic tier scaling constraints limit peak throughput to 360K jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Free/low-cost App Service tiers support moderate read query throughput up to 1000 QPS before requiring premium tiers."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "Free/low-cost App Service tiers support moderate write query throughput up to 500 QPS before requiring premium scaling."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Azure App Service Easy Auth supports OAuth2/OIDC/SAML, and applications can implement API key, JWT, mTLS, or password authentication."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure App Service in EU regions supports GDPR compliance with data residency controls when needed."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Premium/Isolated App Service tiers support HIPAA compliance with BAA when required, though free/basic tiers do not."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure infrastructure and App Service support CCPA compliance requirements when necessary."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure audit capabilities and App Service monitoring support SOX compliance controls when required."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "azure",
+      "reason": "Azure App Service is exclusively available on Microsoft Azure cloud platform."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "csharp",
+        "go",
+        "php",
+        "ruby",
+        "n/a"
+      ],
+      "reason": "Azure App Service natively supports these runtime stacks with built-in language support and deployment tooling."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Pattern hosts web applications, REST APIs, and background workers serving any client platform."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can host applications with or without caching; caching is optional application-level concern."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports hosting message consumers/producers or synchronous APIs without messaging requirements."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can host AI inference APIs or non-AI applications depending on workload requirements."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports single-tenant and multi-tenant application architectures depending on design."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Free/low-cost App Service tiers have limited CPU minutes unsuitable for intensive batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier instability and resource constraints make it unsuitable for distributed transaction coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier CPU minute limits and resource constraints prevent continuous real-time streaming workloads."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can host APIs that integrate with external vector search services or non-vector applications."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Hosting pattern is agnostic to backend data store choice including document databases."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can host applications using key-value stores or other storage types."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports hosting applications that integrate with graph databases or other data stores."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can host time-series APIs or non-time-series applications depending on use case."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports hosting transactional APIs or read-heavy workloads."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can host analytical query APIs though free tier may have resource limitations for heavy OLAP workloads."
+    }
+  ],
+  "defaultConfig": {
+    "tier": "free",
+    "auto_scaling": false,
+    "deployment_slots": false,
+    "always_on": false,
+    "runtime_version": "latest"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "tier": {
+        "type": "string",
+        "enum": [
+          "free",
+          "basic",
+          "standard",
+          "premium"
+        ],
+        "description": "App Service pricing tier. Free (F1): 60 CPU min/day, 1GB disk, no custom domains. Basic: $13+/mo, always-on, custom domains. Standard: auto-scaling, deployment slots. Premium: enhanced performance and VNet integration."
+      },
+      "auto_scaling": {
+        "type": "boolean",
+        "description": "Enable automatic horizontal scaling based on CPU/memory metrics. Requires Standard tier or higher. Trade-off: cost vs. automatic traffic handling."
+      },
+      "deployment_slots": {
+        "type": "boolean",
+        "description": "Enable staging slots for blue-green deployments and testing before production swap. Requires Standard tier or higher. Reduces deployment risk but increases cost."
+      },
+      "always_on": {
+        "type": "boolean",
+        "description": "Keep app loaded even when idle to avoid cold starts. Requires Basic tier or higher. Trade-off: faster response times vs. higher cost."
+      },
+      "runtime_version": {
+        "type": "string",
+        "enum": [
+          "latest",
+          "lts",
+          "specific"
+        ],
+        "description": "Runtime version strategy. Latest: newest features but potential breaking changes. LTS: long-term support for stability. Specific: pin to exact version for maximum control."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 5,
+      "reason": "At very low read QPS, managed PaaS overhead (network latency, cold starts, shared infrastructure) may not be justified compared to simpler serverless options.",
+      "message": "hosting-managed-paas--azure: peak read QPS is {actual} req/s (<5). Managed App Service overhead may not be justified; consider serverless Functions for sporadic traffic."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 2,
+      "reason": "At very low write QPS, the always-on nature of App Service (even in Free tier) may be overkill compared to consumption-based serverless compute.",
+      "message": "hosting-managed-paas--azure: peak write QPS is {actual} req/s (<2). Always-on App Service may be overkill; consider consumption-based serverless for sporadic writes."
+    }
+  ]
+}

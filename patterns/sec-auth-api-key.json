@@ -1,0 +1,419 @@
+{
+  "id": "sec-auth-api-key",
+  "version": "1.0.0",
+  "title": "API Key Authentication",
+  "description": "API key-based authentication for service-to-service and third-party integrations; simpler than OAuth2 but requires secure key management.",
+  "types": [
+    "ops",
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 1200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "API key authentication is low-cost to implement and operate compared to OAuth2/SAML.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "API key authentication has minimal infrastructure costs. Min=$0 for self-managed implementation using application database to store hashed API keys with no additional services required. Simple implementations can use existing database infrastructure with bcrypt/Argon2 hashing. Max=$500 represents production scenarios with dedicated API management: (1) API Gateway services with key management (AWS API Gateway: $3.50/million requests + $0.09/GB = $100-300/mo for moderate traffic), (2) Kong API Gateway self-hosted ($50-100/mo infrastructure), (3) Rate limiting infrastructure (Redis: $30-50/mo), (4) Monitoring/analytics ($20-50/mo). Cloud-native key storage (AWS Parameter Store, Azure Key Vault) adds minimal cost ($0-50/mo). Enterprise API management platforms (Kong Enterprise, Apigee) can exceed $1000/mo but are outliers.",
+      "adoptionCost": "Low-medium complexity implementation. API key authentication requires: (1) Key generation system with cryptographically secure random bytes (UUID v4 or 32+ byte random) - 4-8 hours, (2) Secure storage with one-way hashing (bcrypt, Argon2) and database schema - 8-16 hours, (3) Validation middleware/interceptor across API endpoints - 8-12 hours, (4) Key rotation and revocation mechanisms - 8-16 hours, (5) Rate limiting per key to prevent abuse - 8-12 hours, (6) Admin UI/API for key management - 12-20 hours, (7) Documentation and security policies - 4-8 hours. Total: 52-92 developer hours at $150/hour = $7,800-13,800. However, with modern frameworks (FastAPI, Express.js middleware, Spring Security), API gateway features (AWS API Gateway, Kong), and AI coding assistance reducing boilerplate by 60-80%, realistic adoption cost is $1200-2000 for teams with basic security experience, representing 8-15 focused development hours.",
+      "licenseCost": "API key authentication is an architectural pattern with no licensing requirements. Implementation uses open standards and open-source libraries. All major languages have free libraries for secure random generation (secrets module in Python, crypto in Node.js, SecureRandom in Java), password hashing (bcrypt, Argon2), and API middleware frameworks. Cloud provider API key management features (AWS API Gateway API keys, Azure API Management) are pay-as-you-go with no license fees. No proprietary software or commercial licenses required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "api-key-authentication",
+      "confidence": "high",
+      "reasoning": "This pattern specifically provides API key-based authentication mechanism for service-to-service and third-party integrations. Renamed from 'api-key-auth' for consistency with standard authentication capability naming conventions."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "secrets-management",
+      "confidence": "high",
+      "reasoning": "API key authentication requires secure storage and management of API keys. The pattern description explicitly mentions 'requires secure key management', making this a fundamental dependency for secure key storage, rotation, and revocation.",
+      "optional": false
+    },
+    {
+      "capability": "request-validation",
+      "confidence": "high",
+      "reasoning": "API key authentication needs to validate incoming requests to verify the presence, format, validity, expiration, and associated permissions of API keys before granting access.",
+      "optional": true
+    },
+    {
+      "capability": "rate-limiting",
+      "confidence": "high",
+      "reasoning": "API key authentication should be paired with rate limiting per key to prevent abuse and ensure fair usage across different API consumers and integrations.",
+      "optional": false
+    },
+    {
+      "capability": "audit-logging",
+      "confidence": "high",
+      "reasoning": "API key usage must be tracked through audit logging for security monitoring, compliance purposes, and to detect unauthorized access attempts or suspicious patterns.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "sec-auth-jwt-stateless",
+      "sec-auth-oauth2-oidc",
+      "sec-auth-password",
+      "sec-auth-saml-sso",
+      "sec-auth-session-cookies",
+      "sec-auth-mtls-service-mesh"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "security",
+    "auth"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "api_key",
+      "reason": "This pattern specifically implements API key authentication as the primary authentication mechanism."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports optional audit logging of API key usage, creation, rotation, and access attempts."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with GDPR requirements when combined with proper key rotation and audit logging."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports HIPAA compliance when combined with encryption, audit logging, and key lifecycle management."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with CCPA requirements for authentication and access control with proper key governance."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports SOX compliance when combined with audit logging and proper key management controls."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "API key authentication is a language/framework-level pattern that works across all cloud providers."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "API key authentication can be implemented in any language with HTTP request handling capabilities."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "api",
+        "web",
+        "mobile",
+        "cli",
+        "iot"
+      ],
+      "reason": "API key authentication is designed for APIs and programmatic access including workers, CLIs, and IoT devices."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without caching though caching significantly improves key validation performance."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API key authentication is compatible with both synchronous and asynchronous messaging patterns."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports AI inference workloads requiring programmatic API access with API key authentication."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API keys can be scoped to specific tenants enabling secure multi-tenant authentication and authorization."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports batch processing jobs that require programmatic authentication via API keys."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API key authentication is independent of transaction coordination mechanisms and works with any transaction model."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports real-time streaming workloads requiring low-latency API key validation for stream authentication."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API key authentication is compatible with vector search workloads and embedding APIs requiring programmatic access."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with any database type including document stores for key storage and validation."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with key-value stores often used for high-performance key caching and validation."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API key authentication works independently of the underlying database type including graph databases."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports time-series workloads requiring programmatic access via API key for data ingestion and queries."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "API key authentication is suitable for OLTP workloads requiring transactional API access with key validation."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports OLAP workloads and analytical APIs requiring programmatic authentication for data queries."
+    }
+  ],
+  "defaultConfig": {
+    "key_format": "uuid_v4",
+    "storage_method": "hashed",
+    "hash_algorithm": "argon2",
+    "key_rotation_days": 90,
+    "rate_limiting_enabled": true,
+    "key_scopes_enabled": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "key_format": {
+        "type": "string",
+        "enum": [
+          "uuid_v4",
+          "random_32_bytes",
+          "prefixed_random"
+        ],
+        "description": "API key generation format. uuid_v4 (32 chars) is standard and collision-resistant, random_32_bytes (64 hex chars) provides more entropy, prefixed_random (e.g., sk_live_...) enables key type identification."
+      },
+      "storage_method": {
+        "type": "string",
+        "enum": [
+          "hashed",
+          "encrypted"
+        ],
+        "description": "How API keys are stored. hashed (Argon2/bcrypt) is most secure - keys cannot be recovered if database is compromised. encrypted allows key recovery but requires secure key management."
+      },
+      "hash_algorithm": {
+        "type": "string",
+        "enum": [
+          "argon2",
+          "bcrypt",
+          "scrypt"
+        ],
+        "description": "Hashing algorithm for stored keys. argon2 is recommended (memory-hard, GPU-resistant), bcrypt is widely supported, scrypt is alternative memory-hard option."
+      },
+      "key_rotation_days": {
+        "type": "integer",
+        "enum": [
+          30,
+          90,
+          180,
+          365
+        ],
+        "description": "Recommended key rotation frequency in days. Shorter intervals (30-90) improve security but increase operational burden. 90 days is common balance."
+      },
+      "rate_limiting_enabled": {
+        "type": "boolean",
+        "description": "Enable per-key rate limiting to prevent abuse. Recommended for production to protect against compromised keys and brute force attacks."
+      },
+      "key_scopes_enabled": {
+        "type": "boolean",
+        "description": "Enable scope-based permissions per API key (e.g., read-only, write, admin). Adds complexity but improves security through least-privilege principle."
+      }
+    }
+  },
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "API key authentication supports up to 99.99% availability with key caching and distributed validation."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "API key validation adds minimal latency of ~10ms p95 for cached key lookup and validation."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "P99 latency includes occasional database lookups for uncached keys requiring at least 50ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "API key auth enables fast recovery of 1-5 minutes as keys are stored in database and easily restored."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "With database replication, RPO can be 0-5 minutes depending on replication lag and key storage."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000000,
+      "reason": "Pattern supports up to 50M jobs/hour with in-memory key caching to minimize database lookups."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 10000,
+      "reason": "At very high QPS (>10k req/s), API key validation becomes a bottleneck. Consider OAuth2 with JWT for stateless validation."
+    }
+  ],
+  "requires_constraints": [],
+  "warn_nfr": []
+}

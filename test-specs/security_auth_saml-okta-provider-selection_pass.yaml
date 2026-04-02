@@ -1,0 +1,31 @@
+# Security - SAML Okta Provider Selection
+#
+# A spec with nfr.security.auth: saml, nfr.security.audit_logging: true, and saas-providers: [okta].
+# audit_logging is required by sec-auth-saml-sso's requires_nfr constraint (enterprise SAML
+# mandates audit logging for compliance and forensic visibility).
+# Tests that idp-saml--okta is selected when SAML is the auth mechanism and
+# Okta is the declared provider. idp-saml--auth0 is excluded because it
+# requires saas-providers: [auth0]. OIDC IdP patterns are excluded because
+# they gate on security.auth == oauth2_oidc, not saml.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - idp-saml--okta is selected
+#   - idp-saml--auth0 is NOT selected (provider constraint)
+#   - idp-oidc--* patterns are NOT selected (wrong auth type)
+
+project:
+  name: SAML Okta Provider
+  domain: test
+functional:
+  summary: 'Test scenario: SAML with Okta provider'
+constraints:
+  platform: web
+  cloud: agnostic
+  language: agnostic
+  saas-providers:
+    - okta
+nfr:
+  security:
+    auth: saml
+    audit_logging: true

@@ -1,0 +1,487 @@
+{
+  "id": "data-batch-processing--cold-start",
+  "version": "1.0.0",
+  "title": "Batch Processing: Managed Batch with Cold Start",
+  "description": "Batch job execution using managed batch services (AWS Batch, Azure Batch, Google Batch) with on-demand worker provisioning. Workers are provisioned fresh when jobs are submitted \u2014 no idle standby pool \u2014 resulting in P95 job start times of 2-5 minutes due to VM provisioning, container image pull, and network setup. Most cost-efficient for workloads that tolerate multi-minute delays between submission and execution. Best for nightly ETL, end-of-day reports, periodic data aggregation, and non-urgent background processing where eliminating idle standby costs outweighs startup latency.",
+  "types": [
+    "design",
+    "ops",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 4000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Cold-start batch has no idle standby costs \u2014 pay only for actual job execution time. Most cost-efficient option for infrequent batch jobs. Min ($50): small scheduled jobs (1-2 per day, t3.small, 1hr each ~$1.50/day). Max ($4000): daily heavy ETL on c5.4xlarge instances (6-8hr/day x $0.68/hr x 30 days = $1000-1400) + storage and orchestration.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "On-demand batch provisioning eliminates idle costs. Min ($50): basic scheduled jobs once/day with small instances. Max ($4000): production daily ETL with large c5.4xlarge or r5.2xlarge instances running 6-8 hours daily, S3 storage, and CloudWatch/orchestration costs.",
+      "adoptionCost": "Standard managed batch setup \u2014 no warm pool complexity. Requires designing for cold start tolerance and idempotent re-runs. Estimate 11-12 developer days at ~$170/day = $2000.",
+      "licenseCost": "No license cost. AWS Batch, Azure Batch, and Google Batch are usage-based managed services with no upfront licensing. Open-source alternatives (Airflow, Luigi) available.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "batch-processing",
+      "confidence": "high",
+      "reasoning": "Provides standard batch processing capability via managed batch with on-demand provisioning \u2014 cost-optimized for workloads tolerating multi-minute start delays."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Primary use case: nightly ETL, end-of-day processing, and periodic data aggregation where multi-minute start latency is acceptable."
+    },
+    {
+      "capability": "high-throughput-processing",
+      "confidence": "high",
+      "reasoning": "On-demand batch achieves high throughput through horizontal scaling once workers are provisioned; throughput during execution is not limited by startup latency."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "scheduler",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Managed batch services provide built-in schedulers; cron-based triggers (EventBridge, cron jobs) commonly used for on-demand batch."
+    },
+    {
+      "capability": "job-orchestration",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Orchestration required to manage job submission, provision monitoring, and coordinate multi-step batch workflows across on-demand workers."
+    },
+    {
+      "capability": "data-storage",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "On-demand workers must read from and write to persistent storage as they are terminated after job completion."
+    },
+    {
+      "capability": "retry-strategy",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Cold-start batch requires retry with sufficient delay to allow new worker provisioning before re-attempting failed jobs."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-stream-processing",
+      "data-batch-processing--serverless",
+      "data-batch-processing--warm-pool",
+      "data-batch-processing--cluster"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "batch",
+    "cold-start",
+    "managed-batch",
+    "cost-optimized"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Managed batch with cold start is compatible with any auth mechanism; job-level auth handled by IAM roles on provisioned instances."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed batch services provide job execution logs and cloud-native audit trails; compatible with both audited and non-audited environments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Cold-start batch supports tenant isolation through separate job queues with per-tenant IAM roles on provisioned workers."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Managed batch services with cold start can achieve up to 99.99% availability; five-nine availability requires active-active multi-region topology."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 300,
+      "reason": "Cold-start batch achieves P95 job start of 2-5 minutes (120-300s). Specs requiring <5 min P95 are at the lower bound; pre-provisioned warm pools are more reliable for sub-5-minute requirements."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 300,
+      "reason": "P99 job start for cold-start batch is 5-10 minutes (300-600 seconds), accounting for slow container pulls, resource contention, and provisioning delays under load."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Cold-start batch RTO is 15-30 minutes: failure detection + re-queuing + fresh worker provisioning (2-5 min) + re-processing from checkpoint."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "RPO of 5+ minutes for cold-start batch; data arriving between batch windows is at risk until next scheduled run or re-queue."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Cold-start managed batch handles up to 360M jobs/hour once provisioned; throughput during execution matches warm pool performance."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 10,
+      "reason": "At <10 jobs/hour, cold-start provisioning overhead (2-5 min per job) dominates execution time. Pre-provisioned infrastructure or serverless functions are more efficient."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed cold-start batch is compatible with PII workloads when provisioned instances are configured with appropriate encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch is compatible with GDPR through proper data handling, deletion capabilities, and ephemeral compute environments."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch supports HIPAA compliance with encryption at rest/transit and BAA coverage for managed services."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch is compatible with CCPA when batch jobs support consumer data deletion within required timeframes."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch supports SOX compliance through managed service job execution logs providing an immutable audit trail."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch is inherently eventually consistent. Read-your-writes requires compensating patterns on top."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strict durability achievable with idempotent jobs, checkpointing, and transactional writes to durable storage before worker termination."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Cold-start managed batch is available on all major clouds (AWS Batch, Azure Batch, Google Batch) and on-prem via Kubernetes Jobs."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Cold-start managed batch supports all languages via containerized job images."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Cold-start batch targets scheduled job execution platforms; api platform excluded as batch is not a request-response architecture."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch works with external caches; in-memory caches must be rebuilt on each cold start."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch can be triggered by message queues but primarily uses scheduled triggers or direct job submission."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch supports AI inference in batch jobs; model loading time is included in cold-start overhead."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch supports multi-tenant workloads through separate job queues with per-tenant IAM-scoped on-demand workers."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires batch_processing feature flag \u2014 this is the cold-start managed batch variant of the batch processing implementation pattern."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch can coordinate distributed transactions within job execution but requires saga patterns for fault tolerance."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch is compatible with lambda architecture; the batch layer handles large-scale historical recomputation."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch can build vector indexes offline in scheduled batch jobs."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch works with document stores for bulk reads and writes in scheduled batch jobs."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch can use key-value stores for job state; connections established fresh on each worker start."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch supports graph analytics and bulk graph mutations in scheduled batch jobs."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch handles time-series aggregation and historical rollup in scheduled nightly or hourly jobs."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch executes bulk OLTP operations during off-peak windows; multi-minute start time is acceptable for nightly batch windows."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cold-start batch is well-suited for OLAP aggregation jobs running on scheduled windows where query latency matters more than start time."
+    }
+  ],
+  "defaultConfig": {
+    "worker_type": "managed-cold-start",
+    "schedule_type": "cron",
+    "retry_strategy": "exponential_backoff",
+    "parallelism": "partitioned",
+    "failure_handling": "fail_job"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "worker_type": {
+        "type": "string",
+        "enum": [
+          "managed-cold-start"
+        ],
+        "description": "Execution environment. Managed-cold-start: managed batch service (AWS Batch, Azure Batch, Google Batch) with on-demand worker provisioning. No idle standby \u2014 workers provisioned fresh per job run."
+      },
+      "schedule_type": {
+        "type": "string",
+        "enum": [
+          "cron",
+          "interval",
+          "event_driven",
+          "manual"
+        ],
+        "description": "How batches are triggered. Cron is most common for cold-start batch with fixed nightly or periodic schedules."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "immediate",
+          "exponential_backoff",
+          "fixed_delay"
+        ],
+        "description": "How failed jobs are retried. Exponential_backoff recommended; allow time for fresh worker provisioning before retry."
+      },
+      "parallelism": {
+        "type": "string",
+        "enum": [
+          "single",
+          "partitioned",
+          "distributed"
+        ],
+        "description": "Execution model. Partitioned recommended for large cold-start jobs: provision multiple workers in parallel for independent data partitions."
+      },
+      "failure_handling": {
+        "type": "string",
+        "enum": [
+          "fail_job",
+          "skip_and_continue",
+          "dead_letter_queue",
+          "partial_commit"
+        ],
+        "description": "What happens when individual records fail. Fail_job recommended for cold-start batch ETL requiring full re-runs from checkpoint on failure."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<",
+      "value": 0.95,
+      "reason": "Cold-start batch with availability target <95% indicates non-critical workload; simpler cron-based solutions may be more cost-effective than managed batch infrastructure.",
+      "message": "data-batch-processing--cold-start: availability target is {actual} (<95%). For non-critical batch jobs, simpler cron-based execution may reduce operational overhead."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+# Feature - OLAP Workload Flag
+#
+# An agnostic AWS spec with olap_workload: true feature flag, needsReadYourWrites
+# consistency, and optimize-tco cost intent. This tests that the compiler selects
+# OLAP-appropriate data warehouse patterns when the olap_workload feature is enabled,
+# including columnar storage and analytical query optimization patterns.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - OLAP/data-warehouse patterns are selected due to olap_workload: true
+#   - patterns requiring oltp_workload only are not selected
+
+constraints:
+  platform: agnostic
+  cloud: aws
+  features:
+    olap_workload: true
+project:
+  name: Multi-Platform (API + Web)
+  domain: test
+functional:
+  summary: 'Test scenario: Multi-Platform (API + Web)'
+nfr:
+  consistency:
+    needsReadYourWrites: true
+cost:
+  intent:
+    priority: optimize-tco

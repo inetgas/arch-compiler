@@ -1,0 +1,455 @@
+{
+  "id": "arch-serverless-pay-per-use",
+  "version": "1.0.0",
+  "title": "Serverless Pay\u2011Per\u2011Use Compute",
+  "description": "Eliminate idle infrastructure cost by running compute on a pay-per-execution billing model rather than paying for always-on instances. Well-suited to bursty or unpredictable workloads where provisioned servers would sit idle most of the time. This is a cost optimisation pattern, not an architectural style \u2014 it can apply to any workload that tolerates cold starts.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "azure-functions",
+      "aws-lambda",
+      "gcp-cloud-functions",
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing. Free tiers are quota-limited; production use may require paid plans and compliance agreements.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Serverless compute platforms offer generous free tiers (AWS Lambda: 1M requests/month free, Azure Functions: 1M executions free, GCP Cloud Functions: 2M invocations free). Min=$0 represents low-traffic scenarios staying within free tier limits (e.g., development environments, webhooks, scheduled jobs with <100K invocations/month). Max=$500 represents moderate production workloads with ~10-20M invocations/month at $0.20 per million invocations plus compute time ($0.0000166667 per GB-second for AWS Lambda). Higher-scale workloads (>50M invocations) can exceed $1000-5000/month, but typical small-to-medium implementations fall in this range. Costs scale linearly with usage (requests \u00d7 duration \u00d7 memory), making serverless cost-effective for variable workloads but potentially expensive for constant high-throughput scenarios where traditional compute may be cheaper.",
+      "adoptionCost": "Medium-high complexity adoption. Requires: (1) Architectural refactoring to stateless, event-driven functions (10-20 hours at $100-150/hour = $1000-3000), (2) Learning serverless-specific patterns (cold starts, timeouts, concurrency limits), (3) Rewriting deployment pipelines for function packaging and IAM configuration (5-10 hours = $500-1500), (4) Integration with cloud-native services (API Gateway, event buses, storage triggers). With AI coding assistants reducing boilerplate by 30-40%, estimate drops to ~$1500. Teams familiar with cloud-native development may spend $500-800; teams migrating from traditional monoliths may spend $2500-4000. Includes testing for cold start optimization and monitoring setup.",
+      "licenseCost": "All major serverless platforms (AWS Lambda, Azure Functions, GCP Cloud Functions, Cloudflare Workers) operate on pure pay-per-use pricing with no upfront license fees or subscription requirements. No proprietary tools are mandatory\u2014open-source frameworks (Serverless Framework, AWS SAM, Terraform) handle deployments. Optional paid tools like Datadog Serverless ($15/host-month) or Lumigo ($0.20/GB analyzed) exist for enhanced monitoring but aren't required. Enterprise support agreements (AWS Enterprise Support at 10% of monthly spend) are optional. Core platform access is free; customers pay only for compute resources consumed.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "Serverless platforms automatically scale compute resources up and down based on demand without manual intervention, which is a core feature of this pattern."
+    },
+    {
+      "capability": "reduced-idle-cost",
+      "confidence": "high",
+      "reasoning": "Pay-per-use serverless compute eliminates costs during idle periods since you only pay for actual execution time, not for provisioned capacity."
+    },
+    {
+      "capability": "compute",
+      "confidence": "high",
+      "reasoning": "This pattern provides compute execution capability, though in a serverless model, enabling workload processing without infrastructure management."
+    },
+    {
+      "capability": "elastic-capacity",
+      "confidence": "high",
+      "reasoning": "Serverless automatically provides elastic capacity to handle variable workloads without pre-provisioning, which is distinct from but related to auto-scaling."
+    },
+    {
+      "capability": "pay-per-execution",
+      "confidence": "high",
+      "reasoning": "The billing model charges only for actual function executions and duration, providing granular cost control based on usage."
+    },
+    {
+      "capability": "managed-infrastructure",
+      "confidence": "high",
+      "reasoning": "Serverless abstracts away infrastructure management including servers, OS patching, and capacity planning, allowing focus on application code."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Serverless functions typically require stateless design patterns since execution environments are ephemeral and may not persist between invocations.",
+      "optional": false
+    },
+    {
+      "capability": "event-driven",
+      "confidence": "high",
+      "reasoning": "Serverless compute is typically triggered by events (HTTP requests, queue messages, scheduled events), requiring an event-driven architectural approach.",
+      "optional": false
+    },
+    {
+      "capability": "cold-start-latency",
+      "confidence": "high",
+      "reasoning": "Serverless patterns must handle initialization latency when functions haven't been invoked recently, as cold starts are inherent to the platform's cost-saving mechanisms.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-microservices",
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "serverless",
+    "pay-per-use",
+    "autoscale"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Serverless platforms typically provide 99.9-99.99% availability with automatic failover and regional redundancy."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Cold starts introduce 50-3000ms latency at p95 depending on runtime and package size."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Cold starts and occasional platform throttling cause p99 latency of 100-5000ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Serverless platforms automatically detect and route around failures within 1-2 minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "With quota increases, serverless can scale to 10,000+ concurrent executions achieving up to 36M jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Serverless functions can handle up to 50K read QPS with appropriate concurrency limits and auto-scaling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 20000,
+      "reason": "Serverless write throughput is bounded by execution concurrency and downstream service limits at ~20K QPS."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless platforms offer GDPR-compliant regions and data residency controls but pattern works regardless."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Major serverless providers offer HIPAA-eligible services with BAAs but pattern works for both compliant and non-compliant workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless compute supports CCPA compliance through data access controls and deletion capabilities but is not restricted to it."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless platforms provide audit trails and controls for SOX compliance but pattern applies to all workload types."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic"
+      ],
+      "reason": "The generic serverless pay-per-use cost pattern applies to cloud-agnostic specifications across AWS Lambda, Azure Functions, and GCP Cloud Functions."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby"
+      ],
+      "reason": "Serverless platforms support major programming languages with managed runtimes and custom runtime support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Serverless compute is ideal for backend workloads including APIs, workers, batch jobs, data pipelines, and ML inference."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can integrate with caching layers (Redis, ElastiCache) but pattern does not require caching."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions work well with async messaging (SQS, EventBridge, Pub/Sub) but also support synchronous invocation."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless compute supports AI inference workloads with appropriate memory and timeout configurations."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions provide execution isolation suitable for multi-tenant architectures but work for single-tenant as well."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless supports batch processing for jobs under execution time limits but also handles real-time request-response."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Distributed transactions are challenging in stateless serverless but can be implemented via saga patterns or not required."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can process real-time streams (Kinesis, Event Hubs) but also support batch and API workloads."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can integrate with vector databases for AI/ML applications but pattern does not mandate it."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions commonly integrate with document stores (DynamoDB, Cosmos DB) but support any storage backend."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions integrate well with key-value stores for fast lookups but pattern is storage-agnostic."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can query graph databases but pattern does not require or exclude graph data models."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can ingest and query time-series data but pattern is neutral to time-series requirements."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless compute handles OLTP workloads with low-latency transactional processing but also supports analytical workloads."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless functions can run OLAP queries and analytics jobs within execution time limits but pattern is workload-agnostic."
+    }
+  ],
+  "defaultConfig": {
+    "compute_type": "function",
+    "memory_size_mb": 1024,
+    "timeout_seconds": 30,
+    "cold_start_optimization": "standard",
+    "concurrency_model": "auto"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "compute_type": {
+        "type": "string",
+        "enum": [
+          "function",
+          "container"
+        ],
+        "description": "Function (AWS Lambda, Cloud Functions) for sub-second tasks with faster scaling, or Container (Cloud Run, Fargate) for longer workloads with more control and fewer runtime constraints"
+      },
+      "memory_size_mb": {
+        "type": "integer",
+        "enum": [
+          128,
+          256,
+          512,
+          1024,
+          2048,
+          4096
+        ],
+        "description": "Memory allocation directly impacts CPU allocation and cost. Higher memory = faster execution but higher per-invocation cost. Optimize based on workload profiling"
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 3,
+        "maximum": 900,
+        "description": "Maximum execution time per invocation. Shorter timeouts prevent runaway costs but may fail legitimate long operations. Consider async patterns for long tasks"
+      },
+      "cold_start_optimization": {
+        "type": "string",
+        "enum": [
+          "standard",
+          "provisioned",
+          "warm-pool"
+        ],
+        "description": "Standard (pure pay-per-use, cold starts possible), Provisioned (pre-warmed instances, eliminates cold starts but adds baseline cost), Warm-pool (periodic warming, balanced approach)"
+      },
+      "concurrency_model": {
+        "type": "string",
+        "enum": [
+          "auto",
+          "reserved",
+          "limited"
+        ],
+        "description": "Auto (unlimited scaling, risk of cost spikes), Reserved (guaranteed capacity for critical workloads), Limited (cap concurrent executions to control costs and downstream load)"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 100,
+      "reason": "At very low job volumes (<100/hour), serverless invocation overhead and cold starts may outweigh the benefits of pay-per-use pricing compared to a simple always-on instance.",
+      "message": "arch-serverless-pay-per-use: peak jobs per hour is {actual} (<100). Serverless overhead may outweigh pay-per-use savings at this low volume."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At very low QPS (<1 req/s), serverless cold starts add disproportionate overhead; a simple always-on compute instance is more cost-effective.",
+      "message": "arch-serverless-pay-per-use: peak read QPS is {actual} req/s (<1). At this low traffic, cold start overhead makes serverless less cost-effective than a small always-on instance."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 10000,
+      "reason": "At sustained high QPS (>10K req/s), serverless pay-per-execution costs may exceed reserved capacity; analyze cost vs. performance trade-offs.",
+      "message": "arch-serverless-pay-per-use: peak read QPS is {actual} req/s (>10K). At sustained high throughput, pay-per-execution costs may exceed reserved compute instances. Evaluate cost model."
+    }
+  ]
+}

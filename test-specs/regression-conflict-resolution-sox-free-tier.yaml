@@ -1,0 +1,34 @@
+# Regression test for conflict resolution bug
+# Bug: cost-free-saas-tier and compliance-sox were both selected
+# despite declaring each other as incompatible
+
+project:
+  name: Conflict Resolution Regression Test
+  domain: test
+
+functional:
+  summary: Test that mutually incompatible patterns are not both selected
+
+constraints:
+  platform: api
+  language: python
+  cloud: agnostic
+
+# This scenario should force both patterns to be eligible, but only ONE selected
+nfr:
+  data:
+    compliance:
+      sox: false  # Don't force sox, let pattern selection decide
+
+cost:
+  ceilings:
+    monthly_operational_usd: 500
+    one_time_setup_usd: 5000
+  intent:
+    priority: minimize-opex
+
+# Expected behavior:
+# - Both cost-free-saas-tier and compliance-sox should initially be eligible
+# - Conflict resolution should detect mutual incompatibility
+# - Only ONE should be selected (whichever has higher match score)
+# - The other should be rejected with reason "Incompatible with..."

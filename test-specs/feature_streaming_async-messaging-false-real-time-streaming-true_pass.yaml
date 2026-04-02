@@ -1,0 +1,23 @@
+# Feature - Async Messaging False, Real-Time Streaming True
+#
+# A spec with platform agnostic, async_messaging explicitly set to false but
+# real_time_streaming set to true. This tests that the compiler correctly
+# distinguishes between async messaging and real-time streaming as separate
+# feature flags, selecting streaming patterns without async messaging patterns.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - real-time streaming patterns are selected
+#   - async messaging patterns are NOT selected (async_messaging: false)
+
+constraints:
+  platform: agnostic
+  features:
+    async_messaging: false
+    real_time_streaming: true
+project:
+  name: Multi-Platform (API + Web)
+  domain: test
+functional:
+  summary: 'Test scenario: Multi-Platform (API + Web)'
+nfr: {}

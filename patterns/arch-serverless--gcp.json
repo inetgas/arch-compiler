@@ -1,0 +1,528 @@
+{
+  "id": "arch-serverless--gcp",
+  "version": "1.0.0",
+  "title": "Serverless-First Architecture (Cloud Functions/Run)",
+  "description": "Structure the system as stateless, event-driven function handlers backed by GCP managed services (Cloud Functions/Run, API Gateway, Firestore, Cloud Storage, Pub/Sub). No persistent servers \u2014 each function activates on demand, executes, and terminates. The architectural commitment is to build around events and GCP-managed primitives rather than long-running processes.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 2000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "GCP serverless services have generous free tiers that cover small workloads. Cloud Functions offers 2M invocations/month free, Cloud Run provides 2M requests/month free, plus 360,000 vCPU-seconds and 180,000 GiB-seconds. Min=$0 represents development/low-traffic workloads staying within free tier. Max=$2000 represents a moderate production workload with ~50M function invocations/month, several Cloud Run services handling ~20M requests/month, Cloud Storage for assets (~500GB), Cloud Pub/Sub for event routing (~100M messages), and associated networking/egress costs. High-traffic production workloads could exceed this significantly.",
+      "adoptionCost": "Medium-high complexity adoption. Requires architectural mindset shift from traditional server-based thinking to event-driven, stateless design. Team must learn: (1) Function composition and orchestration patterns, (2) Cold start optimization and scaling behaviors, (3) Event routing with Pub/Sub or Eventarc, (4) Stateless architecture and external state management, (5) Distributed tracing and debugging across functions, (6) IAM and security best practices for service-to-service auth. Implementation involves refactoring existing code into functions, setting up CI/CD pipelines for serverless deployment, establishing observability with Cloud Logging/Monitoring, and developing local testing strategies. Estimated 2-3 weeks for a mid-sized team with cloud experience, 4-6 weeks without.",
+      "licenseCost": "GCP Cloud Functions and Cloud Run are fully managed services billed on consumption (pay-per-use) with no upfront licensing fees. Supporting tools are typically open source or included: gcloud CLI (free), Terraform/Pulumi for IaC (open source), Cloud Build for CI/CD (usage-based pricing included in GCP), standard logging/monitoring (included). No commercial licenses required for core serverless architecture implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "low-ops",
+      "confidence": "strong",
+      "reasoning": "Serverless architectures minimize operational overhead by abstracting infrastructure management, automatic scaling, and maintenance to the cloud provider. This is a core benefit of the serverless-first pattern."
+    },
+    {
+      "capability": "elastic-scaling",
+      "confidence": "strong",
+      "reasoning": "Cloud Functions and Cloud Run automatically scale based on demand, including scale-to-zero when idle. This elastic scaling capability is fundamental to serverless architectures and directly aligns with the pay-per-use model described."
+    },
+    {
+      "capability": "event-driven-execution",
+      "confidence": "high",
+      "reasoning": "Serverless functions are triggered by events (HTTP requests, Pub/Sub messages, storage events, etc.). This event-driven nature is explicitly mentioned in the pattern description as a core characteristic."
+    },
+    {
+      "capability": "pay-per-use",
+      "confidence": "high",
+      "reasoning": "The pattern description explicitly mentions 'pay-per-use' as a key feature. This cost model charges only for actual execution time and resources consumed, making it a major differentiator and benefit of serverless architecture."
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "high",
+      "reasoning": "Serverless functions are inherently stateless, with each invocation running independently. This characteristic enables the elastic scaling and scale-to-zero behavior of serverless platforms."
+    },
+    {
+      "capability": "cold-start-latency",
+      "confidence": "medium",
+      "reasoning": "Serverless functions experience cold start latency when scaling from zero or provisioning new instances. This is an inherent characteristic that must be understood and managed in serverless architectures."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "managed-services-availability",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Serverless architecture depends on the availability and maturity of managed services (Cloud Functions, Cloud Run, Pub/Sub, Cloud Storage, etc.) from GCP. Without these managed services, the pattern cannot be implemented."
+    },
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "Event-driven serverless functions require event sources to trigger execution (HTTP endpoints, Pub/Sub topics, Cloud Storage buckets, Firestore changes, etc.). The pattern cannot function without configured event triggers.",
+      "optional": false
+    },
+    {
+      "capability": "distributed-tracing",
+      "confidence": "high",
+      "reasoning": "Serverless architectures create highly distributed systems with ephemeral compute instances. Debugging and monitoring require distributed tracing capabilities (Cloud Trace) to understand request flows across functions and identify performance bottlenecks.",
+      "optional": false
+    },
+    {
+      "capability": "secrets-management",
+      "confidence": "medium",
+      "reasoning": "Serverless functions need secure access to credentials, API keys, and configuration secrets. Secret management services (Secret Manager) are essential for securely configuring functions without hardcoding sensitive data.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-microservices",
+      "arch-modular-monolith",
+      "arch-monolith",
+      "arch-serverless",
+      "arch-serverless--aws",
+      "arch-serverless--azure",
+      "hosting-managed-paas",
+      "hosting-managed-paas--aws",
+      "hosting-managed-paas--azure",
+      "hosting-managed-paas--digitalocean-app-platform",
+      "hosting-managed-paas--flyio",
+      "hosting-managed-paas--gcp",
+      "hosting-managed-paas--railway",
+      "hosting-managed-paas--render",
+      "platform-kubernetes",
+      "platform-no-mesh",
+      "platform-service-mesh",
+      "platform-vm-first"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "architecture",
+    "serverless",
+    "event-driven",
+    "gcp"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Serverless on GCP with managed services typically achieves up to 99.99% availability with multi-zone deployment and automatic failover."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Cold starts and function invocation overhead introduce minimum p95 latency of 50ms for serverless execution."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Occasional cold starts, network retries, and scaling delays result in minimum p99 latency of 200ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Automatic health checks, instant function replacement, and managed service failover enable RTO of 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000000,
+      "reason": "Pattern supports peak throughput up to 36M jobs/hour (10k jobs/second) with default Cloud Functions and Cloud Run concurrency limits."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 60,
+      "reason": "At <60 jobs/hour (<1 per minute), serverless pay-per-invocation pricing and cold start overhead are inefficient compared to scheduled or always-on workers."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 200000,
+      "reason": "Serverless architecture on GCP handles up to 200k read QPS with auto-scaling Cloud Functions and Cloud Run instances."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Write operations through serverless functions are bounded at 100k QPS due to downstream managed service write limits."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Pattern supports all authentication mechanisms via Cloud Identity Platform, API Gateway, IAM, and Cloud Endpoints."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports audit logging through Cloud Audit Logs for all service invocations and can operate without it."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Stateless functions are compatible with all tenant isolation strategies through proper request routing and database configuration."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports PII handling with encryption at rest/transit, VPC Service Controls, and DLP API integration."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports GDPR compliance with GCP's GDPR-compliant services, data residency controls, and right-to-erasure capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Functions and Cloud Run are covered under GCP's HIPAA BAA with proper configuration and encryption."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports CCPA compliance through GCP's data management controls, access logs, and consumer data request handling."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports SOX compliance through immutable audit logs, access controls, and change tracking in Cloud Audit Logs."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports read-your-writes consistency with single-region deployments and synchronous database operations via Firestore or Cloud Spanner."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports strict durability when using managed storage services like Cloud Storage, Firestore, or Cloud SQL with synchronous replication."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "gcp",
+      "reason": "Pattern is specific to GCP serverless services including Cloud Functions, Cloud Run, and Eventarc."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "sql",
+        "dart",
+        "swift",
+        "scala",
+        "c",
+        "cpp",
+        "objective-c",
+        "n/a"
+      ],
+      "reason": "Cloud Functions and Cloud Run support multiple language runtimes including Node.js, Python, Go, Java, .NET, Ruby, and custom containers."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Serverless architecture is platform-agnostic and can support web apps, APIs, background workers, batch jobs, ML inference, and event-driven workloads."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with Memorystore (Redis/Memcached) for caching layers and can operate without caching."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven architecture naturally leverages Pub/Sub, Eventarc, and Cloud Tasks but also supports synchronous request-reply patterns."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloud Run and Cloud Functions are suitable for ML inference workloads with auto-scaling and GPU support, but not required."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless architecture allows multi-tenant patterns with proper isolation through IAM, VPC, and request routing, but also supports single-tenant deployments."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Serverless pattern naturally supports batch processing through Cloud Functions triggered by Cloud Scheduler or Cloud Tasks, but also handles real-time requests."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports distributed transactions through Firestore transactions, Cloud Spanner, or saga patterns, but not required for all use cases."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Supports real-time streaming through Cloud Functions triggered by Pub/Sub, Eventarc, or Firestore changes, but also supports batch workflows."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with Vertex AI Vector Search, Firestore vector search, or third-party vector databases via Cloud Run, but not required."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Integrates seamlessly with Firestore as a fully managed document database, but also works with SQL and other storage types."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with Memorystore Redis and Firestore for fast key-value storage, but not required for all serverless applications."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can integrate with third-party graph databases like Neo4j Aura via Cloud Run or implement graph queries in application logic."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Can integrate with Cloud Bigtable for time-series data or BigQuery for analytical queries, but not required for all use cases."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Works with Cloud SQL, Cloud Spanner, and Firestore for transactional OLTP workloads, but also supports non-transactional patterns."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with BigQuery for analytical OLAP workloads through Cloud Functions or Cloud Run for data transformation and query execution."
+    }
+  ],
+  "defaultConfig": {
+    "compute_service": "cloud-functions",
+    "api_gateway": "api-gateway",
+    "event_bus": "pubsub",
+    "database": "firestore",
+    "storage": "cloud-storage",
+    "cold_start_optimization": "min-instances"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "compute_service": {
+        "type": "string",
+        "enum": [
+          "cloud-functions",
+          "cloud-run",
+          "hybrid"
+        ],
+        "description": "Primary compute service: Cloud Functions for simple event handlers (auto-scaling, limited runtime), Cloud Run for containerized apps (more control, longer execution), or hybrid for mixed workloads"
+      },
+      "api_gateway": {
+        "type": "string",
+        "enum": [
+          "api-gateway",
+          "cloud-endpoints",
+          "direct"
+        ],
+        "description": "API management layer: API Gateway for full-featured management and security, Cloud Endpoints for OpenAPI/gRPC, or direct invocation for internal services"
+      },
+      "event_bus": {
+        "type": "string",
+        "enum": [
+          "pubsub",
+          "eventarc",
+          "cloud-tasks"
+        ],
+        "description": "Event routing mechanism: Pub/Sub for async messaging, Eventarc for CloudEvents from 100+ sources, Cloud Tasks for guaranteed task execution with rate control"
+      },
+      "database": {
+        "type": "string",
+        "enum": [
+          "firestore",
+          "cloud-sql",
+          "bigtable",
+          "spanner"
+        ],
+        "description": "Primary database: Firestore for document NoSQL with real-time sync, Cloud SQL for managed relational, Bigtable for high-throughput analytics, Spanner for global consistency"
+      },
+      "storage": {
+        "type": "string",
+        "enum": [
+          "cloud-storage",
+          "filestore"
+        ],
+        "description": "Object/file storage: Cloud Storage for scalable object storage with lifecycle policies, Filestore for NFS-compatible file shares"
+      },
+      "cold_start_optimization": {
+        "type": "string",
+        "enum": [
+          "min-instances",
+          "concurrency-tuning",
+          "none"
+        ],
+        "description": "Strategy to reduce cold starts: min-instances keeps functions warm (costs more), concurrency-tuning optimizes request handling, none accepts cold starts for cost savings"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At very low QPS (<1 req/s), serverless cold start overhead and function invocation costs may outweigh benefits compared to always-on compute.",
+      "message": "arch-serverless--gcp: peak read QPS is {actual} req/s (<1). Cold start overhead and per-invocation costs may exceed benefits of scale-to-zero; consider always-on compute for steady ultra-low traffic."
+    }
+  ]
+}

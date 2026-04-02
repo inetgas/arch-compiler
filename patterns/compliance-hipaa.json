@@ -1,0 +1,401 @@
+{
+  "id": "compliance-hipaa",
+  "version": "1.0.0",
+  "title": "HIPAA Compliance",
+  "description": "Health Insurance Portability and Accountability Act compliance pattern. Implements safeguards for Protected Health Information (PHI): administrative, physical, and technical controls. Includes encryption (at rest and in transit), access controls, audit logging, breach notification, Business Associate Agreements (BAA), and risk assessments. Required for healthcare applications handling PHI.",
+  "types": [
+    "security",
+    "ops"
+  ],
+  "provides": [
+    {
+      "capability": "hipaa-compliance",
+      "description": "HIPAA compliance framework for PHI protection",
+      "confidence": "medium",
+      "reasoning": "This is the primary capability of this pattern - it provides comprehensive HIPAA compliance framework including administrative, physical, and technical safeguards as described in the pattern."
+    },
+    {
+      "capability": "phi-protection",
+      "confidence": "high",
+      "reasoning": "This pattern provides broader PHI safeguards beyond just encryption, including access controls, audit trails, and breach notification, accurately reflecting the comprehensive protection mechanisms."
+    },
+    {
+      "capability": "baa-support",
+      "description": "Support for Business Associate Agreements",
+      "confidence": "medium",
+      "reasoning": "Business Associate Agreement support is a specific HIPAA requirement for third-party data handling and is semantically valid for healthcare compliance patterns."
+    },
+    {
+      "capability": "healthcare-security",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly provides healthcare-specific security capabilities since it implements the complete HIPAA security rule framework, distinct from general security patterns."
+    },
+    {
+      "capability": "access-control",
+      "confidence": "high",
+      "reasoning": "HIPAA compliance mandates role-based access controls and minimum necessary access policies for PHI \u2014 implementing access control is a core deliverable of this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "audit-logging",
+      "description": "Comprehensive audit logs (HIPAA requires tracking all PHI access)",
+      "confidence": "medium",
+      "reasoning": "HIPAA requires comprehensive audit trails for all PHI access and modifications as a mandatory technical safeguard under the Security Rule \u00a7164.312(b)."
+    },
+    {
+      "capability": "encryption-at-rest",
+      "confidence": "high",
+      "reasoning": "HIPAA addressable specification requires encryption of PHI stored in systems per \u00a7164.312(a)(2)(iv).",
+      "optional": false
+    },
+    {
+      "capability": "encryption-in-transit",
+      "confidence": "high",
+      "reasoning": "HIPAA requires encryption during transmission of PHI to ensure secure transmission per \u00a7164.312(e)(1).",
+      "optional": false
+    },
+    {
+      "capability": "access-control",
+      "confidence": "high",
+      "reasoning": "HIPAA requires role-based access controls and unique user identification per \u00a7164.312(a)(1) as a foundational technical safeguard.",
+      "optional": false
+    },
+    {
+      "capability": "backup-restore",
+      "confidence": "high",
+      "reasoning": "HIPAA requires data backup plans and disaster recovery procedures per \u00a7164.308(a)(7), essential for business continuity and data availability safeguards.",
+      "optional": true
+    },
+    {
+      "capability": "incident-management",
+      "confidence": "high",
+      "reasoning": "Required for breach notification procedures per \u00a7164.308(a)(6). HIPAA mandates documented incident response and breach notification processes.",
+      "optional": true
+    },
+    {
+      "capability": "risk-assessment",
+      "confidence": "high",
+      "reasoning": "HIPAA mandates regular risk analysis per \u00a7164.308(a)(1)(ii)(A) as a core administrative safeguard requirement for ongoing compliance.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "retention_days": 2555,
+    "encryption_algorithm": "AES-256",
+    "mfa_required": true,
+    "breach_notification_hours": 24,
+    "audit_log_retention_days": 2555,
+    "access_control_model": "rbac",
+    "encryption_key_rotation_days": 90,
+    "session_timeout_minutes": 15,
+    "baa_required": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "retention_days": {
+        "type": "integer",
+        "minimum": 2555,
+        "maximum": 3650,
+        "description": "PHI retention period in days (HIPAA requires minimum 6 years from creation or last use, 7 years recommended = 2555 days)"
+      },
+      "encryption_algorithm": {
+        "type": "string",
+        "enum": [
+          "AES-256",
+          "AES-128"
+        ],
+        "description": "Encryption algorithm for PHI at rest and in transit. AES-256 recommended for maximum security, AES-128 acceptable for performance-critical scenarios"
+      },
+      "mfa_required": {
+        "type": "boolean",
+        "description": "Require multi-factor authentication for all PHI access. Strongly recommended for HIPAA compliance to prevent unauthorized access"
+      },
+      "breach_notification_hours": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 72,
+        "description": "Hours to initiate breach notification after discovery. HIPAA requires within 60 days, but best practice is 24-72 hours for timely response"
+      },
+      "audit_log_retention_days": {
+        "type": "integer",
+        "minimum": 2555,
+        "maximum": 3650,
+        "description": "Audit log retention period in days. Must match or exceed PHI retention for compliance investigations and forensics"
+      },
+      "access_control_model": {
+        "type": "string",
+        "enum": [
+          "rbac",
+          "abac",
+          "mac"
+        ],
+        "description": "Access control model: RBAC (Role-Based, simpler management), ABAC (Attribute-Based, fine-grained policies), MAC (Mandatory, highest security)"
+      },
+      "encryption_key_rotation_days": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 365,
+        "description": "Days between encryption key rotations. 90 days recommended, more frequent for high-risk environments, less for operational simplicity"
+      },
+      "session_timeout_minutes": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 60,
+        "description": "Idle session timeout in minutes. 15 minutes recommended for PHI access, shorter for high-security areas, longer for clinical workflows"
+      },
+      "baa_required": {
+        "type": "boolean",
+        "description": "Require Business Associate Agreements with all third-party vendors handling PHI. Required by HIPAA for covered entities and business associates"
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 1000.0,
+      "max": 15000.0
+    },
+    "adoptionCost": 25000.0,
+    "licenseCost": 15000.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "HIPAA compliance requires ongoing infrastructure and services. Minimum ($1000) covers: encryption services (KMS ~$50), enhanced audit logging (CloudTrail/CloudWatch ~$200), backup and disaster recovery (~$300), vulnerability scanning (~$200), and basic compliance monitoring tools (~$250). Maximum ($15000) includes: enterprise-grade encryption across all data stores, comprehensive SIEM/log management (Splunk/Datadog ~$3000), dedicated compliance automation platform (Vanta/Drata ~$2000), enhanced DLP services (~$2000), regular penetration testing (~$3000), BAA-compliant infrastructure redundancy, automated backup/DR solutions (~$2000), and 24/7 security monitoring (~$3000). Costs scale with data volume, number of systems, and organization size.",
+      "adoptionCost": "HIPAA compliance implementation is highly complex requiring: comprehensive risk assessment and gap analysis (~$5000), policy and procedure documentation development (~$3000), technical implementation of encryption, access controls, and audit logging across all systems (~$8000), staff training and awareness programs (~$2000), third-party security audit and penetration testing (~$4000), BAA negotiation with all vendors (~$1000), incident response plan development (~$1500), and compliance consultant fees (~$500). Requires specialized expertise in healthcare regulations, security architecture, and privacy controls. Even with AI coding assistants, significant manual work needed for policy creation, risk assessments, vendor management, and regulatory interpretation. Timeline typically 3-6 months for initial compliance.",
+      "licenseCost": "Includes essential compliance tools: compliance management platform annual license (Vanta/Drata/Secureframe ~$8000/year), vulnerability scanning and security assessment tools (~$3000), encryption key management solutions, HIPAA-specific documentation templates and frameworks (~$1000), employee training platform with HIPAA modules (~$2000), and incident management software (~$1000). Many core infrastructure components (cloud encryption, IAM) are included in cloud provider costs, but specialized compliance automation, continuous monitoring, and documentation tools require commercial licenses. Open-source alternatives exist but lack HIPAA-specific templates and automated compliance reporting required for efficient audit preparation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "compliance",
+    "hipaa",
+    "healthcare",
+    "phi"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": true,
+      "reason": "HIPAA compliance pattern is only selected when HIPAA compliance is explicitly required for Protected Health Information."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "HIPAA compliance controls including encryption, access validation, and audit logging support availability up to four nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "HIPAA encryption at rest and in transit, access control checks, and audit logging introduce minimum p95 latency of 100ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "HIPAA compliance overhead including encryption, access validation, and audit trail generation requires p99 latency floor of 200ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "HIPAA contingency planning and disaster recovery procedures with proper validation support RTO of at least 15 minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "HIPAA integrity requirements mandate minimal PHI data loss through continuous audit logging and backup procedures."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000,
+      "reason": "HIPAA compliance controls including encryption, audit logging, and access validation limit peak throughput to 50000 jobs per hour."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "HIPAA requires comprehensive audit logging for all PHI access, modifications, and administrative actions."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "HIPAA compliance is a security and operational pattern that applies infrastructure-level controls independent of application language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference"
+      ],
+      "reason": "HIPAA compliance applies to any platform that processes, stores, or transmits Protected Health Information."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports async messaging with encryption in transit and proper audit logging for PHI message flows."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports AI inference workloads with appropriate PHI de-identification and access control safeguards."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports both single and multi-tenant architectures with appropriate PHI isolation and access controls."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports batch processing of PHI with encryption, audit logging, and access controls for batch jobs."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports distributed transactions with proper audit trails and PHI integrity guarantees across systems."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports real-time streaming with encryption in transit and continuous audit logging for PHI streams."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports vector search with appropriate PHI protection and access controls for embedding vectors."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports document stores with encryption at rest and proper access controls for PHI documents."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports key-value stores with encryption at rest and access controls for PHI stored as key-value pairs."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports graph databases with encryption and access controls for PHI relationship data."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports time-series databases for PHI health metrics with encryption and audit logging."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports OLTP workloads with transactional integrity and audit logging for PHI operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA pattern supports analytical workloads on PHI with appropriate de-identification and access controls for analytics."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "HIPAA compliance requires cloud providers with BAA agreements (AWS, Azure, GCP) or controlled on-premises infrastructure."
+    }
+  ],
+  "warn_nfr": []
+}

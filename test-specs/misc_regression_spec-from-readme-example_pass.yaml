@@ -1,0 +1,30 @@
+# Misc Regression - Spec from README Example
+#
+# The canonical example spec shown in the project README: an Azure Python API
+# for a product catalogue with 99.9% availability, 100/200ms p95/p99 latency,
+# and JWT authentication. This is the first spec a new user encounters and
+# must always compile successfully as a smoke test.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - Azure Python API patterns are selected
+#   - JWT auth pattern is selected
+#   - latency targets are recorded in the compiled output
+
+project:
+  name: My Service
+  domain: ecommerce
+functional:
+  summary: REST API for product catalogue
+constraints:
+  cloud: azure
+  language: python
+  platform: api
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 100
+    p99Milliseconds: 200
+  security:
+    auth: jwt

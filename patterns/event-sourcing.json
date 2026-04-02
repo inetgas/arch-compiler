@@ -1,0 +1,466 @@
+{
+  "id": "event-sourcing",
+  "version": "1.0.0",
+  "title": "Event Sourcing",
+  "description": "Persist domain events as source of truth; rebuild state via replay; strong auditability and temporal queries.",
+  "types": [
+    "design",
+    "build",
+    "ops",
+    "test"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Event sourcing requires persistent event store infrastructure with high write throughput and substantial storage for event history. Minimum ($100): Small-scale implementation using managed database (e.g., AWS RDS PostgreSQL t3.small ~$50/month) plus additional storage for event logs (~$30/month) and snapshot storage (~$20/month). Maximum ($5000): Production-grade system with dedicated event store (e.g., EventStoreDB cluster ~$1500), high-IOPS storage for event streams (~$1000), snapshot/projection databases (~$800), message queue/streaming infrastructure for event publishing (Kafka/Kinesis ~$500-1000), increased storage costs due to append-only nature and retention requirements (~$500), and bandwidth for event replay operations (~$200-700). Costs scale with event volume, retention period, number of projections, and replay frequency.",
+      "adoptionCost": "Event sourcing is one of the most complex architectural patterns to implement correctly. High adoption cost factors include: (1) Significant paradigm shift from CRUD/state-based thinking to event-driven modeling requiring team training (~$2000); (2) Complex implementation of event store, versioning strategy, and replay mechanisms (~$3000); (3) Building projection/read model infrastructure and keeping them synchronized (~$1500); (4) Implementing event schema evolution and migration strategies (~$1000); (5) Testing temporal queries, replay scenarios, and eventual consistency edge cases (~$500). Requires deep understanding of domain-driven design, distributed systems, and eventual consistency. Despite AI coding assistants helping with boilerplate, the architectural decisions and domain modeling complexity remain high. Expected 3-6 weeks of focused development for experienced team, longer for teams new to pattern.",
+      "licenseCost": "Event sourcing is an architectural pattern with excellent open-source implementations. No inherent license cost required. Open-source event stores available include EventStoreDB (free open-source version), Apache Kafka, PostgreSQL, or purpose-built solutions like Axon Framework (open-source). Commercial options exist (EventStoreDB Cloud, Axon Server Enterprise) but are optional. Most organizations can implement event sourcing entirely with open-source tools. However, organizations may optionally purchase commercial event store licenses ($5000-20000/year) or enterprise support contracts for production deployments, but these are operational costs, not required licenses for adopting the pattern itself.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "audit-trail",
+      "confidence": "high",
+      "reasoning": "Event sourcing inherently provides complete audit trails by persisting all domain events as immutable records, enabling full traceability of all state changes over time."
+    },
+    {
+      "capability": "temporal-state",
+      "confidence": "high",
+      "reasoning": "Event sourcing enables temporal queries by allowing state reconstruction at any point in time through event replay, providing historical state views and time-travel capabilities."
+    },
+    {
+      "capability": "event-replay",
+      "confidence": "high",
+      "reasoning": "Event sourcing fundamentally provides the ability to replay events to rebuild state, recover from failures, or create read models."
+    },
+    {
+      "capability": "state-reconstruction",
+      "confidence": "high",
+      "reasoning": "The pattern enables rebuilding current state from scratch by replaying the event log, which is core to this pattern."
+    },
+    {
+      "capability": "event-store",
+      "confidence": "high",
+      "reasoning": "Event sourcing requires and implements an event store \u2014 an append-only log of domain events that serves as the system of record."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "event-store",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Event sourcing requires a specialized append-only event store to persist domain events durably and in order, serving as the source of truth for the system."
+    },
+    {
+      "capability": "schema-contract",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "As events are immutable and persist long-term, event sourcing requires a strategy to handle schema evolution (versioning, upcasting) to accommodate changing business requirements without breaking event replay."
+    },
+    {
+      "capability": "efficient-serialization",
+      "confidence": "high",
+      "reasoning": "Events must be serialized for storage and deserialized for replay, requiring a consistent serialization mechanism (JSON, Avro, Protobuf, etc.).",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "crud-single-model",
+      "distributed-2pc"
+    ],
+    "incompatibleAssumptions": [
+      "consistencyModel"
+    ]
+  },
+  "tags": [
+    "data",
+    "event-sourcing",
+    "audit"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Event sourcing can achieve up to 99.99% availability with properly configured event stores and replay mechanisms."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Event sourcing requires at least 100ms p95 latency due to event appending overhead and serialization."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Event sourcing p99 latency starts at 1000ms due to tail latencies in event store writes and schema evolution."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Event sourcing requires at least 5 minutes RTO to replay events and rebuild application state from event store."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Event sourcing supports up to 100K jobs/hour with optimized event stores and asynchronous event processing pipelines."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Event sourcing read queries are constrained by event replay and projection rebuilding overhead at high QPS."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Event sourcing write throughput is limited by event store append performance and serialization overhead."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">=",
+      "value": 5,
+      "reason": "Event sourcing adds complexity (event store, replay, projections). At <5 writes/s, simpler CRUD patterns are more appropriate."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "Event sourcing inherently provides complete audit logging through immutable event streams but can work with or without external audit systems."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Event sourcing supports all tenant isolation strategies by partitioning event streams and projections per tenant."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing can handle both PII and non-PII data with appropriate encryption and pseudonymization strategies for events."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing supports GDPR compliance with additional mechanisms for right-to-erasure through event encryption or tombstoning."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing supports HIPAA compliance through immutable audit trails, temporal queries, and encrypted event storage."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing supports CCPA requirements with right-to-know through event replay and right-to-delete through crypto-shredding."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing naturally supports SOX compliance through immutable event logs, complete audit trails, and temporal state reconstruction."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing supports read-your-writes consistency as applications can read from event streams immediately after appending events."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing provides strict durability through immutable event logs that are persisted before acknowledgment to clients."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Event sourcing is a cloud-agnostic architectural pattern that can be implemented on any cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Event sourcing is a language-agnostic architectural pattern implementable in any programming language with event serialization support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Event sourcing applies to backend systems that handle domain events and state reconstruction across multiple platform types."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing works with or without caching, though caching can optimize read-heavy projections and snapshot retrieval."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Event sourcing requires asynchronous messaging infrastructure to publish and consume domain events across bounded contexts."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing is compatible with AI inference workloads and can provide temporal training data through event replay."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing supports multi-tenancy by partitioning event streams per tenant with isolated event stores and projections."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing works with batch processing for analytics and can replay historical events for batch computation."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing can work with distributed transactions through saga patterns or operate without them using eventual consistency."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing naturally supports real-time streaming as events are published to event streams immediately upon persistence."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing is compatible with vector search by projecting events into vector embeddings for similarity queries."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing can use document stores for event storage or projections, but also works with relational event stores."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing can use key-value stores for snapshots and projections to optimize read performance and state reconstruction."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing can project events into graph databases for relationship queries and temporal graph analysis."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing naturally aligns with time-series databases as events are temporally ordered and immutable by design."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Event sourcing is primarily designed for transactional OLTP systems that capture and persist domain events as state changes."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event sourcing supports OLAP workloads by replaying events for analytical queries and building read-optimized projections."
+    }
+  ],
+  "defaultConfig": {
+    "event_store_type": "append-only-log",
+    "snapshot_strategy": "periodic",
+    "snapshot_frequency": 100,
+    "event_versioning": "upcasting",
+    "consistency_model": "eventual"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "event_store_type": {
+        "type": "string",
+        "enum": [
+          "append-only-log",
+          "event-stream",
+          "database-table"
+        ],
+        "description": "Storage mechanism for events. Append-only-log (Kafka, EventStore) for high throughput, event-stream for real-time processing, database-table for simpler deployments with ACID guarantees."
+      },
+      "snapshot_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "periodic",
+          "on-demand",
+          "hybrid"
+        ],
+        "description": "How to optimize state reconstruction. None replays all events (simple but slow), periodic creates snapshots at intervals, on-demand snapshots on read, hybrid combines both for performance."
+      },
+      "snapshot_frequency": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 10000,
+        "description": "Number of events between snapshots when using periodic strategy. Lower values reduce replay time but increase storage; higher values save storage but slow reconstruction."
+      },
+      "event_versioning": {
+        "type": "string",
+        "enum": [
+          "upcasting",
+          "multiple-versions",
+          "weak-schema"
+        ],
+        "description": "Strategy for evolving event schemas. Upcasting transforms old events to new format on read, multiple-versions maintains handlers for each version, weak-schema uses flexible formats like JSON."
+      },
+      "consistency_model": {
+        "type": "string",
+        "enum": [
+          "strong",
+          "eventual"
+        ],
+        "description": "Consistency guarantee for read models. Strong consistency ensures immediate visibility (slower, simpler), eventual consistency allows stale reads (faster, requires handling delays)."
+      }
+    }
+  },
+  "warn_nfr": []
+}

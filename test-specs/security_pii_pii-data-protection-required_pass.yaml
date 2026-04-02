@@ -1,0 +1,27 @@
+# Security - PII Data Protection Required
+#
+# An agnostic API spec with PII data present (pii: true) and a $50/month cost
+# ceiling. This tests that PII-aware patterns (data encryption, access controls,
+# data classification) are selected when PII is flagged, regardless of the
+# relatively low cost ceiling.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - PII protection patterns are selected
+#   - encryption-at-rest and access control patterns are activated
+
+nfr:
+  data:
+    pii: true
+cost:
+  ceilings:
+    monthly_operational_usd: 50
+project:
+  name: PII Data (Must Protect)
+  domain: test
+functional:
+  summary: 'Test scenario: PII Data (Must Protect)'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

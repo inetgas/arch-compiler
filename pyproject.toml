@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arch-compiler"
+version = "1.0.0"
+description = "ArchCompiler compiles constraints and NFRs into explicit, reviewable architectural decisions with clear trade-offs and cost impact."
+readme = "README-HUMAN.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "inetgas", email = "inertgas.without.r@gmail.com"}
+]
+keywords = ["architecture", "design-patterns", "compiler", "cloud-native", "devops"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Build Tools",
+]
+dependencies = [
+    "PyYAML>=6.0",
+    "jsonschema>=4.0",
+    "ruamel.yaml>=0.17.21",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-xdist>=3.0.0",
+    "pytest-html>=3.1.0",
+]
+
+[project.scripts]
+archcompiler = "tools.archcompiler:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-ra -q"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tools*", "patterns*", "schemas*", "config*"]
+
+[tool.coverage.run]
+source = ["tools"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == __main__",
+]

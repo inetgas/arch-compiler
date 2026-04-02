@@ -1,0 +1,36 @@
+# Misc Regression - Conflict Resolution: SOX vs Free Tier
+#
+# Regression test for a bug where db-managed-postgres and compliance-sox were
+# both selected despite declaring each other as incompatible. This spec has
+# a $500/month budget and SOX: false to allow both patterns to be initially
+# eligible, then conflict resolution should select only one.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - both db-managed-postgres and compliance-sox are initially eligible
+#   - conflict resolution selects only ONE (they are mutually incompatible)
+#   - the rejected pattern appears in rejected-patterns.json with incompatibility reason
+
+project:
+  name: Conflict Resolution Regression Test
+  domain: test
+
+functional:
+  summary: Test that mutually incompatible patterns are not both selected
+
+constraints:
+  platform: api
+  language: python
+  cloud: agnostic
+
+nfr:
+  data:
+    compliance:
+      sox: false  # Don't force sox, let pattern selection decide
+
+cost:
+  ceilings:
+    monthly_operational_usd: 500
+    one_time_setup_usd: 5000
+  intent:
+    priority: minimize-opex

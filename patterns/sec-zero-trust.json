@@ -1,0 +1,411 @@
+{
+  "id": "sec-zero-trust",
+  "version": "1.0.0",
+  "title": "Zero Trust Architecture",
+  "description": "Authenticate/authorize every request; least privilege; segment networks; strong identity posture.",
+  "types": [
+    "ops",
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 15000.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 8000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero Trust Architecture requires multiple infrastructure components: identity/access management (IAM) services, network segmentation tools, policy enforcement points, and monitoring/logging. Minimum assumes small-scale deployment with AWS IAM (free), basic network segmentation via security groups, CloudWatch logs (~$50), and a managed identity service like AWS Cognito (~$50-100) or basic Vault deployment (~$100). Maximum represents enterprise-grade deployment with managed identity platform (Okta/Auth0 enterprise ~$3000-4000), comprehensive network microsegmentation tools (AWS PrivateLink, Transit Gateway ~$1000-2000), enhanced monitoring and SIEM (~$2000-3000), API gateway for policy enforcement (~$500-1000), and certificate management. Costs scale with number of users, API calls authenticated, network complexity, and data volumes logged.",
+      "adoptionCost": "Very high complexity implementation requiring significant architectural changes. Includes: (1) comprehensive security assessment and architecture redesign (40-80 hours), (2) implementation of continuous authentication/authorization across all services requiring code changes to every microservice/API, (3) network segmentation and policy definition (20-40 hours), (4) integration with identity providers and certificate management infrastructure (20-30 hours), (5) migration from implicit trust to explicit verification model requiring changes to service-to-service communication, (6) extensive testing of authorization policies and network rules, (7) team training on zero trust principles and tooling (10-20 hours). Requires deep expertise in security, networking, identity management, and distributed systems. Even with AI assistance, security architecture decisions, policy design, and network topology planning require senior security architects and cannot be automated.",
+      "licenseCost": "Assumes commercial tooling for enterprise-grade zero trust implementation. Typical stack includes: identity and access management platform with strong authentication (Okta, Auth0, or Azure AD enterprise license ~$8000-10000/year for 500-1000 users), secrets management (HashiCorp Vault enterprise for high-availability and advanced features ~$5000-8000/year), network security and microsegmentation tools (potential licenses for service mesh like Istio with enterprise support or commercial alternatives ~$0-5000), SIEM/monitoring platform licenses (~$2000-5000/year). Many open-source options exist (Keycloak, open-source Vault, Istio) that could reduce this to near $0, but enterprise support and advanced features typically require commercial licenses. Mid-range estimate balances open-source core with selective commercial tooling for critical components.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "least-privilege-access",
+      "confidence": "high",
+      "reasoning": "Zero Trust Architecture inherently provides least-privilege access control by verifying and authorizing every request with minimal necessary permissions. This is a core principle explicitly mentioned in the pattern description."
+    },
+    {
+      "capability": "network-segmentation",
+      "confidence": "high",
+      "reasoning": "Network segmentation is a core principle of Zero Trust, isolating resources and limiting lateral movement. This pattern mandates creating security boundaries to ensure authenticated users can only access specifically authorized segments."
+    },
+    {
+      "capability": "continuous-authentication",
+      "confidence": "high",
+      "reasoning": "Zero Trust authenticates and authorizes every request continuously, not just at initial access. This is a fundamental characteristic explicitly stated in the pattern description."
+    },
+    {
+      "capability": "request-authorization",
+      "confidence": "high",
+      "reasoning": "Every request is authorized based on context and policy, which is a core Zero Trust principle. The pattern description explicitly requires authenticating and authorizing every request."
+    },
+    {
+      "capability": "access-control",
+      "confidence": "high",
+      "reasoning": "Zero Trust architecture enforces access control at every request via identity verification, policy evaluation, and least-privilege enforcement."
+    },
+    {
+      "capability": "policy-engine",
+      "confidence": "high",
+      "reasoning": "Zero Trust requires a policy decision point that evaluates identity, device, and context at every access request \u2014 this IS a policy engine."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "identity-provider",
+      "confidence": "high",
+      "reasoning": "Zero Trust requires a robust identity provider for authenticating users and services to maintain strong identity posture. Without centralized identity management, the pattern cannot effectively enforce authentication policies uniformly across all resources.",
+      "optional": false
+    },
+    {
+      "capability": "policy-engine",
+      "confidence": "high",
+      "reasoning": "Zero Trust needs a policy decision point to evaluate authorization rules based on identity, context, and risk for every request. This is essential for making consistent authorization decisions across the architecture.",
+      "optional": false
+    },
+    {
+      "capability": "audit-logging",
+      "confidence": "high",
+      "reasoning": "Zero Trust requires comprehensive audit trails for all access decisions to maintain security posture and enable threat detection. Logging every authentication and authorization decision is critical for compliance and security monitoring.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "security",
+    "zero-trust"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Zero Trust components (policy engine, identity provider) add authentication overhead that caps availability at four nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Authentication and authorization checks on every request add minimum 50ms overhead at p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Policy engine evaluation and identity verification under load add minimum 200ms tail latency."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 1,
+      "reason": "Zero Trust adds authentication/authorization overhead on every request; at <1 req/s, simpler perimeter security may be more practical."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires comprehensive audit trails to detect policy violations and security anomalies across all access decisions."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust architecture supports GDPR-compliant systems through access controls and audit logging but does not mandate GDPR."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports HIPAA requirements through audit logging and access controls but is not HIPAA-specific."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust enhances CCPA compliance through access controls but does not mandate CCPA adherence."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports SOX-compliant systems through audit trails but is not SOX-specific or exclusive."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Zero Trust is a universal security paradigm applicable to any cloud or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Zero Trust is an architectural pattern that applies to infrastructure and network layers independent of programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Zero Trust principles apply universally across all platform types through consistent authentication and authorization."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to systems with or without caching as cache access is also governed by Zero Trust policies."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust controls apply to both synchronous and asynchronous message flows equally through service-to-service authentication."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern secures AI inference endpoints through same authentication and authorization framework as other services."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust enhances multi-tenant security but also applies to single-tenant systems through consistent access controls."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern governs batch job authorization and execution access regardless of batch processing presence."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust applies to distributed and non-distributed transaction systems through per-request authorization checks."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern secures real-time streaming pipelines through per-stream authorization policies and identity verification."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust controls apply to vector search operations through same policy engine as other data access patterns."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern governs document store access through least-privilege policies regardless of document database usage."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust applies to key-value store access through per-request authorization checks on all operations."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern secures graph database queries through consistent authorization regardless of graph database presence."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust governs time-series data access through same policy framework as other database types."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to OLTP systems through transactional authorization checks on every database operation."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Zero Trust secures OLAP analytical queries through consistent access control policies on data warehouse access."
+    }
+  ],
+  "defaultConfig": {
+    "authentication_method": "mutual-tls",
+    "authorization_model": "rbac",
+    "network_segmentation": "micro-segmentation",
+    "session_duration_minutes": 60,
+    "mfa_required": true,
+    "device_trust_required": false,
+    "continuous_verification": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "authentication_method": {
+        "type": "string",
+        "enum": [
+          "mutual-tls",
+          "jwt-bearer",
+          "oauth2",
+          "certificate-based"
+        ],
+        "description": "Primary authentication mechanism for service-to-service and user authentication. Mutual TLS provides strongest cryptographic identity, JWT/OAuth2 are more flexible for distributed systems, certificates work well for device identity."
+      },
+      "authorization_model": {
+        "type": "string",
+        "enum": [
+          "rbac",
+          "abac",
+          "pbac",
+          "rbac-abac-hybrid"
+        ],
+        "description": "Authorization strategy: RBAC (role-based) is simpler to manage, ABAC (attribute-based) provides fine-grained context-aware decisions, PBAC (policy-based) offers centralized policy management, hybrid combines RBAC simplicity with ABAC flexibility."
+      },
+      "network_segmentation": {
+        "type": "string",
+        "enum": [
+          "micro-segmentation",
+          "zone-based",
+          "service-mesh",
+          "software-defined-perimeter"
+        ],
+        "description": "Network isolation approach: Micro-segmentation isolates individual workloads, zone-based groups by trust level, service mesh provides application-layer segmentation, SDP creates dynamic perimeters around resources."
+      },
+      "session_duration_minutes": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 480,
+        "description": "Maximum session lifetime before re-authentication required. Shorter durations (5-60 min) increase security but impact UX, longer durations (120-480 min) improve usability but increase risk window."
+      },
+      "mfa_required": {
+        "type": "boolean",
+        "description": "Enforce multi-factor authentication for all user access. Significantly increases security posture but adds authentication friction."
+      },
+      "device_trust_required": {
+        "type": "boolean",
+        "description": "Require device compliance verification (managed, patched, encrypted) before granting access. Strengthens security but requires device management infrastructure."
+      },
+      "continuous_verification": {
+        "type": "boolean",
+        "description": "Continuously validate trust signals during sessions rather than only at initial authentication. Detects compromised sessions but increases overhead and complexity."
+      }
+    }
+  },
+  "warn_nfr": []
+}

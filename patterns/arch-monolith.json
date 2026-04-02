@@ -1,0 +1,479 @@
+{
+  "id": "arch-monolith",
+  "version": "1.0.0",
+  "title": "Monolithic Architecture",
+  "description": "Single deployable unit; simplest operational model; scale with replicas behind a load balancer.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 3000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Monolithic architecture is a deployment pattern that requires infrastructure to run. Min ($50) represents a small production deployment: single t3.small EC2 instance ($15/mo) + Application Load Balancer ($16/mo) + RDS t3.micro database ($15/mo) + minimal storage/bandwidth ($4/mo). Max ($3000) represents a scaled production deployment: 3-5 larger compute instances behind ALB ($500-800/mo) + production RDS instance with multi-AZ ($400-600/mo) + ElastiCache for session management ($100/mo) + S3 storage ($50/mo) + CloudWatch/monitoring ($50/mo) + increased bandwidth/data transfer ($200/mo) + backups and snapshots ($100/mo) + CDN ($200/mo). The monolith scales vertically (larger instances) and horizontally (replicas behind load balancer), which is more cost-efficient than microservices but has scaling limits. Costs scale with traffic, not architectural complexity.",
+      "adoptionCost": "Low adoption cost as monolithic architecture is the simplest and most traditional pattern. Implementation involves: structuring a single codebase with logical layer separation (1-2 days, $200), setting up a single deployment pipeline (1 day, $150), configuring load balancer and auto-scaling for replicas (1 day, $150). No distributed systems complexity, no service mesh, no inter-service communication protocols. Most developers already understand this pattern. With AI coding assistants, boilerplate setup is accelerated. Primary work is organizational (module boundaries, build configuration) rather than learning new paradigms. Suitable for small-to-medium teams and early-stage products.",
+      "licenseCost": "Monolithic architecture is a design pattern, not a product or framework requiring licenses. Implementation uses standard open-source tools: web frameworks (Spring Boot, Django, Rails, Express - all free), databases (PostgreSQL, MySQL - open source), load balancers (nginx, HAProxy - free, or cloud-native ALB/ELB included in compute costs), CI/CD tools (GitLab CI, GitHub Actions, Jenkins - free tiers available). No proprietary architecture frameworks or commercial orchestration platforms required. Organizations may choose commercial APM tools (New Relic, Datadog) but those are operational add-ons, not architecture requirements.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "simple-deployment",
+      "confidence": "strong",
+      "reasoning": "Monolithic architecture deploys as a single unit, eliminating distributed deployment complexity, service orchestration, and inter-service deployment coordination."
+    },
+    {
+      "capability": "low-distributed-complexity",
+      "confidence": "strong",
+      "reasoning": "By avoiding distributed systems concerns like network partitions, service discovery, distributed transactions, and inter-service communication, monoliths inherently have lower distributed complexity."
+    },
+    {
+      "capability": "horizontal-scaling",
+      "confidence": "high",
+      "reasoning": "Monoliths can scale by running multiple replicas behind a load balancer, allowing the system to handle increased load through replication."
+    },
+    {
+      "capability": "shared-process-space",
+      "confidence": "high",
+      "reasoning": "All components share the same runtime environment and process space, enabling simplified in-process communication without network overhead."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "service-boundary-discipline",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Without physical service boundaries, monoliths require disciplined modular design and clear internal boundaries to prevent tight coupling and maintain code organization as the system grows."
+    },
+    {
+      "capability": "build-toolchain",
+      "confidence": "high",
+      "reasoning": "Monoliths need a single cohesive build process for the entire application to compile, package, and prepare the single deployable unit.",
+      "optional": true
+    },
+    {
+      "capability": "stateless-design",
+      "confidence": "medium",
+      "reasoning": "To enable effective horizontal scaling with multiple replicas behind a load balancer, the monolith must be designed to be stateless or use externalized session management.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless--aws",
+      "arch-serverless--gcp",
+      "arch-serverless--azure",
+      "arch-modular-monolith",
+      "arch-serverless",
+      "arch-microservices",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "architecture",
+    "monolith"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.995,
+      "reason": "Monolith cannot exceed 99.9% availability due to single deployment unit; target >99.5% suggests need for distributed architecture."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Monolith achieves p95 latency floor of 10ms due to in-process communication and minimal network overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Monolith achieves p99 latency floor of 50ms due to shared resource contention and garbage collection pauses."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Monolith requires 15+ minutes RTO for full application restart, health check stabilization, and cache warmup."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Monolith with transactional database supports RPO of 1-5 minutes using database replication and transaction logs."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000000,
+      "reason": "Monolith throughput ceiling at 50M jobs/hour due to shared database connection limits and single process resource constraints."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 2000,
+      "reason": "Monolith read QPS ceiling at 2000 due to single database connection pool and vertical scaling limits."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Monolith write QPS ceiling at 1000 due to single database instance write bottleneck and shared transaction management."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can optionally implement audit logging through shared logging infrastructure or omit it entirely."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Monolith supports all tenant isolation strategies from row-level security to separate databases per tenant."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can handle PII or non-PII data with appropriate encryption and access controls applied uniformly."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can implement GDPR compliance through application-level data access controls and deletion workflows."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can achieve HIPAA compliance with encryption at rest, audit logging, and access controls in single codebase."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can support CCPA requirements through centralized data access and deletion request handling."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can enforce SOX compliance through transactional integrity and audit trails in unified application logic."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith naturally provides read-your-writes consistency through shared database connections or can relax it if not needed."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith supports strict durability via ACID-compliant database or relaxed durability for performance optimization."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Monolithic architecture is cloud-agnostic and can be deployed on any cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Monolithic architecture is a language-agnostic design pattern implementable in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Monolithic architecture applies to any platform type including web apps, APIs, workers, batch jobs, and CLI tools."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can optionally use in-memory or external caching layers but does not require them for operation."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can optionally integrate async messaging for background jobs but synchronous processing is also supported."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can include AI inference logic within the same deployment unit or operate without AI capabilities."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith supports multi-tenancy through application-level tenant isolation or can serve single-tenant deployments."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can include batch processing jobs within the same codebase or focus solely on real-time request handling."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Monolithic architecture handles transactions within a single deployment unit and database, not across distributed services."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can integrate real-time streaming capabilities through embedded stream processing or operate without streaming."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can integrate vector search through pgvector extensions or external vector databases, or omit this feature."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can use document-oriented databases like MongoDB as its backing store or use relational databases instead."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can use key-value stores like Redis for caching and session management or operate without them."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can integrate graph databases for relationship queries or use relational databases with join-based queries."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can use time-series databases like TimescaleDB for temporal data or store time-series in relational tables."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith commonly supports OLTP workloads with transactional database but can also handle non-transactional use cases."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Monolith can handle OLAP workloads through analytical queries on the same database or focus on transactional workloads only."
+    }
+  ],
+  "defaultConfig": {
+    "scaling_strategy": "horizontal",
+    "load_balancer_type": "layer7",
+    "session_management": "stateless",
+    "deployment_strategy": "rolling"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "scaling_strategy": {
+        "type": "string",
+        "enum": [
+          "horizontal",
+          "vertical",
+          "hybrid"
+        ],
+        "description": "How to scale the monolith: horizontal (add replicas behind load balancer), vertical (increase instance resources), or hybrid (both approaches)"
+      },
+      "load_balancer_type": {
+        "type": "string",
+        "enum": [
+          "layer4",
+          "layer7",
+          "dns"
+        ],
+        "description": "Load balancing approach: layer4 (TCP/UDP, faster but less intelligent), layer7 (HTTP/application-aware routing), or dns (DNS-based distribution)"
+      },
+      "session_management": {
+        "type": "string",
+        "enum": [
+          "stateless",
+          "sticky-sessions",
+          "shared-state"
+        ],
+        "description": "How to handle user sessions across replicas: stateless (no server-side state, best for scaling), sticky-sessions (route user to same instance), or shared-state (centralized session store)"
+      },
+      "deployment_strategy": {
+        "type": "string",
+        "enum": [
+          "rolling",
+          "blue-green",
+          "canary",
+          "recreate"
+        ],
+        "description": "Deployment approach: rolling (gradual instance replacement), blue-green (full environment swap), canary (test with subset of traffic), or recreate (downtime deployment)"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 1500,
+      "reason": "Monolith approaching read QPS ceiling (2000); consider migrating to microservices or read replicas for scalability.",
+      "message": "arch-monolith: peak read QPS is {actual} req/s (>1500). Approaching monolith ceiling (2000 req/s); consider architectural evolution to microservices or read replicas."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 750,
+      "reason": "Monolith approaching write QPS ceiling (1000); consider database sharding or write scaling strategies.",
+      "message": "arch-monolith: peak write QPS is {actual} req/s (>750). Approaching monolith ceiling (1000 req/s); consider database sharding or distributed architecture."
+    }
+  ]
+}

@@ -1,0 +1,434 @@
+{
+  "id": "compliance-gdpr-right-to-be-forgotten",
+  "version": "1.0.0",
+  "title": "GDPR Right to Be Forgotten",
+  "description": "Implements GDPR Article 17 'Right to Erasure' (right to be forgotten). Provides mechanisms to permanently delete user data across all systems when requested. Includes data discovery, cascading deletion, backup purging, third-party notification, and audit trail. Critical for GDPR compliance when handling EU residents' data.",
+  "types": [
+    "security",
+    "ops",
+    "data"
+  ],
+  "conflicts": {},
+  "provides": [
+    {
+      "capability": "data-erasure",
+      "description": "Permanent deletion of user data across all systems",
+      "confidence": "medium",
+      "reasoning": "Core capability of this pattern - implements the actual deletion of user data across systems as required by GDPR Article 17."
+    },
+    {
+      "capability": "erasure-verification",
+      "description": "Verify complete data removal with audit trail",
+      "confidence": "medium",
+      "reasoning": "Essential capability for proving compliance - verifies that data has been completely removed from all systems including backups."
+    },
+    {
+      "capability": "gdpr-right-to-erasure",
+      "confidence": "high",
+      "reasoning": "Explicitly provides the high-level GDPR Article 17 compliance capability, making it discoverable for systems requiring right to be forgotten implementation."
+    },
+    {
+      "capability": "data-deletion-audit-trail",
+      "confidence": "high",
+      "reasoning": "Provides comprehensive audit trail of deletion requests and actions taken, which is a key component mentioned in the pattern description for compliance evidence."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-discovery",
+      "confidence": "high",
+      "reasoning": "Must be able to discover all locations where user data exists across systems before it can be deleted - this is a prerequisite mentioned in the description.",
+      "optional": true
+    },
+    {
+      "capability": "audit-logging",
+      "description": "Audit logs for erasure verification",
+      "confidence": "medium",
+      "reasoning": "Required to maintain compliance records of erasure requests and actions, which is legally necessary for demonstrating GDPR compliance."
+    },
+    {
+      "capability": "distributed-transaction",
+      "confidence": "medium",
+      "reasoning": "Cascading deletion across multiple systems requires transactional guarantees or compensating mechanisms to ensure data consistency and complete erasure.",
+      "optional": false
+    },
+    {
+      "capability": "backup-management",
+      "confidence": "high",
+      "reasoning": "Pattern explicitly mentions backup purging as a key component - requires capability to identify and delete data from backup systems to ensure complete erasure.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "erasure_deadline_days": 30,
+    "include_backups": true,
+    "notify_third_parties": true,
+    "verification_required": true,
+    "data_discovery_strategy": "metadata-catalog",
+    "deletion_order": "cascading",
+    "audit_retention_years": 7,
+    "anonymization_fallback": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "erasure_deadline_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 90,
+        "description": "Maximum days to complete erasure (GDPR requires 'without undue delay', typically 30 days)"
+      },
+      "include_backups": {
+        "type": "boolean",
+        "description": "Purge data from backups and archives (required for full GDPR compliance but increases complexity)"
+      },
+      "notify_third_parties": {
+        "type": "boolean",
+        "description": "Notify data processors, controllers, and third-party services of erasure request (GDPR Article 19 requirement)"
+      },
+      "verification_required": {
+        "type": "boolean",
+        "description": "Require verification that all data has been erased across all systems before marking request complete"
+      },
+      "data_discovery_strategy": {
+        "type": "string",
+        "enum": [
+          "metadata-catalog",
+          "full-scan",
+          "hybrid"
+        ],
+        "description": "How to discover user data: metadata-catalog (fast, requires data catalog), full-scan (thorough but slow), hybrid (catalog + validation scan)"
+      },
+      "deletion_order": {
+        "type": "string",
+        "enum": [
+          "cascading",
+          "parallel",
+          "manual-approval"
+        ],
+        "description": "Deletion execution strategy: cascading (respects dependencies), parallel (faster but may fail on constraints), manual-approval (requires human review)"
+      },
+      "audit_retention_years": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10,
+        "description": "Years to retain erasure audit logs (GDPR Article 30 requires records of processing activities, typically 3-7 years)"
+      },
+      "anonymization_fallback": {
+        "type": "boolean",
+        "description": "Allow anonymization instead of deletion for data required for legal/regulatory retention (GDPR Article 17(3) exemptions)"
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 3000.0
+    },
+    "adoptionCost": 8000.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($100): Small application with basic data discovery scanning (1-2 database servers), audit logging storage (~10GB/month), and minimal third-party API calls for notifications (~100 deletion requests/month). Includes database query overhead, log storage in S3/blob storage (~$5), and basic monitoring. Max ($3000): Enterprise-scale implementation with comprehensive data discovery across multiple data stores (10+ databases, data lakes, backup systems), dedicated audit trail database with retention, real-time compliance monitoring dashboards, automated third-party notification systems, backup purging automation across multiple regions, and high-volume deletion processing (1000+ requests/month). Includes data classification tools, scheduled scanning jobs, compliance reporting infrastructure, and integration APIs. Costs scale with number of data sources, deletion request volume, backup retention complexity, and geographic distribution of data.",
+      "adoptionCost": "Very high complexity implementation requiring: (1) Data discovery and mapping across all systems to identify PII storage locations (20-40 hours); (2) Implementation of cascading deletion logic with transactional integrity across multiple databases and services (30-50 hours); (3) Backup purging mechanisms that work with existing backup strategies (15-25 hours); (4) Third-party notification system with retry logic and confirmation tracking (10-20 hours); (5) Comprehensive audit trail system for compliance evidence (15-25 hours); (6) Integration with existing authentication and authorization systems (10-15 hours); (7) Testing across all data stores including edge cases, orphaned data, and failure scenarios (25-40 hours); (8) Legal and compliance review to ensure GDPR Article 17 requirements are met; (9) Documentation for compliance audits. Requires expertise in data privacy law, database administration, distributed systems, and security. Total estimated 125-215 developer hours plus legal consultation.",
+      "licenseCost": "GDPR compliance is a legal requirement, not a licensed product. Implementation can be built using open-source tools and frameworks (PostgreSQL, MySQL audit plugins, standard logging libraries, cloud-native services). However, organizations may optionally purchase commercial data discovery tools ($10k-$50k/year) or privacy management platforms like OneTrust, BigID, or TrustArc ($25k-$100k+/year) to automate discovery and deletion workflows. Since the pattern itself can be implemented with open-source components and cloud-native services, the base license cost is $0. Commercial tools are optional enhancements, not requirements.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "compliance",
+    "gdpr",
+    "privacy",
+    "data-protection"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr_rtbf",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically implements GDPR Article 17 Right to Erasure and is only applicable when GDPR compliance is required."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Data erasure workflows across distributed systems with verification and audit trails can guarantee up to four nines availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5000,
+      "reason": "Comprehensive data discovery across multiple systems, cascading deletions, and verification require at least 5 seconds p95 latency."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 10000,
+      "reason": "Complex deletion operations spanning backups, third-party notifications, and audit trails require at least 10 seconds p99 latency."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 30,
+      "reason": "Multi-system data discovery, coordinated deletion workflows, and backup purging require at least 30 minutes RTO."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100,
+      "reason": "Resource-intensive data discovery, cascading deletions, backup purging, and verification limit throughput to 100 erasure jobs per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": ">=",
+      "value": 1,
+      "reason": "GDPR Right to Erasure implementation has significant operational overhead (data discovery, cascading deletions, backup purging, audit trails). At very low request volumes (<1/hour), consider whether full GDPR RTBF infrastructure is necessary or if manual processes would suffice."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "GDPR Article 17 compliance requires comprehensive audit trails for all data erasure requests, executions, and verifications."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "GDPR exclusively regulates personal data (PII); pattern only applies when PII is present."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "GDPR compliance requirements are cloud-agnostic and apply to any infrastructure hosting EU resident data."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Data erasure workflows can be implemented in any programming language as a compliance orchestration layer."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "GDPR compliance requirements apply to any platform that processes personal data."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern must purge cached data but works regardless of whether application uses caching layers."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern benefits from async messaging for coordinating distributed deletions but can work with synchronous orchestration."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to AI systems that may store personal data but works regardless of AI inference presence."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern ensures proper tenant data isolation during deletion but works for both single-tenant and multi-tenant systems."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern can leverage batch processing for bulk deletions but also supports real-time erasure requests."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern benefits from distributed transaction coordination for atomic deletions but can work with compensating workflows."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern must purge data from streaming systems when present but works regardless of real-time streaming usage."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern must delete embeddings and vectors when present but works regardless of vector search usage."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern handles document deletion in NoSQL stores when present but works with any storage backend."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern handles key-value store deletion when present but works with any storage architecture."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern handles graph node and relationship deletion when present but works with any database type."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern handles time-series data deletion when present but works regardless of time-series database usage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern applies to transactional systems storing personal data but works regardless of OLTP workload presence."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern must purge data from analytical systems and data warehouses but works regardless of OLAP workload presence."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">",
+      "value": 30000,
+      "reason": "While GDPR allows up to 30 days to fulfill erasure requests, p95 latencies >30 seconds suggest the erasure workflow may have inefficiencies in data discovery or deletion orchestration that could be optimized.",
+      "message": "compliance-gdpr-right-to-be-forgotten: p95 latency is {actual}ms (>30s). While GDPR allows 30 days response time, high deletion latencies may indicate inefficient data discovery or deletion workflows that could be optimized."
+    }
+  ]
+}

@@ -1,0 +1,408 @@
+{
+  "id": "caching-required-high-write-throughput",
+  "version": "1.0.0",
+  "title": "Caching Required: High Write Throughput",
+  "description": "Policy pattern that enforces caching when write QPS reaches 500+ req/s \u2014 the threshold at which synchronous database writes become a throughput bottleneck and write batching or buffering is required.",
+  "types": [
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 0.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 99999,
+    "costNotes": "Meta-policy pattern with no direct cost. Actual write caching infrastructure costs are accounted for in the write cache strategy pattern selected downstream (write-through-cache, write-back-cache).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero cost \u2014 meta-policy pattern only. Write caching infrastructure costs are in write-through-cache and write-back-cache patterns.",
+      "adoptionCost": "Zero adoption cost \u2014 this pattern auto-detects write QPS requirements from the spec and enforces caching as a hard compilation requirement.",
+      "licenseCost": "No license cost \u2014 policy enforcement pattern only.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "write-caching-requirement-enforcement",
+      "confidence": "high",
+      "reasoning": "Detects when write throughput exceeds the threshold where direct database writes become a bottleneck, and enforces /constraints/features/caching: true as a hard compilation gate so a write cache strategy is selected."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "key-value-store",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "At 500+ write QPS, a write cache layer (write-through or write-back) is required to absorb burst write load or reduce write latency. The specific implementation is determined by the downstream cache strategy pattern."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cache",
+    "throughput",
+    "performance",
+    "write-optimization",
+    "meta-policy"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural enforcement pattern applicable to any high-write-throughput system"
+  },
+  "defaultConfig": {},
+  "supports_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">=",
+      "value": 500,
+      "reason": "Pattern activates when write QPS reaches 500+ req/s \u2014 the threshold at which synchronous database writes typically become a latency or throughput bottleneck for standard managed database instances."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Pattern is compatible with any authentication mechanism supported by the underlying cache infrastructure."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both audited and non-audited environments; audit requirements are enforced at the cache strategy level."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Write caching supports all tenant isolation strategies through tenant-scoped cache key namespacing."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is compatible with both PII and non-PII workloads; PII requires cache encryption and appropriate flush policies."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with GDPR when write cache flush and invalidation cover right-to-be-forgotten requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with HIPAA when cache stores use encryption at rest and in transit."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatible with CCPA when cache flush handles data deletion requests before persistence."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX workloads requiring strict audit trails should prefer write-through (synchronous persistence) over write-back (async flush with data loss risk)."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Consistency enforcement is delegated to the downstream write cache strategy pattern."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability enforcement is delegated to the downstream write cache strategy pattern (write-back requires durability/strict: false; write-through supports either)."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Pattern is cloud-agnostic; write caching infrastructure exists on all major clouds and on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Pattern is language-agnostic; write cache client libraries exist for all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "High write QPS can occur on any platform type; write caching enforcement is platform-agnostic."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write caching is compatible with both async and sync messaging architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "High write QPS can occur in AI inference pipelines (embedding writes, result logging) but pattern is not AI-specific."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write caching supports both single-tenant and multi-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "High write QPS occurs in both real-time and batch write workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Meta-pattern activates regardless; distributed_transactions compatibility is enforced by the downstream write cache strategy (write-back is incompatible, write-through is compatible)."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "High write QPS is common in real-time streaming ingestion pipelines."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write caching can buffer vector embedding writes before persistence."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write caching works with document stores as the backing database."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write caching works with key-value stores as the backing database."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write caching can buffer graph mutation writes before persistence."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write caching is a natural fit for high-write-QPS time-series ingestion pipelines."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Meta-pattern activates regardless; OLTP compatibility is enforced by the downstream write cache strategy (write-back is incompatible with OLTP, write-through is compatible)."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write caching can buffer analytical result writes before persistence."
+    }
+  ],
+  "requires_constraints": [
+    {
+      "path": "/constraints/features/caching",
+      "op": "==",
+      "value": true,
+      "reason": "At 500+ write QPS, a write caching strategy is mandatory to prevent database write saturation or unacceptable write latency. Set constraints.features.caching: true"
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Write caching improves availability under write burst load, but the cache+DB stack is bounded at four nines without additional redundancy."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Write-through adds synchronous dual-write overhead; write-back adds cache-write latency. Floor is 1ms for in-memory cache writes."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Tail latency from cache contention, flush coordination, or backing store pressure under high write load."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Write cache recovery requires flushing pending writes or replaying state; minimum RTO is 1 minute."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Write-through guarantees RPO=0; write-back may lose in-flight writes (RPO > 0). Downstream pattern enforces the specific RPO constraint."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000000,
+      "reason": "Write caching infrastructure supports up to 1M writes/sec (3.6B/hour) with a properly sized cache cluster."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": true,
+      "reason": "At 500+ write QPS with strict durability, write-through is required (write-back is incompatible). Write-through incurs dual-write latency overhead; consider if strict durability is truly necessary at this scale.",
+      "message": "caching-required-high-write-throughput: spec requires durability/strict=true at {actual} write QPS. Write-through will be enforced (write-back incompatible), adding synchronous dual-write latency. Verify strict durability is required at this scale."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 600,
+      "reason": "Pattern activates at exactly 500 write QPS. If actual QPS is only slightly above threshold (500-600), consider if architectural overhead of write caching justifies the complexity vs. scaling the database instance.",
+      "message": "caching-required-high-write-throughput: write QPS is {actual} req/s, just above the 500 req/s caching threshold. Consider if database instance scaling is simpler than introducing write cache complexity."
+    }
+  ]
+}

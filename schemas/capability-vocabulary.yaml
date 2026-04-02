@@ -1,0 +1,956 @@
+# Capability Vocabulary
+#
+# PURPOSE: Canonical names for pattern requires/provides capability strings.
+#
+# This is an ADDITIVE vocabulary — it only registers known synonym pairs and
+# environment prerequisites. Unknown capability names are allowed through.
+# The vocabulary grows as new synonym pairs are discovered.
+#
+# STRUCTURE:
+#   capabilities:
+#     <canonical-name>:
+#       category:    "pattern"      — must be provided by a selected pattern
+#                    "environment"  — always satisfied by the deployment environment;
+#                                     no pattern needs to provide it
+#                    "external"     — provided by a cloud/SaaS provider, never by a pattern
+#       aliases:     list of known non-canonical strings that should be replaced with
+#                    the canonical name (triggers test failure if found in patterns)
+#       description: one-line description
+#       deprecated:  true if this term is too abstract and should be replaced (optional)
+#       replace_with: suggested specific replacements for deprecated terms (optional)
+#
+# HOW TO ADD AN ENTRY:
+#   1. Choose the canonical form (prefer noun over gerund, hyphenated, lowercase)
+#   2. List all known aliases (strings currently used in patterns that mean the same thing)
+#   3. Set category
+#   4. Run tests — patterns using alias strings will now fail test_registry_integrity.py
+#   5. Fix the patterns, re-run tests
+
+capabilities:
+
+  # ── Synonym pairs (clear-cut: same concept, different string) ──────────────
+
+  secrets-management:
+    category: pattern
+    aliases: [secret-management]
+    description: Secure storage and injection of credentials and API keys
+
+  timeseries-database:
+    category: pattern
+    aliases: [time-series-database]
+    description: Database optimised for time-stamped data series
+
+  timeseries-storage:
+    category: pattern
+    aliases: [time-series-storage]
+    description: Storage layer for time-stamped data series
+
+  event-source:
+    category: environment
+    aliases: [event-sources]
+    description: Cloud event trigger (SQS, EventBridge, Pub/Sub, HTTP trigger) — provided by the deployment environment, not a pattern
+
+  retry-strategy:
+    category: pattern
+    aliases: [retry-mechanism, retry-logic]
+    description: Automatic retry with backoff on transient failures
+
+  circuit-breaker:
+    category: pattern
+    aliases: [cascading-failure-prevention]
+    description: Trips open when a dependency fails repeatedly, preventing cascading failures
+
+  backpressure-handling:
+    category: pattern
+    aliases: [backpressure-management]
+    description: Mechanism for managing load and preventing downstream services from being overwhelmed
+
+  event-driven:
+    category: pattern
+    aliases: [event-driven-architecture]
+    description: System design where components communicate via events rather than direct calls
+
+  document-store:
+    category: pattern
+    aliases: [document-storage]
+    description: Schema-flexible document database (e.g. MongoDB, DynamoDB)
+
+  session-store:
+    category: pattern
+    aliases: [session-storage]
+    description: Server-side session persistence
+
+  json-store:
+    category: pattern
+    aliases: [json-storage]
+    description: Storage layer optimised for JSON documents
+
+  distributed-transaction-coordination:
+    category: pattern
+    aliases: [distributed-transaction-coordinator]
+    description: Coordinates atomic operations across multiple services or data stores
+
+  health-check:
+    category: environment
+    aliases: [health-checking, health-check-endpoint]
+    description: Liveness/readiness endpoint — provided by the deployment platform (k8s probes, load balancer health checks)
+
+  # ── Environment prerequisites (never provided by a pattern) ────────────────
+  # Patterns that require these will be auto-dismissed in pre-flight checks.
+
+  internet-connectivity:
+    category: environment
+    aliases: []
+    description: Outbound internet access from the deployment environment
+
+  network-connectivity:
+    category: environment
+    aliases: [network]
+    description: Network access between services in the deployment environment
+
+  compute:
+    category: environment
+    aliases: [compute-resources]
+    description: CPU/memory resources provided by the deployment environment
+
+  persistent-storage:
+    category: environment
+    aliases: []
+    description: Durable block or file storage provided by the deployment environment
+
+  git-repository:
+    category: environment
+    aliases: [version-control, source-control]
+    description: A git repository exists for the project
+
+  cloud-infrastructure:
+    category: environment
+    aliases: []
+    description: Cloud provider account and resource provisioning capability
+
+  # ── Deprecated: too abstract, retire from requires ─────────────────────────
+  # These terms appear in requires but are too broad to be matchable.
+  # Patterns should use specific replacements instead.
+
+  data-storage:
+    category: environment
+    aliases: []
+    description: Abstract storage requirement — too broad to match a specific pattern
+    deprecated: true
+    replace_with: [relational-database, document-store, key-value-store, time-series-database]
+
+  api:
+    category: pattern
+    aliases: []
+    description: Abstract API requirement — too broad to match a specific pattern
+    deprecated: true
+    replace_with: [rest-api, graphql-api, grpc-api]
+
+  monitoring:
+    category: pattern
+    aliases: []
+    description: Abstract monitoring requirement — too broad to match a specific pattern
+    deprecated: true
+    replace_with: [metrics-collection, operational-alerting, sli-slo-monitoring]
+
+  observability:
+    category: pattern
+    aliases: []
+    description: Abstract observability requirement — too broad to match a specific pattern
+    deprecated: true
+    replace_with: [observability-baseline, distributed-tracing, metrics-collection, log-correlation]
+
+  # ── Observability capability synonyms ──────────────────────────────────────
+
+  structured-logging:
+    category: pattern
+    aliases: [logging]
+    description: Ingestion and querying of structured (JSON) log streams
+
+  metrics-collection:
+    category: pattern
+    aliases: [metrics-tracking]
+    description: Collection and aggregation of application and infrastructure metrics
+
+  # ── New synonym pairs from second batch ────────────────────────────────────
+
+  stateless-design:
+    category: pattern
+    aliases: [stateless-architecture, stateless-application-design, stateless-service, stateless-workload, stateless-execution]
+    description: Application holds no state between requests; any instance can serve any request
+
+  timeout-handling:
+    category: pattern
+    aliases: [timeout-enforcement, timeouts]
+    description: Mechanism for bounding request duration and reacting when limits are exceeded
+
+  # ── Additional environment prerequisites ───────────────────────────────────
+
+  storage:
+    category: environment
+    aliases: []
+    description: Physical or virtual storage provided by the deployment environment
+
+  database:
+    category: environment
+    aliases: []
+    description: An existing database instance — prerequisite when the pattern operates on top of an existing DB (e.g., sharding, replication)
+
+  infrastructure:
+    category: environment
+    aliases: []
+    description: Physical or cloud infrastructure provided by the deployment environment
+
+  system-architecture:
+    category: environment
+    aliases: []
+    description: The system's architectural design exists as a documented artifact
+
+  traffic-switching:
+    category: environment
+    aliases: []
+    description: Load balancer or service mesh capable of routing traffic between environments; required by blue-green deployment
+
+  environment-isolation:
+    category: environment
+    aliases: []
+    description: VPCs, namespaces, or accounts providing isolated deployment environments; always present in cloud and on-prem deployments
+
+  cloud-resources:
+    category: environment
+    aliases: []
+    description: Cloud provider compute, storage, and networking resources available in the deployment account
+
+  cost-visibility:
+    category: pattern
+    aliases: [cost-reporting, cost-monitoring]
+    description: Cost visibility, reporting and monitoring — provided by FinOps patterns; cost-reporting and cost-monitoring are old aliases
+
+  incident-management:
+    category: environment
+    aliases: [incident-response]
+    description: Organisational incident process and tooling (PagerDuty, OpsGenie, Jira, or equivalent); an org-level prerequisite not provided by a pattern
+
+  # ── OOP / language-feature prerequisites ────────────────────────────────────
+  # These are features of the chosen programming language, not patterns to select.
+
+  inheritance:
+    category: environment
+    aliases: []
+    description: OOP inheritance — a feature of the chosen language, not an architectural pattern
+
+  polymorphism:
+    category: environment
+    aliases: []
+    description: OOP polymorphism — a feature of the chosen language
+
+  object-oriented-programming:
+    category: environment
+    aliases: [oop]
+    description: OOP programming paradigm — a property of the chosen language
+
+  class-instantiation-control:
+    category: environment
+    aliases: []
+    description: Language-level ability to control class instantiation (required by Singleton)
+
+  interface-compliance:
+    category: environment
+    aliases: []
+    description: Language-level interface or protocol conformance mechanism
+
+  object-delegation:
+    category: environment
+    aliases: []
+    description: Language-level object composition and method delegation
+
+  existing-interface:
+    category: environment
+    aliases: []
+    description: A pre-existing interface in the codebase — design context, not a selectable pattern
+
+  incompatible-interfaces:
+    category: environment
+    aliases: []
+    description: Two incompatible interfaces that need adapting — design context for the Adapter pattern
+
+  common-interface:
+    category: environment
+    aliases: []
+    description: A shared interface for decorated objects — design context for the Decorator pattern
+
+  method-overriding:
+    category: environment
+    aliases: []
+    description: Language-level method override / virtual dispatch
+
+  dependency-injection:
+    category: environment
+    aliases: []
+    description: DI as a language/framework capability — available in all modern frameworks
+
+  composition-root:
+    category: environment
+    aliases: []
+    description: Application wiring point — a design convention, not a selectable pattern
+
+  # ── Developer expertise prerequisites ────────────────────────────────────────
+  # Team skill requirements; satisfied when the tech stack is chosen.
+
+  dart-expertise:
+    category: environment
+    aliases: []
+    description: Team Dart/Flutter expertise — prerequisite for choosing Flutter
+
+  react-expertise:
+    category: environment
+    aliases: []
+    description: Team React expertise — prerequisite for choosing React Native
+
+  csharp-expertise:
+    category: environment
+    aliases: []
+    description: Team C# expertise — prerequisite for choosing Xamarin/.NET
+
+  javascript-typescript:
+    category: environment
+    aliases: []
+    description: Team JavaScript/TypeScript expertise — prerequisite for React Native
+
+  dotnet-knowledge:
+    category: environment
+    aliases: []
+    description: Team .NET knowledge — prerequisite for Xamarin/Blazor patterns
+
+  platform-sdk-knowledge:
+    category: environment
+    aliases: []
+    description: Knowledge of target platform SDKs (iOS/Android) — prerequisite for cross-platform patterns
+
+  native-platform-apis:
+    category: environment
+    aliases: []
+    description: Access to native iOS/Android/desktop APIs — provided by the target platform
+
+  proto-schema-management:
+    category: environment
+    aliases: []
+    description: Protobuf schema toolchain (protoc, buf) — part of the build environment when using gRPC
+
+  # ── Development workflow prerequisites ────────────────────────────────────────
+
+  branch-management:
+    category: environment
+    aliases: []
+    description: Git branch operations — always available in any git repository
+
+  merge-conflict-resolution:
+    category: environment
+    aliases: []
+    description: Git merge tooling — always available in any git repository
+
+  code-review:
+    category: environment
+    aliases: []
+    description: Code review process — a team practice, not a selectable pattern
+
+  design-documentation:
+    category: environment
+    aliases: []
+    description: Architectural design documentation — an org practice, not a selectable pattern
+
+  documentation-storage:
+    category: environment
+    aliases: []
+    description: A place to store documentation (wiki, repo) — always available in any project
+
+  # ── Build and CI/CD toolchain ─────────────────────────────────────────────────
+
+  build-toolchain:
+    category: environment
+    aliases: []
+    description: Compiler, build system, and linker for the chosen language stack
+
+  ci-cd-pipeline:
+    category: environment
+    aliases: [ci-cd-integration]
+    description: CI/CD pipeline (GitHub Actions, GitLab CI, Jenkins) — org-level infrastructure
+
+  continuous-integration:
+    category: environment
+    aliases: []
+    description: CI system that runs tests on every commit — org-level infrastructure
+
+  automated-testing:
+    category: environment
+    aliases: []
+    description: Automated test execution capability — provided by CI and test frameworks
+
+  mobile-build-pipeline:
+    category: environment
+    aliases: []
+    description: Mobile app build pipeline (Xcode Cloud, Fastlane, Bitrise) — org-level toolchain
+
+  native-toolchain:
+    category: environment
+    aliases: []
+    description: Native platform SDK and build tools (Xcode, Android Studio) — developer environment
+
+  mobile-platform-toolchains:
+    category: environment
+    aliases: []
+    description: iOS and Android build toolchains — part of the mobile development environment
+
+  mobile-deployment-targets:
+    category: environment
+    aliases: []
+    description: App store or enterprise distribution targets — org-level mobile deployment infrastructure
+
+  mobile-development-environment:
+    category: environment
+    aliases: []
+    description: Mobile development setup (simulators, device provisioning) — developer environment
+
+  platform-toolchains:
+    category: environment
+    aliases: []
+    description: Target platform build tools — part of the chosen tech stack environment
+
+  build-system:
+    category: environment
+    aliases: []
+    description: Build orchestration tool (Gradle, Make, Bazel) — part of the project toolchain
+
+  package-manager:
+    category: environment
+    aliases: []
+    description: Language package manager (npm, pip, Maven, Cargo) — part of the project toolchain
+
+  # ── Application artifact prerequisites ───────────────────────────────────────
+  # These exist as soon as an application is built.
+
+  containerized-application:
+    category: environment
+    aliases: [containerizable-application, containerization]
+    description: A containerised application image — produced by the project build pipeline
+
+  application-code:
+    category: environment
+    aliases: []
+    description: The application source code — always exists for any software project
+
+  build-artifacts:
+    category: environment
+    aliases: []
+    description: Compiled/packaged application outputs — produced by the build pipeline
+
+  static-site-hosting:
+    category: environment
+    aliases: [static-site-generator]
+    description: Static site hosting capability required by CDN/JAMstack patterns; static-site-generator is the old alias
+
+  frontend-framework:
+    category: environment
+    aliases: []
+    description: Frontend framework (React, Vue, Svelte) — part of the chosen tech stack
+
+  server-runtime:
+    category: environment
+    aliases: []
+    description: Server-side runtime (Node.js, JVM, .NET runtime) — part of the deployment environment
+
+  # ── Cloud provider primitives ─────────────────────────────────────────────────
+
+  aws-account:
+    category: environment
+    aliases: []
+    description: An AWS account — prerequisite when cloud is aws
+
+  vpc-network:
+    category: environment
+    aliases: []
+    description: AWS VPC or equivalent virtual network — provisioned by cloud infrastructure
+
+  iam-authentication:
+    category: environment
+    aliases: [iam-permissions]
+    description: Cloud IAM authentication and permissions — provided by the cloud provider
+
+  azure-subscription:
+    category: environment
+    aliases: []
+    description: An Azure subscription — prerequisite when cloud is azure
+
+  azure-credentials:
+    category: environment
+    aliases: [azure-resource-provider-registration]
+    description: Azure service principal or managed identity credentials — part of the azure environment
+
+  cloud-provider:
+    category: environment
+    aliases: [cloud-provider-api]
+    description: A cloud provider account and its management API — always present when cloud != on-prem
+
+  physical-infrastructure:
+    category: environment
+    aliases: []
+    description: Physical servers and networking — always present for on-prem deployments
+
+  certificate-authority:
+    category: environment
+    aliases: []
+    description: PKI certificate authority (internal or public) — org-level security infrastructure
+
+  cluster-management:
+    category: environment
+    aliases: []
+    description: Kubernetes or container cluster management plane — provided by the deployment environment
+
+  container-runtime:
+    category: environment
+    aliases: []
+    description: Container runtime (Docker, containerd, CRI-O) — part of the deployment environment
+
+  vm-image-management:
+    category: environment
+    aliases: []
+    description: VM image build and registry (AMI, Azure Image, GCE image) — cloud infrastructure
+
+  # ── Client library prerequisites ─────────────────────────────────────────────
+  # These exist as soon as the relevant technology is in the stack.
+
+  postgresql-client:
+    category: environment
+    aliases: []
+    description: PostgreSQL client driver — available for any language when Postgres is in the stack
+
+  mysql-client:
+    category: environment
+    aliases: []
+    description: MySQL client driver — available for any language when MySQL is in the stack
+
+  http-client:
+    category: environment
+    aliases: [api-client]
+    description: HTTP client library — available in every language standard library or ecosystem
+
+  http-service:
+    category: environment
+    aliases: []
+    description: An HTTP server process — present whenever the application exposes HTTP endpoints
+
+  json-serialization:
+    category: environment
+    aliases: []
+    description: JSON encode/decode capability — available in every language standard library
+
+  client-application:
+    category: environment
+    aliases: []
+    description: A client application that connects to the service — always exists when the service has consumers
+
+  # ── Cloud-managed services and deployment environment ─────────────────────────
+
+  function-as-a-service:
+    category: environment
+    aliases: []
+    description: Serverless function runtime (Lambda, Azure Functions, Cloud Run) — cloud provider service
+
+  managed-api-gateway:
+    category: environment
+    aliases: []
+    description: Cloud-managed API gateway (API Gateway, APIM, Cloud Endpoints) — cloud provider service
+
+  managed-backend-services:
+    category: environment
+    aliases: []
+    description: Cloud-managed backend services (S3, DynamoDB, Cognito) — cloud provider services
+
+  deployment-orchestration:
+    category: environment
+    aliases: []
+    description: Container/service orchestration (ECS, k8s, Cloud Run) — deployment environment
+
+  process-isolation:
+    category: environment
+    aliases: []
+    description: OS-level process isolation — provided by the operating system and container runtime
+
+  notification-delivery:
+    category: environment
+    aliases: []
+    description: Notification delivery infrastructure (SNS, SES, push) — cloud provider service
+
+  resource-inventory:
+    category: environment
+    aliases: []
+    description: Cloud resource inventory (AWS Config, Azure Resource Graph) — cloud provider service
+
+  observability-tooling:
+    category: environment
+    aliases: []
+    description: Baseline observability tooling — provided by selected obs-* patterns or the deployment environment
+
+  # ── Abstract data and system prerequisites ────────────────────────────────────
+
+  external-data-persistence:
+    category: environment
+    aliases: [external-state-storage, persistent-data-store, data-source, backing-store, data-persistence]
+    description: An external data store — always exists when the application has state
+
+  distributed-system:
+    category: environment
+    aliases: [distributed-data-store]
+    description: A distributed system context — present whenever multiple services are deployed
+
+  identity-provider:
+    category: environment
+    aliases: []
+    description: Identity provider (Okta, Cognito, Azure AD, Keycloak) — org-level authentication infrastructure
+
+  streaming-platform:
+    category: environment
+    aliases: []
+    description: Event streaming platform (Kafka, Kinesis, Pub/Sub) — org-level or cloud infrastructure
+
+  # ── Web / HTTP infrastructure prerequisites ──────────────────────────────────
+
+  content-negotiation:
+    category: environment
+    aliases: []
+    description: HTTP content-type negotiation — provided by the web framework (Express, Spring, Django, etc.)
+
+  routing:
+    category: environment
+    aliases: []
+    description: URL/path routing — provided by the web framework or API gateway in the deployment environment
+
+  # ── Security infrastructure ───────────────────────────────────────────────────
+
+  encryption:
+    category: environment
+    aliases: [data-encryption]
+    description: Encryption at rest and in transit — provided by the cloud platform (KMS, TLS, disk encryption)
+
+  secure-communication:
+    category: environment
+    aliases: []
+    description: TLS/HTTPS — always available in cloud and modern on-prem deployments
+
+  cryptographic-hashing:
+    category: environment
+    aliases: []
+    description: Cryptographic hash functions (bcrypt, argon2, SHA-256) — available in every language stdlib or package ecosystem
+
+  # ── Compliance and organisational process prerequisites ───────────────────────
+
+  risk-assessment:
+    category: environment
+    aliases: []
+    description: Organisational risk assessment process — an org-level practice, not a selectable pattern
+
+  # ── General programming prerequisites ─────────────────────────────────────────
+
+  error-handling:
+    category: environment
+    aliases: []
+    description: Error and exception handling — a basic capability of every programming language and framework
+
+  # ── Operations toolchain ──────────────────────────────────────────────────────
+
+  configuration-management:
+    category: environment
+    aliases: []
+    description: Configuration management tooling (Ansible, Chef, Puppet, cloud-init) — part of the deployment environment
+
+  # ── Testing toolchain ─────────────────────────────────────────────────────────
+
+  unit-test-framework:
+    category: environment
+    aliases: []
+    description: Unit testing framework (Jest, pytest, JUnit, Go testing, RSpec) — always available in the language ecosystem
+
+  integration-test-framework:
+    category: environment
+    aliases: []
+    description: Integration testing framework (Testcontainers, Spring Boot Test, pytest with fixtures) — part of the project test toolchain
+
+  e2e-test-framework:
+    category: environment
+    aliases: []
+    description: End-to-end testing framework (Playwright, Cypress, Selenium) — part of the project test toolchain
+
+  test-framework:
+    category: environment
+    aliases: []
+    description: Any automated test framework — always present in a well-formed project
+
+  # ── Build / dependency toolchain ──────────────────────────────────────────────
+
+  dependency-management:
+    category: environment
+    aliases: []
+    description: Package/dependency manager (npm, pip, Maven, Gradle, Go modules) — always part of the project toolchain
+
+  dependency-pinning:
+    category: environment
+    aliases: []
+    description: Lock-file or version-pinning mechanism (package-lock.json, poetry.lock, requirements.txt pins) — standard project practice
+
+  dependency-verification:
+    category: environment
+    aliases: []
+    description: Dependency integrity/provenance verification (npm audit, pip-audit, Dependabot) — available in CI/CD toolchain
+
+  module-boundary-enforcement:
+    category: environment
+    aliases: []
+    description: Module/package boundary enforcement (ESLint import rules, ArchUnit, go mod tidy) — enforced by linting or build tools
+
+  # ── Runtime / protocol prerequisites ─────────────────────────────────────────
+
+  xa-protocol:
+    category: environment
+    aliases: []
+    description: XA distributed-transaction protocol support — provided by the database driver and JTA/JTS runtime
+
+  service-communication:
+    category: environment
+    aliases: []
+    description: Inter-service communication layer (HTTP client, gRPC, message client) — always present when services need to call each other
+
+  data-serialization:
+    category: environment
+    aliases: []
+    description: Data serialization/deserialization (JSON, Protobuf, Avro, MessagePack) — provided by language stdlib or widely-available libraries
+
+  runtime-evaluation:
+    category: environment
+    aliases: []
+    description: Runtime expression/script evaluation (eval, scripting engines, rule engines) — available in the language runtime
+
+  schema-validation:
+    category: environment
+    aliases: []
+    description: Schema/payload validation (JSON Schema validators, Pydantic, Joi, Zod) — available as standard library or package in every ecosystem
+
+  service-client-libraries:
+    category: environment
+    aliases: []
+    description: Client SDK/library for a third-party service — provided by the service vendor or open-source community
+
+  scheduler:
+    category: environment
+    aliases: []
+    description: Job/task scheduler (cron, APScheduler, Quartz, cloud scheduler) — provided by the runtime or platform environment
+
+  # ── API / infrastructure prerequisites ───────────────────────────────────────
+
+  api-documentation:
+    category: environment
+    aliases: []
+    description: API documentation tooling (Swagger UI, Redoc, Stoplight) — generated from code annotations or OpenAPI specs in the development toolchain
+
+  request-validation:
+    category: environment
+    aliases: []
+    description: HTTP request validation (middleware, annotations, decorators) — provided by the web framework in use
+
+  # ── Synonym pairs added during requires/provides vocabulary normalization ──────
+
+  backup-restore:
+    category: pattern
+    aliases: [backup-recovery]
+    description: Backup and restore capability for data stores
+
+  key-value-store:
+    category: pattern
+    aliases: [cache-store]
+    description: Key-value data store (Redis, Memcached, DynamoDB) — used as cache or session backing store
+
+  cold-start-latency:
+    category: pattern
+    aliases: [cold-start-tolerance]
+    description: Management of cold-start latency in serverless or container-based deployments
+
+  message-queue:
+    category: pattern
+    aliases: [message-broker]
+    description: Message queue or broker for async communication (SQS, RabbitMQ, Azure Service Bus)
+
+  feature-toggling:
+    category: pattern
+    aliases: [feature-flags]
+    description: Feature flag / feature toggle system for progressive and trunk-based releases
+
+  personal-data-inventory:
+    category: pattern
+    aliases: [data-inventory]
+    description: Inventory of personal data fields and their processing purposes (GDPR Art. 30)
+
+  data-retention-policies:
+    category: pattern
+    aliases: [data-retention, data-retention-management]
+    description: Data retention and deletion policies compliant with regulatory requirements
+
+  write-latency-reduction:
+    category: pattern
+    aliases: [write-latency]
+    description: Techniques for reducing write latency in data stores
+
+  secrets-rotation:
+    category: pattern
+    aliases: [key-rotation]
+    description: Automatic or scheduled rotation of secrets, API keys and cryptographic keys
+
+  cost-governance:
+    category: pattern
+    aliases: [cost-optimization]
+    description: Cost governance, optimisation, and guardrail enforcement
+
+  cache-invalidation:
+    category: pattern
+    aliases: [cache-invalidation-strategy]
+    description: Cache invalidation strategy for keeping caches consistent with the source of truth
+
+  observability-baseline:
+    category: pattern
+    aliases: []
+    description: Baseline observability stack (metrics, traces, logs) — provided by obs-* patterns; required by patterns that need a monitoring foundation
+
+  api-versioning:
+    category: pattern
+    aliases: [versioning]
+    description: API versioning strategy (header, URL path, or query param)
+
+  rest-api:
+    category: pattern
+    aliases: [rest-api-client]
+    description: REST API endpoint — provided by API/service patterns; rest-api-client is the old alias used in requires
+
+# ── Additional environment prerequisites (audit pass 2) ──────
+
+  managed-services-availability:
+    category: environment
+    aliases: []
+    description: Cloud-managed services uptime SLA — always available when a cloud provider is chosen
+
+  aws-account-structure:
+    category: environment
+    aliases: []
+    description: AWS Organization / account structure — org-level prerequisite when cloud is aws
+
+  automation:
+    category: environment
+    aliases: []
+    description: General automation capability (scripts, CI triggers) — always available in a project with a CI/CD pipeline
+
+  backward-compatibility:
+    category: environment
+    aliases: []
+    description: Ability to run old and new code simultaneously — a design discipline enforced in implementation
+
+  service-boundary-discipline:
+    category: environment
+    aliases: []
+    description: Team discipline around module/service boundaries — an org practice, not a selectable pattern
+
+  platform-specific-testing:
+    category: environment
+    aliases: []
+    description: Native device/simulator testing — part of the mobile toolchain environment
+
+  xaml-skills:
+    category: environment
+    aliases: []
+    description: Team XAML expertise — prerequisite for choosing Xamarin
+
+  careful-isolation-implementation:
+    category: environment
+    aliases: []
+    description: Implementation-level diligence around row isolation — a design practice
+
+  build-sandboxing:
+    category: environment
+    aliases: []
+    description: OS-level process sandboxing (bubblewrap, nsjail) — part of the build toolchain environment
+
+  data-loss-risk:
+    category: environment
+    aliases: []
+    description: Accepted data-loss risk tolerance — an architectural decision, not a provided capability
+
+  durable-flush-mechanism:
+    category: environment
+    aliases: []
+    description: AOF/RDB-style durable flush — a configuration of the chosen cache technology
+
+  pii-detection:
+    category: environment
+    aliases: []
+    description: PII scanning tooling — org-level data governance practice
+
+  saas-tier-identification:
+    category: environment
+    aliases: []
+    description: Ability to identify SaaS plan tiers — org procurement practice
+
+  enterprise-directory:
+    category: environment
+    aliases: []
+    description: Enterprise directory (AD, LDAP) — org-level infrastructure prerequisite
+
+  failure-detection:
+    category: environment
+    aliases: []
+    description: Error-rate/latency anomaly detection — provided by the observability stack already in the environment
+
+  data-classification:
+    category: environment
+    aliases: []
+    description: Data classification scheme — an org data governance practice
+
+  data-discovery:
+    category: environment
+    aliases: []
+    description: Data discovery/lineage tooling — an org data governance practice
+
+  resilience-patterns:
+    category: environment
+    aliases: []
+    description: Presence of resilience patterns — a composite design requirement, not a single selectable item
+
+  resource-monitoring:
+    category: environment
+    aliases: []
+    description: Real-time resource utilization monitoring — provided by existing observability patterns
+
+  multi-database-monitoring:
+    category: environment
+    aliases: []
+    description: Monitoring across many DB instances — extension of observability, not a standalone pattern
+
+  geo-distribution-control:
+    category: environment
+    aliases: []
+    description: Ability to specify geo-placement of resources — cloud provider feature
+
+  network-topology-control:
+    category: environment
+    aliases: []
+    description: Control over VPC/subnet routing — cloud network infrastructure
+
+  traffic-analysis:
+    category: environment
+    aliases: []
+    description: Network traffic flow analysis — provided by cloud VPC flow logs or existing APM
+
+  token-counting:
+    category: environment
+    aliases: []
+    description: Token counting — a feature of the model SDK, not an architectural pattern
+
+  webhook-handling:
+    category: environment
+    aliases: []
+    description: Webhook ingestion — an HTTP-level infrastructure concern satisfied by the web framework

@@ -1,0 +1,438 @@
+{
+  "id": "async-event-driven--aws",
+  "version": "1.0.0",
+  "title": "Asynchronous Event-Driven Architecture (AWS EventBridge/SNS/SQS)",
+  "description": "Event-driven architecture on AWS using EventBridge (event routing and schema registry), SNS (fan-out), and SQS (durable queuing). Decouples producers from consumers via managed messaging primitives; embraces eventual consistency and at-least-once delivery semantics.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "AWS EventBridge, SNS, and SQS are pay-per-use services. Min ($50) represents a small production workload: ~1M EventBridge events ($1), ~1M SNS notifications ($0.50), ~2M SQS requests ($0.80), plus data transfer and storage (~$47.70). Max ($5000) represents high-volume production: ~100M EventBridge events ($100), ~50M SNS notifications ($25), ~500M SQS requests ($200), FIFO queues with high throughput ($1000), cross-region/cross-account routing ($500), DLQ storage and retention ($200), CloudWatch metrics/logs ($500), and significant data transfer costs ($2475). Costs scale linearly with event volume, message size, retention periods, and architectural complexity (fan-out patterns, message filtering, delivery retries).",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) Architectural design for event schemas, topic/queue topology, and routing rules (8-16 hours, $800-$1600), (2) Implementation of publishers, subscribers, error handling, and DLQ processing (16-32 hours, $1600-$3200), (3) Integration testing for eventual consistency, idempotency, and ordering guarantees (8-16 hours, $800-$1600), (4) Observability setup with CloudWatch, distributed tracing, and monitoring dashboards (4-8 hours, $400-$800). Total: 36-72 hours at $100/hour = $3600-$7200. With AI coding assistants reducing boilerplate by 30-40%, estimate $3500. Learning curve includes understanding pub/sub patterns, AWS service limits, message ordering, and debugging distributed systems.",
+      "licenseCost": "AWS EventBridge, SNS, and SQS are fully managed cloud services with no upfront license fees. Pricing is purely consumption-based (pay-per-request model). No commercial software licenses required. Optional commercial tools for event schema management (e.g., Confluent Schema Registry) or enterprise monitoring (Datadog, New Relic) would add costs, but the core pattern uses AWS native services that are license-free. Open-source alternatives (Apache Kafka, RabbitMQ) exist but change the pattern implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "temporal-decoupling",
+      "confidence": "strong",
+      "reasoning": "Event-driven architectures inherently decouple producers and consumers in time - producers can emit events without consumers being available, and consumers process events asynchronously at their own pace."
+    },
+    {
+      "capability": "resilience-to-spikes",
+      "confidence": "medium",
+      "reasoning": "SNS/SQS/EventBridge buffer messages during traffic spikes, allowing consumers to process at their own rate without being overwhelmed. This smooths out load and prevents cascading failures."
+    },
+    {
+      "capability": "pub-sub",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly implements publish/subscribe messaging through AWS SNS and EventBridge, enabling one-to-many event distribution where multiple consumers can subscribe to the same event stream."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "high",
+      "reasoning": "The pattern description explicitly states it embraces eventual consistency, which is a fundamental characteristic of async event-driven architectures where state propagates asynchronously across services."
+    },
+    {
+      "capability": "streaming-platform",
+      "confidence": "high",
+      "reasoning": "AWS SNS/SQS/EventBridge provide the streaming/messaging platform for this pattern."
+    },
+    {
+      "capability": "service-communication",
+      "confidence": "high",
+      "reasoning": "AWS messaging services (SQS, SNS, EventBridge) enable async service-to-service communication."
+    },
+    {
+      "capability": "event-source",
+      "confidence": "high",
+      "reasoning": "AWS event sources (EventBridge, SQS, Kinesis) are the foundation of this event-driven pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "message-queue",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "The pattern explicitly uses AWS EventBridge/SNS/SQS which are managed message brokers. This is the foundational infrastructure required to implement pub-sub messaging."
+    },
+    {
+      "capability": "idempotent-consumption",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Event-driven systems with at-least-once delivery guarantees (common in SNS/SQS) require consumers to handle duplicate messages safely. Idempotent processing is critical to maintain data consistency."
+    },
+    {
+      "capability": "distributed-tracing",
+      "confidence": "medium",
+      "reasoning": "Monitoring event flows across decoupled services is essential for debugging and operations in event-driven architectures. Without tracing, it becomes nearly impossible to troubleshoot issues across async boundaries.",
+      "optional": false
+    },
+    {
+      "capability": "dead-letter-queue",
+      "confidence": "high",
+      "reasoning": "Handling failed message processing is crucial for production event-driven systems. Dead letter queues capture messages that cannot be processed successfully after retries, preventing message loss and enabling failure analysis.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "async-event-driven",
+      "async-event-driven--azure",
+      "async-event-driven--gcp"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "integration",
+    "events",
+    "messaging",
+    "aws"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Pattern maximum availability is 99.99% due to AWS EventBridge, SNS, and SQS service SLAs."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Pattern minimum p95 latency is 100ms due to event processing overhead, message routing, and async invocation."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Pattern minimum p99 latency is 1000ms due to tail latencies from queue backpressure and consumer scaling delays."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Pattern supports RTO >= 5 minutes due to time needed for consumer auto-scaling and queue recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Pattern maximum throughput is 360M jobs/hour (100K jobs/sec) constrained by AWS EventBridge and SQS service limits."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">=",
+      "value": 5,
+      "reason": "Event-driven architecture adds async overhead (100ms+ latency, message routing, consumer scaling). At very low throughput, simpler synchronous request-response patterns are more appropriate."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports comprehensive audit logging via AWS CloudTrail for all EventBridge, SNS, and SQS operations."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Event-driven messaging infrastructure is tenant-isolation-agnostic; isolation strategy is implemented by consumers."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-compatible with encryption, audit trails, and data residency controls via AWS regional services."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports HIPAA compliance via BAA-eligible AWS services (EventBridge, SNS, SQS) with encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-compatible with data access controls and audit logging, but does not enforce data deletion in messaging layer."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports SOX compliance through CloudTrail audit trails and immutable message logs for financial transaction tracking."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Pattern is incompatible with read-your-writes consistency as async event-driven architecture embraces eventual consistency."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern provides strict durability via multi-AZ message replication in EventBridge, SNS, and SQS with configurable retention."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "Pattern is AWS-specific, utilizing EventBridge, SNS, and SQS managed services exclusively available on AWS."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Event-driven infrastructure pattern is language-agnostic; producers and consumers can be implemented in any language with AWS SDK support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Event-driven architecture is platform-agnostic infrastructure supporting web, API, worker, batch, and IoT workloads as event consumers."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern fundamentally requires asynchronous messaging capabilities as it is built on EventBridge, SNS, and SQS message brokers."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven architecture can trigger AI inference workloads or non-AI workloads; pattern is workload-type agnostic."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both single-tenant and multi-tenant applications; tenant isolation strategy is implemented at consumer level."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven systems can process events individually or in batches depending on consumer implementation (e.g., Lambda batching)."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven architecture supports eventual consistency models and distributed transactions via saga patterns or simple event flows."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports both real-time event streaming via EventBridge and traditional queue-based processing via SQS."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may optionally perform vector search operations, but vector search is not a messaging infrastructure concern."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may optionally use document stores for persistence, but document storage is not required by messaging infrastructure."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may optionally use key-value stores for state, but key-value storage is not required by event-driven pattern."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may optionally use graph databases for relationship queries, but graph storage is not a messaging concern."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event consumers may optionally use time-series databases for metrics, but time-series storage is not required by event infrastructure."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven pattern supports both OLTP and non-OLTP workloads depending on consumer implementation and processing logic."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Event-driven pattern can feed OLAP systems for analytics or support real-time operational workloads via event streaming."
+    }
+  ],
+  "defaultConfig": {
+    "primary_service": "eventbridge",
+    "queue_type": "standard",
+    "message_retention_days": 4,
+    "dead_letter_queue": true,
+    "fifo_ordering": false,
+    "content_filtering": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "primary_service": {
+        "type": "string",
+        "enum": [
+          "eventbridge",
+          "sns",
+          "sqs"
+        ],
+        "description": "Primary AWS messaging service: EventBridge for event routing with rules/patterns, SNS for fan-out pub/sub, SQS for point-to-point queuing. EventBridge offers most flexibility for event-driven architectures."
+      },
+      "queue_type": {
+        "type": "string",
+        "enum": [
+          "standard",
+          "fifo"
+        ],
+        "description": "SQS queue type: Standard offers best-effort ordering with unlimited throughput, FIFO guarantees exactly-once processing and strict ordering but limited to 300 TPS (3000 with batching)."
+      },
+      "message_retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 14,
+        "description": "How long messages are retained in queues before deletion. Longer retention provides more resilience for consumer failures but increases storage costs."
+      },
+      "dead_letter_queue": {
+        "type": "boolean",
+        "description": "Enable dead-letter queues to capture messages that fail processing after max retries. Essential for debugging and preventing message loss, but adds operational complexity."
+      },
+      "fifo_ordering": {
+        "type": "boolean",
+        "description": "Enforce strict message ordering across the event-driven system. Reduces throughput and increases latency but necessary for workflows requiring sequential processing."
+      },
+      "content_filtering": {
+        "type": "boolean",
+        "description": "Enable message filtering at SNS/EventBridge level so subscribers only receive relevant events. Reduces network traffic and consumer processing but requires careful filter design."
+      }
+    }
+  },
+  "warn_nfr": []
+}

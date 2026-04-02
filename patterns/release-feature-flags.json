@@ -1,0 +1,329 @@
+{
+  "id": "release-feature-flags",
+  "version": "1.0.0",
+  "title": "Feature Flags",
+  "description": "Decouple deploy from release; safer experiments; needs kill switches and governance.",
+  "types": [
+    "deploy",
+    "ops",
+    "build",
+    "test"
+  ],
+  "cost": {
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Feature flag infrastructure costs vary by approach. Min=$0 represents self-hosted open-source solutions (Unleash, Flagsmith) using existing infrastructure with minimal overhead (<1% runtime impact). Max=$500 covers commercial SaaS solutions like LaunchDarkly Basic ($35-75/seat for small teams), Split.io Starter ($33/seat), or ConfigCat Pro ($75/month), plus potential infrastructure for flag evaluation caching and metrics collection. Enterprise SaaS plans (LaunchDarkly Enterprise, Split Enterprise) can exceed $1000/month but represent outlier scenarios. Most teams start with free tiers (LaunchDarkly's 1000 MAUs free, Flagsmith self-hosted) or low-cost managed solutions.",
+      "adoptionCost": "Medium-high complexity adoption due to multiple factors: (1) Technical implementation - SDK integration across services, flag evaluation logic, fallback mechanisms, and kill switches (20-40 hours); (2) Governance framework - establishing flag lifecycle policies, naming conventions, cleanup procedures, and ownership model (10-20 hours); (3) Cultural shift - training teams on deployment vs. release separation, gradual rollout strategies, and experimentation workflows (10-15 hours); (4) Testing strategy changes - adapting CI/CD for flag-aware testing and ensuring all flag states are covered (10-15 hours). With AI coding assistants, technical implementation accelerates 30-40%, but governance and process design remain people-intensive. Total estimate: 50-90 engineering hours at $40-50/hour blended rate = $2000-4500, using $2000 as conservative mid-point.",
+      "licenseCost": "Starting cost assumes open-source approach. Multiple production-grade OSS options available: Unleash (Apache 2.0), Flagsmith (BSD-3), GrowthBook (MIT), or Flipper (MIT for Ruby). Cloud providers also offer native solutions included in existing licensing (AWS AppConfig, Azure App Configuration, GCP Firebase Remote Config). Commercial SaaS becomes cost-effective at scale but isn't required for adoption. Organizations can start with $0 license cost and migrate to commercial solutions ($1000-5000/year) only if advanced features (audit logs, multi-environment management, A/B testing analytics, role-based permissions) justify the investment. Setting baseline at $0 reflects achievable zero-license-cost path.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "feature-toggling",
+      "confidence": "high",
+      "reasoning": "Feature flags enable runtime toggling of features without redeployment, providing core functionality to control feature visibility through configurable flags."
+    },
+    {
+      "capability": "progressive-release",
+      "confidence": "high",
+      "reasoning": "Feature flags enable progressive rollouts including canary releases, percentage-based rollouts, and A/B testing by controlling feature visibility to specific user segments."
+    },
+    {
+      "capability": "deployment-decoupling",
+      "confidence": "high",
+      "reasoning": "Core pattern purpose is to decouple code deployment from feature release, allowing dark launches and safer rollbacks by separating when code ships from when features activate."
+    },
+    {
+      "capability": "feature-toggling",
+      "confidence": "high",
+      "reasoning": "Release feature flags IS the feature flags pattern \u2014 it provides runtime flag evaluation, flag lifecycle management, and progressive rollout control."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "configuration-management",
+      "confidence": "high",
+      "reasoning": "Feature flags require persistent storage and management of feature state, rules, and targeting criteria that can be updated without code changes.",
+      "optional": true
+    },
+    {
+      "capability": "runtime-evaluation",
+      "confidence": "high",
+      "reasoning": "The system must evaluate flag states at runtime to determine which features are active for specific requests or users based on configured rules.",
+      "optional": true
+    },
+    {
+      "capability": "monitoring",
+      "confidence": "high",
+      "reasoning": "Pattern requires monitoring to support kill switches mentioned in the description, enabling detection of issues and emergency feature disablement.",
+      "optional": false
+    },
+    {
+      "capability": "role-based-access-control",
+      "confidence": "high",
+      "reasoning": "Governance requirements necessitate controlled access to flag management to prevent unauthorized feature toggles and ensure proper approval workflows.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "curated"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Feature flag service introduces a dependency point that caps availability at four nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Feature flag evaluation adds 1-5ms latency overhead for flag lookup and evaluation."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 2,
+      "reason": "Feature flag evaluation at p99 can reach 2-10ms due to flag store latency spikes."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 0.016,
+      "reason": "Feature flags enable instant rollback by toggling flags in approximately 1 second."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000,
+      "reason": "Pattern supports high throughput of 1000 evaluations/second (3.6M/hour) with local caching."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Feature flags are a cloud-agnostic deployment pattern implementable on any infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Feature flags are a deployment pattern with SDK support available for all mainstream languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-inference",
+        "iot",
+        "cli"
+      ],
+      "reason": "Feature flags apply to any platform that executes application code and requires runtime configuration."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Feature flags control feature visibility in both synchronous and asynchronous messaging systems."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Feature flags enable controlled rollout of AI/ML features but do not require AI inference."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Feature flags support tenant-specific configurations in multi-tenant systems but work in single-tenant apps too."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Feature flags can control batch job behavior and are compatible with both batch and real-time processing."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Feature flags are orthogonal to transaction coordination and work with or without distributed transactions."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Feature flags can control streaming feature behavior and are compatible with both streaming and non-streaming systems."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Feature flags can control vector search feature rollout but do not require vector search capability."
+    }
+  ],
+  "defaultConfig": {
+    "flag_storage": "config_file",
+    "evaluation_strategy": "simple_boolean",
+    "targeting_capability": "none",
+    "kill_switch_enabled": true,
+    "audit_logging": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "flag_storage": {
+        "type": "string",
+        "enum": [
+          "config_file",
+          "database",
+          "feature_flag_service",
+          "environment_variables"
+        ],
+        "description": "Where feature flag states are stored. Config files are simple but require redeployment; databases allow runtime changes; feature flag services (LaunchDarkly, Split.io) provide advanced targeting and analytics; environment variables are simplest for basic flags."
+      },
+      "evaluation_strategy": {
+        "type": "string",
+        "enum": [
+          "simple_boolean",
+          "percentage_rollout",
+          "user_targeting",
+          "multi_variate"
+        ],
+        "description": "How flags determine which users see features. Simple boolean is on/off for all; percentage rollout enables gradual releases; user targeting allows specific user/group rules; multi-variate supports A/B/n testing with multiple variants."
+      },
+      "targeting_capability": {
+        "type": "string",
+        "enum": [
+          "none",
+          "user_attributes",
+          "context_based",
+          "advanced_segments"
+        ],
+        "description": "Granularity of feature targeting. None means all-or-nothing; user attributes allow targeting by user properties; context-based includes environment/location/device; advanced segments support complex rule combinations."
+      },
+      "kill_switch_enabled": {
+        "type": "boolean",
+        "description": "Whether flags can be used as emergency kill switches to instantly disable problematic features in production without redeployment. Critical for risk mitigation."
+      },
+      "audit_logging": {
+        "type": "boolean",
+        "description": "Track all flag changes and evaluations for compliance and debugging. Adds overhead but provides governance and troubleshooting capabilities."
+      }
+    }
+  },
+  "warn_nfr": []
+}

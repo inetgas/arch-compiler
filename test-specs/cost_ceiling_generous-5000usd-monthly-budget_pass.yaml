@@ -1,0 +1,24 @@
+# Cost Ceiling - Generous $5000/Month Budget
+#
+# An API spec with a generous $5000/month budget and 95% availability target.
+# No cloud or language constraints are set. This tests that a high budget
+# ceiling does not cause errors and patterns are selected normally.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns are selected based on platform/nfr requirements
+#   - cost ceiling of $5000 is recorded in the compiled output
+
+constraints:
+  platform: api
+cost:
+  ceilings:
+    monthly_operational_usd: 5000
+nfr:
+  availability:
+    target: 0.95
+project:
+  name: Generous Budget ($5000/month)
+  domain: test
+functional:
+  summary: 'Test scenario: Generous Budget ($5000/month)'

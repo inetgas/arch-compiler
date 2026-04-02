@@ -1,0 +1,26 @@
+# Security - mTLS Internal CA High Availability Warning
+#
+# A spec with nfr.security.auth: mtls and availability.target: 0.9999.
+# Tests that pki-internal-ca is still selected (0.9999 <= supports_nfr cap)
+# but emits a warn_nfr advisory because 0.9999 > 0.999 (single-node CA
+# threshold), prompting the operator to deploy an HA CA cluster.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - pki-internal-ca is selected
+#   - warn_nfr advisory is emitted about HA CA cluster requirement
+
+project:
+  name: mTLS Internal CA High Availability
+  domain: test
+functional:
+  summary: 'Test scenario: mTLS with high-availability internal CA'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic
+nfr:
+  availability:
+    target: 0.9999
+  security:
+    auth: mtls

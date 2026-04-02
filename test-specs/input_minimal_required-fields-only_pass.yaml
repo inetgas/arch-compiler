@@ -1,0 +1,22 @@
+# Absolute Minimal Input - Required Fields Only
+#
+# A minimal e-commerce product API spec that provides only the required fields:
+# project, functional, constraints (platform/cloud/language), and an empty nfr
+# section. No cost, no features, no optional nfr flags are set. This exercises
+# the compiler's ability to function with the bare minimum valid input.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - basic patterns compatible with aws + javascript + api platform are selected
+#   - no errors or warnings about missing optional sections
+
+project:
+  name: My API
+  domain: ecommerce
+functional:
+  summary: Product API
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+nfr: {}

@@ -1,0 +1,35 @@
+# SaaS Disallowed - Multiple Competitors Blocked, One Approved
+#
+# A web TypeScript startup spec with a $0 budget and free tier preference.
+# Multiple free-tier hosting providers (netlify, vercel, cloudflare-pages) are
+# disallowed for contractual reasons, while render is the only approved option
+# in saas-providers. Tests that only the approved provider's patterns are selected.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - hosting-static-frontend--render IS selected (render is in saas-providers)
+#   - hosting-static-frontend--netlify is NOT selected (netlify disallowed)
+#   - hosting-static-frontend--vercel is NOT selected (vercel disallowed)
+#   - hosting-static-frontend--cloudflare-pages is NOT selected (cloudflare-pages disallowed)
+
+project:
+  name: Startup Web App
+  domain: saas
+functional:
+  summary: Early-stage SaaS with approved hosting vendors only
+constraints:
+  cloud: agnostic
+  language: typescript
+  platform: web
+  saas-providers:
+    - render
+  disallowed-saas-providers:
+    - netlify
+    - vercel
+    - cloudflare-pages
+cost:
+  ceilings:
+    monthly_operational_usd: 0
+  preferences:
+    prefer_free_tier_if_possible: true
+nfr: {}

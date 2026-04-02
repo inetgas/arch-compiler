@@ -1,0 +1,24 @@
+# Feature - Caching Enabled with Zero Budget (Compiler Allows)
+#
+# A spec with ai_inference feature enabled but a $0 monthly budget. The
+# combination is economically contradictory since AI inference typically has
+# significant costs, but the compiler is intentionally permissive and does not
+# block compilation based on cost/feature mismatches.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - AI inference patterns are selected despite the zero budget
+#   - the cost contradiction is visible in the output for human review
+
+constraints:
+  features:
+    ai_inference: true
+cost:
+  ceilings:
+    monthly_operational_usd: 0
+project:
+  name: Feature + Conflicting Cost
+  domain: test
+functional:
+  summary: 'Test scenario: Feature + Conflicting Cost'
+nfr: {}

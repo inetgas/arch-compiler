@@ -1,0 +1,415 @@
+{
+  "id": "sec-auth-session-cookies",
+  "version": "1.0.0",
+  "title": "Session Cookies for Web Apps",
+  "description": "Server-side sessions with secure cookies; easier revocation; requires CSRF protection and session store/stickiness.",
+  "types": [
+    "ops",
+    "design",
+    "build"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 20.0,
+      "max": 2000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Session cookies require a session store backend. Min ($20): Small app using Redis ElastiCache cache.t3.micro (~$15/mo) or DynamoDB on-demand with minimal reads/writes (~$5-10/mo). Max ($2000): Production apps with high traffic requiring Redis cluster (cache.r5.large multi-AZ ~$400-600/mo), plus load balancer with sticky sessions (ALB ~$20-30/mo), plus session data storage/backup (~$100-200/mo), plus increased costs for horizontal scaling across multiple nodes requiring session replication or centralized store. Costs scale with concurrent users and session data size. Medium scenarios (~$100-300) cover cache.m5.large Redis with moderate traffic.",
+      "adoptionCost": "Medium-high complexity. Implementation involves: (1) Setting up session store infrastructure (Redis/DynamoDB/database) - 4-8 hours, (2) Implementing secure cookie handling with httpOnly, secure, sameSite flags - 2-4 hours, (3) CSRF protection integration (tokens, double-submit cookies) - 4-8 hours, (4) Session lifecycle management (creation, validation, expiration, revocation) - 4-6 hours, (5) Load balancer sticky session configuration or distributed session store - 2-4 hours, (6) Security testing and hardening - 4-6 hours. Total ~20-36 hours at $50-100/hr equivalent = $1000-3600, but with AI assistant reducing to ~8-12 hours = $400-1200. Mid-range $800 accounts for moderate team experience with session management patterns.",
+      "licenseCost": "Session cookies are implemented using open-source libraries and frameworks. All major languages have free session management libraries (express-session for Node.js, Flask-Session for Python, Spring Session for Java, etc.). Session stores like Redis, Memcached, and PostgreSQL are open-source. CSRF protection libraries are also free (csurf, django-csrf, etc.). No commercial licenses required for standard implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "session-management",
+      "confidence": "high",
+      "reasoning": "This pattern implements server-side session management with secure cookies, encompassing the full session lifecycle including creation, storage, validation, and revocation."
+    },
+    {
+      "capability": "authentication",
+      "confidence": "high",
+      "reasoning": "The pattern provides authentication capability through session cookies where users authenticate and receive a session cookie that proves their identity for subsequent requests."
+    },
+    {
+      "capability": "csrf-protection",
+      "confidence": "high",
+      "reasoning": "Session cookie authentication requires CSRF protection (SameSite, CSRF tokens) — this pattern implements CSRF mitigations as a core security control."
+    },
+    {
+      "capability": "user-identification",
+      "confidence": "high",
+      "reasoning": "Session cookies resolve authenticated user identity by linking the session cookie to a server-side session record that contains the verified user ID, making user identification a core output of this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "csrf-protection",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Cookie-based authentication is vulnerable to CSRF attacks since browsers automatically send cookies with requests. CSRF protection mechanisms (tokens, SameSite attribute, etc.) are essential to prevent malicious sites from making authenticated requests on behalf of users."
+    },
+    {
+      "capability": "session-store",
+      "confidence": "high",
+      "reasoning": "Server-side sessions require persistent storage to maintain session data across requests. The pattern description explicitly mentions 'session store/stickiness' as a requirement, which could be implemented via in-memory storage, Redis, database, or other storage mechanisms.",
+      "optional": false
+    },
+    {
+      "capability": "session-management",
+      "confidence": "medium",
+      "reasoning": "The pattern description mentions 'stickiness' as an alternative to shared session stores. Session affinity (sticky sessions) ensures requests from the same user route to the same server instance, which is necessary when not using a shared distributed session store.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "sec-auth-api-key",
+      "sec-auth-jwt-stateless",
+      "sec-auth-oauth2-oidc",
+      "sec-auth-password",
+      "sec-auth-saml-sso",
+      "sec-auth-mtls-service-mesh"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "security",
+    "web"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session management is compatible with both audited and non-audited environments depending on compliance needs."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies support GDPR-compliant implementations with proper consent and deletion mechanisms or non-GDPR contexts."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session management is compatible with HIPAA environments when combined with appropriate encryption and audit controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies work in both CCPA-regulated and non-regulated contexts depending on application requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session management supports SOX compliance through audit trails but doesn't mandate it for all applications."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Session cookies are a universal web security pattern that works across all cloud providers and on-premises deployments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Session cookies are a web security pattern implementable in any backend language with HTTP server capabilities."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "==",
+      "value": "web",
+      "reason": "Session cookies are a browser-based session persistence mechanism only applicable to web platform applications."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session storage typically benefits from caching infrastructure but can work with direct database persistence."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies are orthogonal to async messaging and work in both synchronous and event-driven architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session management is compatible with AI-powered applications and traditional applications equally."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies support both single-tenant and multi-tenant applications with tenant ID embedded in session data."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies are web-focused but applications can include batch processing in background workers independently."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session management works with or without distributed transaction coordination in the application layer."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies are compatible with applications that include or exclude real-time streaming features."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session management is orthogonal to vector search capabilities in the application data layer."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies work with document stores, relational databases, or any session store backend equally."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session storage commonly uses key-value stores (Redis) but can use other persistence mechanisms like SQL databases."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session management is independent of whether the application uses graph databases for its primary data model."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies are compatible with applications that do or don't include time-series data storage."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session management works with OLTP workloads and non-transactional workloads equally well."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Session cookies are orthogonal to analytical workloads and support both OLAP and non-OLAP applications."
+    }
+  ],
+  "defaultConfig": {
+    "session_store": "redis",
+    "cookie_same_site": "lax",
+    "session_duration_minutes": 60,
+    "csrf_protection": "double_submit_cookie",
+    "cookie_secure": true,
+    "cookie_http_only": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "session_store": {
+        "type": "string",
+        "enum": [
+          "redis",
+          "memcached",
+          "database",
+          "in_memory"
+        ],
+        "description": "Backend storage for session data. Redis/Memcached offer fast access and TTL support; database provides persistence; in-memory only for single-server dev environments."
+      },
+      "cookie_same_site": {
+        "type": "string",
+        "enum": [
+          "strict",
+          "lax",
+          "none"
+        ],
+        "description": "SameSite cookie attribute. Strict blocks all cross-site requests (breaks OAuth flows); Lax allows top-level navigation (recommended); None requires Secure flag and allows cross-site (needed for embedded iframes)."
+      },
+      "session_duration_minutes": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 10080,
+        "description": "Session timeout in minutes. Shorter durations (15-60) improve security; longer durations (1440-10080) improve UX. Balance based on sensitivity of data."
+      },
+      "csrf_protection": {
+        "type": "string",
+        "enum": [
+          "double_submit_cookie",
+          "synchronizer_token",
+          "custom_header"
+        ],
+        "description": "CSRF mitigation strategy. Double-submit uses separate cookie+body token; synchronizer token stores in session (more secure); custom header relies on CORS (simpler for SPAs)."
+      },
+      "cookie_secure": {
+        "type": "boolean",
+        "description": "Require HTTPS for cookie transmission. Should always be true in production; false only for local HTTP development."
+      },
+      "cookie_http_only": {
+        "type": "boolean",
+        "description": "Prevent JavaScript access to cookies. Should always be true to mitigate XSS attacks; false only if client-side needs to read session ID."
+      }
+    }
+  },
+  "requires_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Session store dependency and session affinity requirements limit availability to three nines."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Session validation adds minimum 5ms p95 latency for session store lookup and CSRF token verification."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Session store p99 lookups require minimum 10ms due to network round-trips and occasional cache misses."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Session revocation enables rapid incident response with 1-minute RTO for invalidating compromised sessions."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "Session state can be persisted synchronously to session store with zero RPO for stateless recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000,
+      "reason": "Pattern supports up to 100 requests/second (360K/hour) before session store becomes bottleneck."
+    }
+  ],
+  "requires_constraints": [],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 360,
+      "reason": "Session cookies add overhead (session store lookups, CSRF validation) that may not be justified for very low traffic web applications.",
+      "message": "sec-auth-session-cookies: peak throughput is {actual} jobs/hour (<360, ~0.1 req/s). Session management overhead may outweigh benefits for very low-traffic applications."
+    }
+  ]
+}

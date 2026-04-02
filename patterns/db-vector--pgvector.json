@@ -1,0 +1,486 @@
+{
+  "id": "db-vector--pgvector",
+  "version": "1.0.0",
+  "title": "Vector Database (pgvector)",
+  "description": "pgvector is a PostgreSQL extension for vector similarity search. Adds vector data type and indexing to standard PostgreSQL. Best for: combining relational data with vector search, keeping vectors alongside existing data, self-hosted deployments. Lower cost than SaaS but requires PostgreSQL ops expertise.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-vector--pinecone"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "vector-storage",
+      "description": "Store vectors in PostgreSQL with vector data type",
+      "confidence": "medium",
+      "reasoning": "pgvector's primary function is storing vector embeddings as a native PostgreSQL data type, making this a core capability with native type system integration."
+    },
+    {
+      "capability": "similarity-search",
+      "description": "Nearest-neighbor search using pgvector indexes",
+      "confidence": "medium",
+      "reasoning": "pgvector enables vector similarity search using distance metrics (L2, cosine, inner product), which is the main use case for vector databases and is highly optimized through specialized indexing."
+    },
+    {
+      "capability": "relational-joins",
+      "description": "Join vector search with relational data in same database",
+      "confidence": "medium",
+      "reasoning": "A key differentiator of pgvector is the ability to join vector data with relational tables in the same database, enabling hybrid queries that combine vector similarity with traditional SQL operations."
+    },
+    {
+      "capability": "vector-indexing",
+      "confidence": "high",
+      "reasoning": "pgvector supports IVFFlat and HNSW indexes which are critical for performance at scale, enabling efficient approximate nearest neighbor search on large vector datasets."
+    },
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "pgvector runs on PostgreSQL and inherits all standard relational database capabilities including ACID transactions, SQL queries, constraints, and data integrity features."
+    },
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "pgvector runs inside PostgreSQL; RLS policies apply to vector tables just like any other table, enabling per-tenant vector search isolation."
+    },
+    {
+      "capability": "xa-protocol",
+      "confidence": "medium",
+      "reasoning": "pgvector is a PostgreSQL extension that participates in PostgreSQL transactions including XA/two-phase commit distributed transaction coordination."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "postgresql",
+      "description": "Requires PostgreSQL 12+ with pgvector extension",
+      "confidence": "medium",
+      "reasoning": "pgvector is a PostgreSQL extension and cannot function without a PostgreSQL database instance. This is a hard dependency as it extends PostgreSQL's type system and indexing capabilities."
+    }
+  ],
+  "defaultConfig": {
+    "distance_metric": "cosine",
+    "vector_dimensions": 1536,
+    "index_type": "hnsw",
+    "hnsw_m": 16,
+    "hnsw_ef_construction": 64,
+    "ivfflat_lists": 100,
+    "maintenance_work_mem": "512MB"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "distance_metric": {
+        "type": "string",
+        "enum": [
+          "cosine",
+          "l2",
+          "inner_product"
+        ],
+        "description": "Distance operator for similarity search. Cosine for normalized vectors (most common), L2 for Euclidean distance, inner product for dot product similarity."
+      },
+      "vector_dimensions": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 16000,
+        "description": "Dimensionality of vectors. Common: 1536 (OpenAI ada-002), 768 (sentence-transformers), 384 (MiniLM). Higher dimensions = more storage and slower queries."
+      },
+      "index_type": {
+        "type": "string",
+        "enum": [
+          "hnsw",
+          "ivfflat",
+          "none"
+        ],
+        "description": "Index algorithm. HNSW: faster queries, more memory, better recall. IVFFlat: memory efficient, good for large datasets. None: exact search, no index overhead."
+      },
+      "hnsw_m": {
+        "type": "integer",
+        "minimum": 4,
+        "maximum": 64,
+        "description": "HNSW max connections per layer. Higher = better recall but more memory. Typical: 16. Trade-off between index size and query performance."
+      },
+      "hnsw_ef_construction": {
+        "type": "integer",
+        "minimum": 4,
+        "maximum": 1000,
+        "description": "HNSW build-time search depth. Higher = better index quality but slower builds. Typical: 64-200. Affects index creation time vs query accuracy."
+      },
+      "ivfflat_lists": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10000,
+        "description": "IVFFlat cluster count. Rule of thumb: sqrt(row_count). More lists = faster queries but slower inserts. Balance between query speed and write performance."
+      },
+      "maintenance_work_mem": {
+        "type": "string",
+        "enum": [
+          "256MB",
+          "512MB",
+          "1GB",
+          "2GB",
+          "4GB"
+        ],
+        "description": "PostgreSQL memory for index creation. Higher = faster index builds. Set based on available RAM. Critical for large vector datasets."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 15.0,
+      "max": 2000.0
+    },
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "PostgreSQL hosting with pgvector extension. Min ($15): Self-hosted on small VPS (DigitalOcean Droplet 2GB RAM, 1 vCPU) or AWS RDS db.t3.micro with minimal storage for development/testing with <100K vectors. Max ($2000): Production deployment on AWS RDS db.r6g.2xlarge (8 vCPU, 64GB RAM) with 500GB SSD storage, Multi-AZ setup, and automated backups for millions of vectors with high-performance indexing (HNSW/IVFFlat). Mid-range ($200-500): db.t3.large with 100GB storage handles most medium-scale applications with 1-5M vectors. Note: pgvector itself is free, costs are purely infrastructure (compute + storage + backup).",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) PostgreSQL administration knowledge for performance tuning, (2) Understanding vector similarity search algorithms (cosine, L2, inner product), (3) Index selection and optimization (IVFFlat vs HNSW trade-offs), (4) Schema design to integrate vectors with relational data, (5) Query optimization for hybrid searches (filtering + vector similarity), (6) Embedding generation pipeline integration. Learning curve: 1-2 weeks for experienced PostgreSQL developers, 3-4 weeks for those new to vector databases. Implementation: 20-40 hours for setup, indexing strategy, and integration. Lower than specialized vector DBs like Pinecone/Weaviate due to PostgreSQL familiarity, but higher than simple key-value stores.",
+      "licenseCost": "pgvector is open source (PostgreSQL License, similar to MIT/BSD), completely free for commercial use with no restrictions. PostgreSQL itself is also open source. No licensing fees, vendor lock-in, or usage-based charges. All costs are infrastructure-only. Commercial support available through PostgreSQL service providers (e.g., EnterpriseDB, Crunchy Data) but optional.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "vector",
+    "ai-ml",
+    "similarity-search"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "PostgreSQL with pgvector achieves up to 99.9% availability due to failover complexity with extension dependencies."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Vector similarity search with pgvector requires at least 10ms p95 latency due to index traversal and distance calculations."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Complex vector queries with filtering and joins can require at least 50ms p99 latency under load."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "PostgreSQL failover with pgvector extension requires at least 5 minutes for automatic recovery and extension verification."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 10000000,
+      "reason": "PostgreSQL with pgvector handles up to approximately 10M vector operations per hour on typical infrastructure."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "pgvector read queries including vector similarity search are limited to approximately 1000 QPS due to computational overhead."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 500,
+      "reason": "pgvector write operations including vector indexing are limited to approximately 500 QPS due to index maintenance overhead."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "password",
+        "mtls",
+        "saml",
+        "api_key",
+        "jwt",
+        "oauth2_oidc",
+        "n/a"
+      ],
+      "reason": "PostgreSQL supports multiple authentication methods through pg_hba.conf configuration and extensions."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL pgaudit extension provides comprehensive audit logging capabilities that can be enabled or disabled."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "PostgreSQL with pgvector supports all tenant isolation strategies through row-level security, schemas, or separate databases."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL encryption and row-level security enable secure handling of PII data in vector embeddings or alongside them."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL deletion capabilities, audit logging, and encryption support GDPR compliance for vector data."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL with encryption, audit logging, and access controls can meet HIPAA requirements for vector embeddings of health data."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL data access controls and deletion features support CCPA compliance for vector search applications."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL transaction logging and audit trails support SOX compliance requirements for financial data with vectors."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL transaction isolation levels guarantee read-your-writes consistency for vector operations within transactions."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL ACID compliance with fsync and synchronous_commit ensures strict durability for vector data when configured."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "pgvector runs on PostgreSQL which can be deployed on any major cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "pgvector is accessed via standard PostgreSQL drivers available in all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "pgvector database extension can be accessed from any application platform type that connects to PostgreSQL."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "==",
+      "value": true,
+      "reason": "pgvector pattern requires vector_search feature to be enabled as it provides vector similarity search capabilities."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector works with or without caching layers for vector similarity results."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector vector storage is compatible with both synchronous and asynchronous application architectures."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector stores vector embeddings from AI models but does not perform inference itself, working with or without inference features."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector supports multi-tenant architectures through PostgreSQL row-level security and schema isolation or single-tenant deployments."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector handles both real-time vector queries and batch vector ingestion workloads equally well."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector participates in PostgreSQL transactions including distributed transactions via two-phase commit when needed."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector can store vectors from real-time streams or serve batch workloads equally well."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL with pgvector can store JSONB documents alongside vectors for hybrid search or operate purely with vectors."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL with pgvector can function as key-value store using primary keys alongside vector search or use other access patterns."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL supports graph queries through extensions like Apache AGE alongside pgvector or without graph capabilities."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL TimescaleDB extension can be combined with pgvector for time-series vector data or used without time-series features."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector handles transactional vector operations within PostgreSQL OLTP workloads or analytical vector queries."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "pgvector supports analytical vector queries alongside PostgreSQL OLAP extensions or purely transactional workloads."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "pgvector adds PostgreSQL extension overhead and index maintenance complexity. Below 10 QPS, simpler storage solutions may be more appropriate.",
+      "message": "db-vector--pgvector: peak read QPS is {actual} req/s (<10). Vector database overhead may not be justified at this scale; consider simpler storage."
+    }
+  ]
+}

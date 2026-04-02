@@ -1,0 +1,27 @@
+# NFR Availability - 99.9% Target (High)
+#
+# An agnostic API spec with a high 99.9% (three nines) availability target and
+# a $3000/month cost ceiling. This tests that the compiler selects patterns
+# required for high availability such as multi-AZ deployment and health checks,
+# while staying within the specified cost envelope.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - high-availability patterns requiring >= 99.9% are selected
+#   - patterns requiring >= 99.99% are not triggered
+
+nfr:
+  availability:
+    target: 0.999
+cost:
+  ceilings:
+    monthly_operational_usd: 3000
+project:
+  name: High Availability (99.9%)
+  domain: test
+functional:
+  summary: 'Test scenario: High Availability (99.9%)'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

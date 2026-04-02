@@ -1,0 +1,273 @@
+{
+  "id": "genai-inference--fal",
+  "version": "1.0.0",
+  "title": "Fal: Serverless GenAI Inference",
+  "description": "Serverless inference API specialising in image and video generation models (Stable Diffusion, FLUX, video diffusion). Pay-per-use billing with GPU cold-start times in the low-second range; suited to bursty media generation workloads that do not require dedicated GPU capacity.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 750.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 10.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "fal"
+    ],
+    "costNotes": "Usage-based pricing makes cost prediction difficult. Implement usage monitoring and alerts. Consider caching results for repeated requests.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Fal.ai uses pure pay-per-inference pricing. Min ($10) represents light usage: ~100-1000 images/month for prototyping or low-traffic apps at $0.001-0.01 per image. Max ($5000) represents high-volume production: 50,000-500,000+ inferences/month for applications with significant user traffic. Video generation models cost significantly more ($0.10-1.00+ per video), so video-heavy workloads could exceed this range. Costs are highly variable based on model selection (SDXL, Flux, video models), resolution, and inference frequency.",
+      "adoptionCost": "Medium-low complexity integration. Fal provides well-documented REST APIs and SDKs (Python, JavaScript/TypeScript), making basic integration straightforward (2-5 dev days). However, production readiness requires: implementing proper error handling for inference failures, result caching strategies to avoid redundant API calls, usage monitoring/alerting systems, and potentially queue management for high-volume scenarios. Teams need to understand GenAI model selection, prompt engineering basics, and cost optimization strategies. Estimated 5-10 dev days total at $75-100/hour blended rate.",
+      "licenseCost": "Fal operates on a pure pay-per-use model with no upfront licensing fees, subscription tiers, or platform access costs. Users pay only for actual inference compute time consumed. Free credits are provided for testing/evaluation, but production usage is entirely usage-based with no separate license purchase required. This is a consumption-based SaaS model, not a licensed software product.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "genai-inference",
+      "confidence": "strong",
+      "reasoning": "Core capability - this pattern specifically provides serverless GenAI model inference services through Fal's platform."
+    },
+    {
+      "capability": "image-generation",
+      "confidence": "strong",
+      "reasoning": "Specific GenAI capability mentioned in the description as a primary use case for Fal's service."
+    },
+    {
+      "capability": "video-generation",
+      "confidence": "medium",
+      "reasoning": "Specific GenAI capability mentioned in the description as a primary use case for Fal's service."
+    },
+    {
+      "capability": "serverless-compute",
+      "confidence": "high",
+      "reasoning": "The pattern abstracts the underlying infrastructure by providing serverless, pay-per-use compute for inference workloads without managing servers."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "http-client",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Required to interact with Fal's serverless API endpoints for submitting inference requests and retrieving results."
+    },
+    {
+      "capability": "secrets-management",
+      "confidence": "strong",
+      "optional": false,
+      "reasoning": "Required to securely store and access Fal API keys/tokens needed for authentication with the service."
+    },
+    {
+      "capability": "background-job-processing",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Required because GenAI inference (especially video generation) is typically asynchronous - jobs are submitted and results are polled or retrieved later."
+    },
+    {
+      "capability": "webhook-handling",
+      "confidence": "medium",
+      "reasoning": "Often used for async job completion notifications as an alternative to polling, improving efficiency for long-running inference tasks.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "genai-inference--huggingface",
+      "genai-inference--openai",
+      "genai-inference--replicate",
+      "genai-inference--anthropic"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ai",
+    "genai",
+    "inference",
+    "image-generation",
+    "video-generation",
+    "saas",
+    "api",
+    "fal"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Pattern for using a public SaaS; documentation is freely available."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Serverless GenAI platforms cannot guarantee higher than 99% availability due to external model dependencies and cold starts."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "GenAI inference for image/video generation requires at least 500ms p95 latency due to model compute time."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "P99 latencies for GenAI inference are typically 1 second or higher due to model complexity and queue wait times."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000000,
+      "reason": "Serverless GenAI can elastically scale to handle up to 100M jobs/hour given sufficient quota and budget."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "fal.ai does not offer a HIPAA BAA and processes requests on shared infrastructure not suitable for PHI."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "==",
+      "value": false,
+      "reason": "fal.ai lacks SOX-compliant audit controls and data residency guarantees required for financial data."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "fal.ai does not offer a HIPAA BAA and processes requests on shared infrastructure not suitable for PHI."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "==",
+      "value": false,
+      "reason": "fal.ai lacks SOX-compliant audit controls and data residency guarantees required for financial data."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Fal is a cloud-agnostic SaaS service accessible from any cloud provider or on-premises environment via REST API."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript"
+      ],
+      "reason": "Fal provides official SDKs for Python, TypeScript, and JavaScript, and REST API accessible from any language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api",
+        "worker",
+        "batch",
+        "ml-inference"
+      ],
+      "reason": "Fal serverless GenAI inference API can be called from any platform type that supports HTTP clients."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "fal"
+      ],
+      "reason": "Pattern specifically requires Fal as the backend provider"
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern is specifically designed for AI/ML inference workloads using Fal's GenAI models."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "fal",
+    "model_type": "image-generation",
+    "timeout_seconds": 300,
+    "retry_strategy": "exponential-backoff",
+    "service_auth_method": "api_key"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "fal"
+        ],
+        "description": "Fal as the serverless GenAI inference provider"
+      },
+      "model_type": {
+        "type": "string",
+        "enum": [
+          "image-generation",
+          "video-generation",
+          "image-to-video",
+          "text-to-image",
+          "image-to-image"
+        ],
+        "description": "Type of GenAI model to use. Image generation for static outputs, video generation for animated content, image-to-video for motion synthesis, text-to-image for prompt-based generation, image-to-image for transformations."
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 30,
+        "maximum": 600,
+        "description": "Maximum time to wait for inference completion. Longer timeouts for video generation (300-600s), shorter for image generation (30-120s)."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "exponential-backoff",
+          "fixed-interval"
+        ],
+        "description": "How to handle transient failures. Exponential-backoff recommended for production (reduces load during outages), fixed-interval for predictable retry timing, none for fail-fast scenarios."
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "api_key"
+        ],
+        "description": "Service credential method used to authenticate to the LLM provider API. Always api_key \u2014 stored in environment variable, never in code."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "At <10 jobs/hour, the overhead of integrating a serverless GenAI API (async handling, webhooks, API key management) may not justify the complexity compared to simpler alternatives.",
+      "message": "genai-inference--fal: peak_jobs_per_hour is {actual} (<10). Serverless GenAI integration overhead may outweigh benefits at very low volumes."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "Fal processes data on external servers. Sending PII to third-party APIs may violate compliance requirements (GDPR).",
+      "message": "genai-inference--fal: spec indicates PII handling, but Fal API processes data externally which may violate data residency or compliance requirements."
+    }
+  ]
+}

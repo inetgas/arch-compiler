@@ -1,0 +1,35 @@
+# Integration test fixture: clean success — no violations, no advisory warnings
+#
+# Purpose:
+#   - QPS=50: avoids caching-required-high-read-throughput (threshold >= 200)
+#   - QPS=50: avoids low-QPS warn_nfr triggers (threshold < 10)
+#   - needsReadYourWrites=false: avoids RYW advisory warnings
+#   - No compliance flags: avoids compliance patterns and their violations
+#   - caching=false: avoids cache-aside selection and its warn_nfr
+#
+# Expected compiler behaviour:
+#   - rc=0 (success)
+#   - "Cost Feasibility Analysis" present in stdout
+#   - "Advisory Warnings" NOT present in stdout
+
+project:
+  name: Clean Success Test
+  domain: test
+
+functional:
+  summary: Minimal clean API spec with no violations and no advisory conditions
+
+constraints:
+  platform: api
+  cloud: agnostic
+  language: python
+  features:
+    caching: false
+
+nfr:
+  throughput:
+    peak_query_per_second_read: 50
+  availability:
+    target: 0.95    # 0.95 avoids secrets-env-vars warn_nfr (threshold > 0.95)
+  consistency:
+    needsReadYourWrites: false

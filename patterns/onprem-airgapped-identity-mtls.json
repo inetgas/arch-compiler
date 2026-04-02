@@ -1,0 +1,258 @@
+{
+  "id": "onprem-airgapped-identity-mtls",
+  "version": "1.0.1",
+  "title": "Air-gapped identity with mTLS and short-lived credentials",
+  "description": "Provides service identity and authentication in air-gapped environments by issuing short-lived X.509 certificates from an internal PKI and enforcing mutual TLS between services. Replaces external OIDC/OAuth2 providers that may be unreachable in isolated network segments.",
+  "types": [
+    "design",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 800.0
+    },
+    "preferredProviders": [
+      "n/a"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "May be near-$0 incremental cost if org already runs internal PKI.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min $0 assumes organization already operates internal PKI infrastructure (Vault, EJBCA, or similar) with existing capacity. Max $800 covers dedicated PKI infrastructure for air-gapped environment: self-hosted HashiCorp Vault on 2-3 VMs ($200-300 for compute/storage), internal certificate authority operations ($100-200 for automation/monitoring), and cert-manager or similar automation tooling ($0-300 for commercial support). Air-gapped environments typically use existing hardware, so incremental cost is primarily for dedicated PKI services if not already present. Service mesh components (Istio, Linkerd) are open-source with $0 direct cost but may require additional compute resources.",
+      "adoptionCost": "High complexity pattern requiring: (1) PKI infrastructure design and deployment (10-15 hours) including root CA, intermediate CAs, and certificate policies for air-gapped constraints, (2) mTLS integration across service mesh or application layer (15-20 hours) with proper certificate validation, (3) short-lived credential rotation automation (10-15 hours) including cert-manager, renewal webhooks, and graceful rotation logic, (4) operational runbooks and disaster recovery procedures critical for air-gapped environments (8-10 hours), (5) security policy definition and least-privilege access controls (5-8 hours). Total 48-68 hours at $75/hour blended rate with AI assistance = $3,600-5,100. Medium-high estimate of $3,500 accounts for AI-assisted implementation reducing custom scripting but substantial testing required for air-gapped reliability.",
+      "licenseCost": "Open-source PKI solutions available: HashiCorp Vault (MPL 2.0), cert-manager (Apache 2.0), EJBCA Community (LGPL), OpenSSL (Apache-style), CFSSL (BSD). Air-gapped environments typically mandate open-source or internally auditable solutions due to compliance requirements. Commercial PKI solutions (Venafi, Entrust) range $20,000-100,000+ annually but are unnecessary for this pattern. Assumes open-source tooling with internal support rather than commercial enterprise PKI platforms.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "service-authentication",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly provides mutual TLS authentication between services in air-gapped environments, which is a form of service-to-service authentication."
+    },
+    {
+      "capability": "credential-rotation",
+      "confidence": "medium",
+      "reasoning": "The pattern specifically mentions short-lived cert rotation as a core feature, directly providing automated credential lifecycle management."
+    },
+    {
+      "capability": "certificate-management",
+      "confidence": "high",
+      "reasoning": "This pattern inherently provides certificate lifecycle management as part of the short-lived cert rotation capability, including issuance, renewal, and revocation."
+    },
+    {
+      "capability": "zero-trust-security",
+      "confidence": "medium",
+      "reasoning": "mTLS with short-lived certs and no external dependencies aligns with zero-trust principles by requiring continuous verification and assuming no implicit trust."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "pki",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Internal PKI (Public Key Infrastructure) is explicitly mentioned as necessary for issuing and managing the certificates used in mTLS authentication."
+    },
+    {
+      "capability": "certificate-authority",
+      "confidence": "high",
+      "reasoning": "The pattern requires an active Certificate Authority for issuing and signing certificates as part of the internal PKI infrastructure.",
+      "optional": false
+    },
+    {
+      "capability": "mtls",
+      "confidence": "high",
+      "reasoning": "The pattern depends on mutual TLS protocol implementation capabilities to establish authenticated and encrypted bidirectional connections between services.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "on-prem",
+    "air-gapped",
+    "mtls",
+    "pki",
+    "identity"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Pattern supports availability up to 99.99% with internal PKI infrastructure and certificate validation overhead."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "mTLS handshake and certificate validation add minimum 10ms overhead at p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Certificate validation with CRL/OCSP checks can add up to 50ms at p99."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Pattern supports RTO >= 1 minute with internal PKI failover and local certificate authority recovery."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "mtls",
+      "reason": "Pattern explicitly implements mTLS authentication with internal PKI for air-gapped environments."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern requires audit logging for certificate issuance, rotation, and authentication events."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern provides strong authentication suitable for HIPAA but does not guarantee full compliance."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern secures authentication layer independent of CCPA data privacy requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "mTLS with audit logging supports SOX authentication requirements but does not enforce full compliance."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "on-prem",
+      "reason": "Pattern specifically designed for air-gapped on-premise environments where external OIDC providers are unavailable."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "This is an infrastructure pattern for mTLS-based identity applicable to all programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Identity and authentication pattern applies to all platform types requiring service-to-service communication."
+    }
+  ],
+  "defaultConfig": {
+    "pki_type": "internal-ca",
+    "cert_lifetime_hours": 24,
+    "rotation_strategy": "automated",
+    "cert_storage": "filesystem",
+    "revocation_method": "crl"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "pki_type": {
+        "type": "string",
+        "enum": [
+          "internal-ca",
+          "intermediate-ca",
+          "distributed-ca"
+        ],
+        "description": "PKI architecture: internal-ca for single root CA (simpler), intermediate-ca for hierarchical trust (more scalable), distributed-ca for multi-site air-gapped environments"
+      },
+      "cert_lifetime_hours": {
+        "type": "integer",
+        "enum": [
+          1,
+          8,
+          24,
+          72,
+          168
+        ],
+        "description": "Certificate validity period in hours. Shorter lifetimes (1-8h) increase security but require more frequent rotation; longer lifetimes (72-168h) reduce operational overhead but increase blast radius if compromised"
+      },
+      "rotation_strategy": {
+        "type": "string",
+        "enum": [
+          "automated",
+          "semi-automated",
+          "manual"
+        ],
+        "description": "Certificate rotation approach: automated for zero-touch renewal (requires agent), semi-automated for approval-based renewal (human-in-loop), manual for high-security environments with change control"
+      },
+      "cert_storage": {
+        "type": "string",
+        "enum": [
+          "filesystem",
+          "hsm",
+          "secrets-manager",
+          "memory-only"
+        ],
+        "description": "Private key storage: filesystem for simplicity, hsm for hardware-backed security, secrets-manager for centralized vault, memory-only for ephemeral workloads"
+      },
+      "revocation_method": {
+        "type": "string",
+        "enum": [
+          "crl",
+          "ocsp",
+          "short-lived-only"
+        ],
+        "description": "Certificate revocation: crl for offline distribution lists, ocsp for online status checking (requires responder), short-lived-only to avoid revocation infrastructure by relying on expiration"
+      }
+    }
+  },
+  "warn_nfr": []
+}

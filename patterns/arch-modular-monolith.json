@@ -1,0 +1,477 @@
+{
+  "id": "arch-modular-monolith",
+  "version": "1.0.0",
+  "title": "Modular Monolith",
+  "description": "Monolith with strict internal module boundaries (DDD/hexagonal) for maintainability and future extraction.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 3000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Modular Monolith is an architecture pattern that requires infrastructure but typically less than microservices. Min ($50) represents a small application on minimal cloud resources: single t3.small instance ($15-20/month) + small managed database like RDS t3.micro ($15-20/month) + minimal storage/bandwidth ($10-15/month). Max ($3000) represents a production-grade deployment: larger compute instances ($500-800/month for redundancy) + production database with read replicas ($800-1200/month) + load balancer ($20-50/month) + monitoring/logging ($200-400/month) + CDN/caching layer ($300-500/month) + backup/storage ($100-200/month). Unlike microservices, it avoids service mesh costs, multiple databases, and inter-service networking overhead, keeping costs more predictable and generally lower.",
+      "adoptionCost": "Medium-high complexity pattern. Requires significant architectural discipline to establish and enforce module boundaries using DDD principles and hexagonal architecture. Initial setup involves: defining bounded contexts and module structure (40-60 hours), implementing dependency rules and enforcement tooling (20-30 hours), establishing internal APIs between modules (30-40 hours), creating documentation and architectural guidelines (20-30 hours), and team training on DDD/hexagonal patterns (20-30 hours). Total ~130-190 hours at $50/hour blended rate (considering AI assistance reduces time by 30-40% from traditional 200-300 hours). More complex than simple patterns but less than full microservices migration. Requires experienced architects familiar with domain modeling and strong technical leadership to prevent boundary violations.",
+      "licenseCost": "Open source approach with no mandatory licensing. Pattern relies on architectural principles (DDD, hexagonal architecture) that are freely available. Can be implemented with any standard programming language and framework without special tooling. Optional commercial tools for architecture enforcement (like ArchUnit, Structure101, or NDepend) exist but aren't required - linting and code review can enforce boundaries. Monitoring and deployment tools follow standard infrastructure costs already covered in estimatedMonthlyRangeUsd. Organizations may choose enterprise APM tools (Dynatrace, New Relic) but these are optional and deployment-specific rather than pattern-mandated.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "bounded-contexts",
+      "confidence": "strong",
+      "reasoning": "Modular monolith architecture explicitly organizes code around DDD bounded contexts through strict module boundaries, enabling clear domain separation within a single deployment unit."
+    },
+    {
+      "capability": "incremental-decomposition",
+      "confidence": "medium",
+      "reasoning": "The strict module boundaries and well-defined interfaces make it feasible to incrementally extract modules into separate services later with lower risk and minimal refactoring."
+    },
+    {
+      "capability": "local-transactions",
+      "confidence": "high",
+      "reasoning": "As a monolith, all modules share the same database and runtime, enabling straightforward ACID transactions across multiple bounded contexts without distributed transaction complexity."
+    },
+    {
+      "capability": "hexagonal-architecture",
+      "confidence": "high",
+      "reasoning": "This pattern enforces hexagonal/ports-and-adapters architecture style, isolating domain logic from external concerns through well-defined interfaces and dependency inversion."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "module-boundary-enforcement",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Critical requirement for preventing the modular monolith from degrading into tightly coupled code. Needs tooling like ArchUnit, build-time checks, or language-level module systems to enforce boundaries."
+    },
+    {
+      "capability": "dependency-management",
+      "confidence": "high",
+      "reasoning": "Essential for maintaining module boundaries and preventing circular dependencies. Requires tooling or practices to ensure modules only depend on defined interfaces, not internal implementations.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "arch-serverless--aws",
+      "arch-serverless--gcp",
+      "arch-serverless--azure",
+      "arch-serverless",
+      "arch-monolith",
+      "arch-microservices",
+      "arch-serverless-pay-per-use",
+      "arch-serverless-pay-per-use--aws-lambda",
+      "arch-serverless-pay-per-use--azure-functions",
+      "arch-serverless-pay-per-use--gcp-cloud-functions"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "architecture",
+    "ddd",
+    "modularity"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Modular monolith as single deployment unit can achieve up to 99.99% availability with proper infrastructure."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.999,
+      "reason": "Modular monolith is exceptionally well-suited for 99.9% availability, as modular monoliths offer operational simplicity."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Modular monolith with in-process module communication achieves low latency floor of 10ms p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Modular monolith p99 latency floor of 50ms accounts for module boundary overhead and GC pauses."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 10,
+      "reason": "Modular monolith requires at least 10 minutes RTO for coordinated restart and module initialization."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Modular monolith supports RPO of 1 minute or greater with simplified data consistency across modules."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000,
+      "reason": "Modular monolith vertical scaling limits throughput ceiling to approximately 3.6M jobs per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Modular monolith can handle up to 10000 read queries per second with optimized database and caching."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Modular monolith write throughput ceiling of 5000 QPS limited by single database write bottleneck."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports audit logging through centralized logging module but does not require it."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Modular monolith supports all tenant isolation strategies through module-level isolation patterns."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith handles PII through bounded context isolation and can enforce data protection regardless."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports GDPR compliance through module-level data ownership and centralized policies."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports HIPAA compliance through module isolation and centralized security controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports CCPA compliance through module-level data access controls and audit trails."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports SOX compliance through module-level transaction logging and audit capabilities."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith naturally supports read-your-writes consistency as all modules share same database."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports strict durability through ACID transactions enforced at database layer."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Modular monolith is deployment-agnostic architectural pattern that runs on any cloud or on-premises."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Modular monolith architectural pattern applies to any programming language with module support."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Modular monolith structural pattern applies to any platform type including web apps and backend services."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports caching through in-memory application cache or external cache layer optionally."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports async messaging through internal event bus or external message queue optionally."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports AI inference by integrating external AI APIs or embedding models within modules."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith commonly supports multi-tenancy with tenant isolation enforced at module boundaries."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports batch processing through background job queues and dedicated batch modules."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith uses local transactions within single database, avoiding distributed transaction complexity."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith supports real-time streaming through WebSockets, SSE, or integration with streaming platforms."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith integrates vector search through pgvector extension or external vector database module."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith can use document databases like MongoDB as backing store for specific modules."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith integrates key-value stores like Redis for caching, session management, or state storage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith can integrate graph databases like Neo4j within modules requiring relationship queries."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Modular monolith integrates time-series databases like TimescaleDB for metrics, logs, or IoT data modules."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Modular monolith is optimized for transactional OLTP workloads with ACID guarantees and low latency."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Modular monolith is not suited for analytical OLAP workloads which require distributed query engines."
+    }
+  ],
+  "defaultConfig": {
+    "module_boundary_style": "ddd",
+    "communication_pattern": "direct",
+    "module_isolation_level": "logical",
+    "shared_kernel_allowed": true,
+    "future_extraction_ready": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "module_boundary_style": {
+        "type": "string",
+        "enum": [
+          "ddd",
+          "hexagonal",
+          "clean",
+          "layered"
+        ],
+        "description": "Architecture style for defining module boundaries. DDD uses bounded contexts, hexagonal uses ports/adapters, clean uses dependency rule layers, layered uses horizontal separation."
+      },
+      "communication_pattern": {
+        "type": "string",
+        "enum": [
+          "direct",
+          "event-driven",
+          "mediator"
+        ],
+        "description": "How modules communicate internally. Direct allows in-process calls through interfaces, event-driven uses internal event bus for decoupling, mediator uses CQRS/MediatR pattern for request handling."
+      },
+      "module_isolation_level": {
+        "type": "string",
+        "enum": [
+          "logical",
+          "physical",
+          "database"
+        ],
+        "description": "Degree of module separation. Logical uses namespaces/packages, physical uses separate libraries/projects, database includes schema-per-module for future extraction."
+      },
+      "shared_kernel_allowed": {
+        "type": "boolean",
+        "description": "Whether modules can share common domain primitives and utilities (DDD shared kernel pattern). True enables reuse but creates coupling, false enforces strict duplication for independence."
+      },
+      "future_extraction_ready": {
+        "type": "boolean",
+        "description": "Whether modules are designed for potential extraction into microservices. True enforces stricter boundaries and async communication patterns, false allows tighter integration for simplicity."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 5000,
+      "reason": "Modular monolith approaching upper throughput limits (10K QPS ceiling). Consider microservices for horizontal scalability.",
+      "message": "arch-modular-monolith: peak read QPS is {actual} req/s (>5000). Approaching monolith scalability ceiling; consider service extraction for critical modules."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 2500,
+      "reason": "Modular monolith approaching write throughput ceiling (5K QPS max). Single database bottleneck may require distributed architecture.",
+      "message": "arch-modular-monolith: peak write QPS is {actual} req/s (>2500). Approaching single-database write bottleneck; consider CQRS or service decomposition."
+    }
+  ]
+}

@@ -1,0 +1,410 @@
+{
+  "id": "write-through-cache",
+  "version": "1.0.0",
+  "title": "Write-Through Cache",
+  "description": "Writes go to cache and backing store synchronously; simplifies coherence but adds write latency.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 30.0,
+      "max": 4000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Write-through cache requires both cache infrastructure and backing store. Minimum: Redis/ElastiCache cache.t3.micro ($15) + small RDS/database instance ($15-20) for development/testing. Maximum: Production cluster with ElastiCache cache.r6g.xlarge multi-AZ ($800-1200) + RDS production instance with read replicas ($1500-2000) + increased network transfer costs due to synchronous writes ($200-800). The synchronous nature increases write latency but doubles infrastructure requirements since both cache and backing store must be provisioned and maintained. Costs scale with write throughput, data volume, and availability requirements.",
+      "adoptionCost": "Medium-high complexity implementation. Requires: (1) Understanding cache coherence semantics and trade-offs between write-through, write-back, and write-around strategies (2) Implementing synchronous write logic to both cache and backing store with proper error handling (3) Designing rollback/compensation logic when cache succeeds but backing store fails (or vice versa) (4) Configuring cache eviction policies and TTL strategies (5) Setting up monitoring for cache hit rates, write latency, and consistency (6) Testing failure scenarios and transaction boundaries. With AI coding assistants, basic implementation is straightforward, but production-grade error handling, distributed transaction considerations, and performance tuning require 2-3 weeks of senior developer time. Lower than eventual consistency patterns but higher than simple read-through caching.",
+      "licenseCost": "Open source solutions dominate: Redis (BSD), Memcached (BSD), Hazelcast Community (Apache 2.0), Ehcache (Apache 2.0), Caffeine (Apache 2.0). Application code using these caches typically uses standard database drivers and caching libraries with permissive licenses. Commercial options exist (Redis Enterprise, Hazelcast Enterprise) but are optional upgrades, not requirements. Most organizations implement write-through caching with entirely free, open-source components.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cache-coherence",
+      "confidence": "high",
+      "reasoning": "Write-through cache inherently provides cache coherence by synchronously writing to both cache and backing store, ensuring data consistency between layers."
+    },
+    {
+      "capability": "caching",
+      "confidence": "high",
+      "reasoning": "This pattern fundamentally provides caching functionality as a core capability, storing data in a fast-access layer to improve read performance."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "key-value-store",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "Write-through cache requires a cache storage layer to temporarily hold data and serve read requests with low latency."
+    },
+    {
+      "capability": "external-data-persistence",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "The pattern requires a persistent backing store (database, file system, etc.) where data is durably stored alongside the cache."
+    },
+    {
+      "capability": "write-latency-reduction",
+      "confidence": "high",
+      "reasoning": "Synchronous writes to both cache and backing store inherently increase write latency as a trade-off for maintaining coherence.",
+      "optional": true
+    },
+    {
+      "capability": "strong-consistency",
+      "confidence": "medium",
+      "reasoning": "To ensure both cache and backing store are updated consistently, the pattern requires some form of atomic write capability or transactional support.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "cache-aside",
+      "cache-aside--redis",
+      "write-back-cache"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cache",
+    "coherence"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "defaultConfig": {
+    "write_strategy": "synchronous",
+    "consistency_level": "strong",
+    "cache_ttl_seconds": 3600,
+    "retry_on_backing_store_failure": true,
+    "max_retry_attempts": 3,
+    "fallback_on_cache_failure": "write_to_store_only"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "write_strategy": {
+        "type": "string",
+        "enum": [
+          "synchronous",
+          "asynchronous"
+        ],
+        "description": "Synchronous ensures strong consistency but adds latency; asynchronous improves performance but risks temporary inconsistency"
+      },
+      "consistency_level": {
+        "type": "string",
+        "enum": [
+          "strong",
+          "eventual"
+        ],
+        "description": "Strong consistency guarantees cache and store are always in sync; eventual allows brief inconsistency for better performance"
+      },
+      "cache_ttl_seconds": {
+        "type": "integer",
+        "minimum": 60,
+        "maximum": 86400,
+        "description": "Time-to-live for cached entries in seconds; lower values ensure fresher data but increase backing store load"
+      },
+      "retry_on_backing_store_failure": {
+        "type": "boolean",
+        "description": "Whether to retry writes to backing store on failure; true improves reliability but may increase latency"
+      },
+      "max_retry_attempts": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10,
+        "description": "Maximum number of retry attempts for failed backing store writes"
+      },
+      "fallback_on_cache_failure": {
+        "type": "string",
+        "enum": [
+          "write_to_store_only",
+          "fail_request",
+          "queue_for_later"
+        ],
+        "description": "Behavior when cache write fails: write_to_store_only maintains availability, fail_request ensures consistency, queue_for_later enables recovery"
+      }
+    }
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Write-through cache supports availability up to 99.99% as dual-write to cache and backing store synchronously creates single point of failure risk."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Write-through cache requires at least 5ms p95 latency due to synchronous dual-write overhead to both cache and backing store."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Write-through cache requires at least 20ms p99 latency to account for tail latency in synchronous backing store writes."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Write-through cache supports RTO of at least 1 minute as system can recover quickly with cache and backing store synchronized."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">=",
+      "value": 200,
+      "reason": "Write-through cache is worth the synchronous write overhead at moderate write QPS of 200+ queries per second."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with GDPR compliance as data retention and deletion can be coordinated across cache and backing store."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with HIPAA compliance as encryption and access controls apply to both cache and backing store."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with CCPA compliance as data subject rights can be enforced across cache and backing store."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with SOX compliance as audit trails and controls can be applied to synchronized writes."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache guarantees read-your-writes consistency since synchronous writes ensure cache and backing store are immediately consistent."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache provides strict durability as all writes are synchronously persisted to backing store before acknowledgment."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Write-through cache is a cloud-agnostic pattern that can be implemented on any infrastructure with cache and backing store."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Write-through cache is a language-agnostic architectural pattern implementable in any language with cache client libraries."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Write-through cache is a platform-agnostic design pattern applicable to any system requiring cache coherence with backing storage."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "==",
+      "value": true,
+      "reason": "Write-through cache pattern requires caching capability as its fundamental feature to maintain synchronized cache state."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with AI inference workloads for caching model predictions or embeddings with backing store synchronization."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with multi-tenant applications using tenant-scoped cache keys and synchronized backing store writes."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with batch processing workloads though synchronous writes may add overhead for bulk operations."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with distributed transactions as cache and backing store writes can participate in 2PC protocols."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with real-time streaming for caching aggregations with synchronized backing store updates."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with vector search workloads for caching embeddings with synchronized vector database writes."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with document stores as backing storage for caching frequently accessed documents."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with key-value stores as both cache and backing store in synchronized write pattern."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with graph databases for caching frequent graph query results with synchronized backing store."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with time-series databases for caching recent data points with synchronized backing store writes."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is particularly beneficial for OLTP workloads but not exclusively as it provides strong consistency guarantees."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Write-through cache is compatible with OLAP workloads for caching aggregated query results with synchronized backing store updates."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "Write-through cache adds synchronous write overhead that is not justified at low read QPS.",
+      "message": "write-through-cache: peak read QPS is {actual} req/s (<10). The synchronous write overhead and cache infrastructure complexity may outweigh read performance benefits at this scale."
+    }
+  ]
+}

@@ -1,0 +1,480 @@
+{
+  "id": "db-key-value--redis-cloud",
+  "version": "1.0.0",
+  "title": "Key-Value Store (Redis Cloud)",
+  "description": "Redis Cloud is a fully-managed Redis service with advanced data structures. Offers pub/sub, streams, sorted sets, and Redis modules (RedisJSON, RedisSearch). Best for: high-performance caching, real-time analytics, message queues, session stores. Provides managed infrastructure with automatic failover.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": []
+  },
+  "provides": [
+    {
+      "capability": "key-value-store",
+      "confidence": "high",
+      "reasoning": "Redis Cloud is fundamentally a key-value store, providing fast in-memory data storage and retrieval as its core functionality."
+    },
+    {
+      "capability": "pub-sub",
+      "confidence": "high",
+      "reasoning": "Redis Cloud natively supports publish/subscribe messaging patterns, enabling real-time message distribution across multiple subscribers."
+    },
+    {
+      "capability": "in-memory-cache",
+      "confidence": "high",
+      "reasoning": "Redis Cloud excels as a high-performance caching layer due to its in-memory architecture, which is explicitly mentioned as a primary use case in the description."
+    },
+    {
+      "capability": "session-store",
+      "confidence": "high",
+      "reasoning": "The description explicitly lists session stores as a best-use case, leveraging Redis's fast key-value access patterns for session management."
+    },
+    {
+      "capability": "message-queue",
+      "confidence": "high",
+      "reasoning": "Redis Streams and Lists enable message queue functionality, explicitly mentioned as a best-use case in the description."
+    },
+    {
+      "capability": "sorted-set-store",
+      "confidence": "high",
+      "reasoning": "Sorted sets are explicitly mentioned as an advanced data structure that Redis Cloud provides, useful for leaderboards, rankings, and time-series data."
+    },
+    {
+      "capability": "document-search",
+      "confidence": "medium",
+      "reasoning": "RedisSearch module provides full-text search capabilities, making this a valid provided capability for Redis Cloud deployments with this module enabled."
+    },
+    {
+      "capability": "json-store",
+      "confidence": "medium",
+      "reasoning": "RedisJSON module enables native JSON document storage and manipulation, making Redis Cloud suitable for document-like workloads."
+    },
+    {
+      "capability": "state-management",
+      "confidence": "high",
+      "reasoning": "Redis Cloud is a primary mechanism for distributed state management \u2014 session state, feature flags, distributed locks, counters, and leaderboards \u2014 making state-management a core output of this pattern."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "cloud-infrastructure",
+      "confidence": "high",
+      "reasoning": "Redis Cloud is a fully-managed service that runs on cloud infrastructure and requires underlying cloud platform resources to operate.",
+      "optional": true
+    },
+    {
+      "capability": "network-connectivity",
+      "confidence": "high",
+      "reasoning": "As a cloud-based service, Redis Cloud requires network connectivity for clients to connect and interact with the data store.",
+      "optional": true
+    }
+  ],
+  "preferredProviders": [
+    "redis-cloud"
+  ],
+  "defaultConfig": {
+    "eviction_policy": "volatile-lru",
+    "persistence": true,
+    "max_memory_gb": 1,
+    "replication_enabled": true,
+    "clustering_enabled": false,
+    "tls_enabled": true,
+    "service_auth_method": "password"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "eviction_policy": {
+        "type": "string",
+        "enum": [
+          "volatile-lru",
+          "allkeys-lru",
+          "volatile-lfu",
+          "allkeys-lfu",
+          "volatile-ttl",
+          "noeviction"
+        ],
+        "description": "Memory eviction strategy when max memory is reached. volatile-* only evicts keys with TTL set (safe for mixed cache/persistent data), allkeys-* evicts any key (pure cache), noeviction returns errors when full"
+      },
+      "persistence": {
+        "type": "boolean",
+        "description": "Enable RDB snapshots and AOF logging for data durability. Disable for pure cache use cases where data loss is acceptable for better performance"
+      },
+      "max_memory_gb": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 512,
+        "description": "Maximum memory allocation in GB. Determines dataset size capacity and cost"
+      },
+      "replication_enabled": {
+        "type": "boolean",
+        "description": "Enable primary-replica replication for high availability and automatic failover. Adds cost but provides 99.99% uptime SLA"
+      },
+      "clustering_enabled": {
+        "type": "boolean",
+        "description": "Enable Redis Cluster mode for horizontal scaling across multiple nodes. Required for datasets larger than single-node capacity or high throughput needs"
+      },
+      "tls_enabled": {
+        "type": "boolean",
+        "description": "Enable TLS encryption for Redis connections. Redis Cloud supports TLS; should be true in all non-local environments."
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "password",
+          "acl"
+        ],
+        "description": "Redis Cloud connection authentication. 'password' uses a single connection password; 'acl' uses Redis ACL rules with per-user credentials."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 800.0
+    },
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Redis Cloud offers a free tier (30MB) suitable for development/testing (min=$0). Small production workloads on 250MB-1GB instances range $5-$50/month. Medium production deployments (5-10GB with high availability) cost $100-$300/month. Large-scale production environments with 50GB+, clustering, multiple availability zones, and Redis modules (RedisJSON, RedisSearch) can reach $500-$800/month. Max set at $800 for typical production scenarios; enterprise multi-region deployments can exceed this.",
+      "adoptionCost": "Medium-low complexity. Redis Cloud is managed, eliminating infrastructure setup overhead. Key adoption costs: (1) Learning Redis data structures and best practices: 8-16 hours ($400-$800 developer time). (2) Migration from existing cache/database if applicable: 4-8 hours ($200-$400). (3) Integration with application code (connection pooling, error handling, serialization): 8-12 hours ($400-$600). (4) Testing and performance tuning: 4-8 hours ($200-$400). Total: 24-44 hours. With AI coding assistants reducing implementation time by 30-40%, estimated at $800 (16-26 effective hours at $50/hour blended rate).",
+      "licenseCost": "Redis Cloud operates on a consumption-based SaaS pricing model with no upfront license fees. Free tier available for development. All costs are usage-based (included in monthly operational costs). Redis modules (RedisJSON, RedisSearch, RedisBloom) are included in Redis Cloud pricing without additional licensing. Open-source Redis is Apache/BSD licensed. No separate license purchase required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "key-value",
+    "cache",
+    "in-memory"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Redis Cloud maximum availability is 99.99% with premium tiers offering active-active replication."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1,
+      "reason": "Redis Cloud in-memory operations achieve sub-millisecond latency with network overhead adding 1-2ms floor."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Redis Cloud p99 latency is at least 5ms accounting for network variability and occasional cluster coordination."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Redis Cloud automatic failover typically completes in 1-3 minutes with health monitoring and DNS propagation."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Redis Cloud asynchronous replication maintains RPO of 1-2 minutes under normal conditions due to replication lag."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Redis Cloud can handle up to 100K ops/sec (360M per hour) with clustered deployments and optimized configurations."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Redis Cloud supports extremely high read throughput with clustered sharding and read replicas for key-value operations."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 99999,
+      "reason": "Redis Cloud supports extremely high write throughput with clustered sharding and pipelined write operations."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports optional audit logging for compliance scenarios but does not require it for all deployments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Redis Cloud supports per-database isolation with separate Redis databases or dedicated clusters for multi-tenant architectures."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud can store any data type including PII with appropriate encryption and access controls configured."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports GDPR compliance with data residency, encryption, and data deletion capabilities when properly configured."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud offers HIPAA-compliant configurations with BAA, encryption at rest, audit logging, and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports CCPA requirements through data access controls and deletion capabilities with proper configuration."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud can meet SOX requirements with audit logging, access controls, and change tracking when configured appropriately."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports read-your-writes consistency when reading from primary node but also allows eventual consistency with replicas."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": false,
+      "reason": "Redis Cloud is optimized for performance over strict durability with asynchronous persistence and replication by default."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Redis Cloud is a managed service accessible from any major cloud provider or on-premises environments via network connectivity."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Redis Cloud is accessible via Redis protocol with client libraries available for virtually all programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot"
+      ],
+      "reason": "Redis Cloud is a backend data store that can be used by any platform type for caching, session management, and data storage."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern provides key-value store functionality as the core Redis data model with string, hash, list, set, and sorted set types."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "redis-cloud"
+      ],
+      "reason": "Pattern specifically requires redis-cloud as the database service"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud is commonly used as a caching layer for high-performance data access but also supports primary data storage use cases."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports pub/sub and streams for asynchronous messaging patterns with message queuing and event streaming capabilities."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud can be used for AI inference caching and vector storage with RedisJSON and RedisSearch modules for embeddings."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports multi-tenancy through per-database isolation or key-based partitioning strategies for tenant separation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud can support batch processing workflows for caching, temporary storage, and batch job coordination with fast access."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports distributed transactions through Redis transactions and Lua scripting for atomic multi-key operations."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports real-time streaming with Redis Streams for event processing and time-series data ingestion patterns."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports vector search capabilities through RedisSearch module for similarity search and embedding-based retrieval."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports document storage through RedisJSON module for JSON document storage and querying with path expressions."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud can support graph operations through RedisGraph module for relationship queries and graph traversal algorithms."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports time-series data through RedisTimeSeries module for metric storage and time-based aggregations."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud supports OLTP workloads with fast transactional operations for session stores, caching, and real-time data access."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Redis Cloud can support lightweight OLAP workloads for real-time analytics with aggregations, sorted sets, and RedisSearch."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "Redis Cloud is a managed service with overhead costs. At <10 req/s, simpler storage solutions may be more cost-effective.",
+      "message": "db-key-value--redis-cloud: peak read QPS is {actual} req/s (<10). Managed Redis Cloud overhead may not be justified at this scale; consider simpler storage options."
+    }
+  ]
+}

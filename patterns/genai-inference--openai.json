@@ -1,0 +1,375 @@
+{
+  "id": "genai-inference--openai",
+  "version": "1.0.0",
+  "title": "OpenAI: GenAI Inference API (GPT-4, DALL-E)",
+  "description": "Industry-leading AI models (GPT-4, ChatGPT, DALL-E) via OpenAI API; production-grade reliability; premium pricing; best-in-class text and image generation.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 20.0,
+      "max": 10000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "openai"
+    ],
+    "costNotes": "Premium pricing reflects best-in-class quality. Implement token counting, caching, and usage monitoring to control costs. Consider GPT-3.5-turbo for cost-sensitive use cases.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Pay-as-you-go token-based pricing creates highly variable costs. Min ($20): Small-scale usage (~10K tokens/day with GPT-3.5-turbo at $0.002/1K tokens = ~$0.60/day). Max ($10,000): Heavy production usage (~1M tokens/day with GPT-4 at $0.03-0.06/1K tokens = $30-60K tokens cost, or high-volume DALL-E image generation at $0.04-0.12/image for ~3K-8K images/day). Typical production chatbot handling 100K tokens/day: $100-300/month. Enterprise applications with millions of tokens can easily exceed $10K/month.",
+      "adoptionCost": "Low-to-medium complexity integration. Simple REST API with excellent documentation and official SDKs (Python, Node.js, etc.) enables rapid implementation. Basic integration: 2-4 hours ($200-400 at $100/hr dev rate). Production-ready implementation requires: error handling, rate limiting, token counting/monitoring, prompt engineering, response validation, and cost controls (additional 4-8 hours, $400-800). Total: 6-12 hours. Senior developers can integrate in <1 day, but proper production hardening, testing, and optimization add complexity. No specialized ML expertise required, but understanding token economics and prompt optimization is essential.",
+      "licenseCost": "Pure consumption-based pricing model with no upfront license fees or subscriptions. Costs are entirely usage-based (pay-per-token for text models, pay-per-image for DALL-E). New accounts receive $5-18 in free trial credits for testing, but no ongoing free tier for production use. Enterprise customers may negotiate volume discounts or committed use agreements, but standard access requires no license purchase - just API key registration and pay-as-you-go billing.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "genai-inference",
+      "confidence": "strong",
+      "reasoning": "Core capability - this pattern provides generative AI inference services via OpenAI's API including GPT-4, ChatGPT, and DALL-E models."
+    },
+    {
+      "capability": "text-generation",
+      "confidence": "strong",
+      "reasoning": "Specific capability provided by GPT-4 models for generating text content across various use cases and formats."
+    },
+    {
+      "capability": "chat-completion",
+      "confidence": "strong",
+      "reasoning": "Conversational AI capability provided by ChatGPT models for interactive dialogue and multi-turn conversations."
+    },
+    {
+      "capability": "image-generation",
+      "confidence": "strong",
+      "reasoning": "DALL-E provides image generation from text prompts, a distinct capability from text generation for visual content creation."
+    },
+    {
+      "capability": "embeddings",
+      "confidence": "strong",
+      "reasoning": "OpenAI API provides text embedding models for semantic search, similarity tasks, and vector representations of text."
+    },
+    {
+      "capability": "function-calling",
+      "confidence": "high",
+      "reasoning": "GPT-4 supports structured function calling which enables the model to output structured data and trigger external functions."
+    },
+    {
+      "capability": "moderation",
+      "confidence": "high",
+      "reasoning": "OpenAI offers content moderation API as part of their service to detect potentially harmful or unsafe content."
+    },
+    {
+      "capability": "embedding-generation",
+      "confidence": "strong",
+      "reasoning": "OpenAI text-embedding models (text-embedding-3-small, text-embedding-3-large) provide embedding generation from raw text, converting inputs into dense vector representations for downstream use."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "http-client",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "HTTP/REST client needed to communicate with OpenAI's API endpoints for all model interactions."
+    },
+    {
+      "capability": "secrets-management",
+      "confidence": "strong",
+      "optional": false,
+      "reasoning": "API keys must be securely stored and retrieved to authenticate with OpenAI services and prevent unauthorized access."
+    },
+    {
+      "capability": "token-counting",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Token tracking is essential for cost management and staying within model context limits as GPT-4 has specific token constraints."
+    },
+    {
+      "capability": "cost-visibility",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Premium pricing model requires tracking API usage costs to prevent budget overruns and optimize spending."
+    },
+    {
+      "capability": "rate-limiting",
+      "confidence": "high",
+      "reasoning": "OpenAI API has rate limits that need to be handled to prevent throttling and ensure smooth operation.",
+      "optional": false
+    },
+    {
+      "capability": "error-handling",
+      "confidence": "high",
+      "reasoning": "API calls may fail due to various reasons and need proper retry strategies and error recovery mechanisms.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "genai-inference--fal",
+      "genai-inference--huggingface",
+      "genai-inference--replicate",
+      "genai-inference--anthropic"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ai",
+    "genai",
+    "inference",
+    "gpt-4",
+    "chatgpt",
+    "dall-e",
+    "text-generation",
+    "image-generation",
+    "openai",
+    "premium",
+    "saas"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Pattern for public SaaS with widespread adoption; documentation freely available."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "OpenAI's managed API service provides up to 99.9% availability SLA for production workloads."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "OpenAI API typical p95 latency for GPT-4 inference is 1-5 seconds due to model complexity and processing overhead."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 2000,
+      "reason": "OpenAI API p99 latency for complex GPT-4 requests typically ranges 2-10 seconds depending on token count and model load."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "OpenAI's global load balancing and automatic failover enables recovery within 1-5 minutes for API service disruptions."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000,
+      "reason": "OpenAI API enterprise tier supports up to 1000 requests/second (3.6M per hour) with rate limit quotas."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "OpenAI API is cloud-based SaaS accessible from any cloud provider or on-premises environments via HTTP."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "swift",
+        "dart",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "OpenAI provides official SDKs for Python and TypeScript with community libraries available for all major languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-inference",
+        "cli"
+      ],
+      "reason": "OpenAI API is HTTP-based and callable from any platform that can make REST requests over HTTPS."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "openai"
+      ],
+      "reason": "Pattern specifically requires OpenAI as the backend provider"
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern is specifically designed for AI/ML inference using OpenAI models and requires this capability."
+    }
+  ],
+  "defaultConfig": {
+    "primary_model": "gpt-4o",
+    "fallback_model": "gpt-4o-mini",
+    "image_model": "dall-e-3",
+    "max_tokens": 4096,
+    "temperature": 0.7,
+    "enable_streaming": true,
+    "timeout_seconds": 60,
+    "retry_strategy": "exponential-backoff",
+    "service_auth_method": "api_key"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "primary_model": {
+        "type": "string",
+        "enum": [
+          "gpt-4o",
+          "gpt-4-turbo",
+          "gpt-4",
+          "gpt-3.5-turbo",
+          "o1",
+          "o1-mini"
+        ],
+        "description": "Primary text generation model. gpt-4o: best performance/cost balance; gpt-4-turbo: faster with vision; gpt-4: highest quality; gpt-3.5-turbo: fastest/cheapest; o1: advanced reasoning; o1-mini: cost-effective reasoning."
+      },
+      "fallback_model": {
+        "type": "string",
+        "enum": [
+          "gpt-4o-mini",
+          "gpt-3.5-turbo",
+          "none"
+        ],
+        "description": "Fallback model if primary fails or rate-limited. gpt-4o-mini: balanced fallback; gpt-3.5-turbo: fastest fallback; none: fail without fallback."
+      },
+      "image_model": {
+        "type": "string",
+        "enum": [
+          "dall-e-3",
+          "dall-e-2",
+          "none"
+        ],
+        "description": "Image generation model. dall-e-3: highest quality, more expensive; dall-e-2: faster, cheaper; none: disable image generation."
+      },
+      "max_tokens": {
+        "type": "integer",
+        "minimum": 256,
+        "maximum": 128000,
+        "description": "Maximum tokens per response. Higher values allow longer responses but increase cost and latency. Model-dependent limits apply."
+      },
+      "temperature": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 2,
+        "description": "Sampling temperature (0-2). Lower values (0-0.3): deterministic, factual; Medium (0.7-1.0): balanced creativity; Higher (1.5-2.0): maximum creativity and randomness."
+      },
+      "enable_streaming": {
+        "type": "boolean",
+        "description": "Stream responses token-by-token for better UX in interactive applications. Disable for batch processing or when full response needed before processing."
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 300,
+        "description": "API request timeout in seconds. Longer timeouts for complex prompts or image generation; shorter for interactive applications."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "exponential-backoff",
+          "fixed-delay",
+          "none"
+        ],
+        "description": "Retry strategy for rate limits and transient failures. exponential-backoff: recommended for production; fixed-delay: simpler but less efficient; none: fail immediately."
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "api_key"
+        ],
+        "description": "Service credential method used to authenticate to the LLM provider API. Always api_key \u2014 stored in environment variable, never in code."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "OpenAI API has premium pricing (~$0.03-0.12 per 1K tokens). At <10 jobs/hour, consider cheaper alternatives or local models.",
+      "message": "genai-inference--openai: peak_jobs_per_hour is {actual} (<10). Premium OpenAI pricing may not be cost-effective at low volumes; consider cheaper alternatives."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "OpenAI processes data on external servers. Sending PII to third-party APIs may violate compliance requirements (GDPR).",
+      "message": "genai-inference--openai: spec indicates PII handling, but OpenAI API processes data externally which may violate data residency or compliance requirements."
+    }
+  ]
+}

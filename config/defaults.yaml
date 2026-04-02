@@ -1,0 +1,76 @@
+# config/defaults.yaml
+# Static defaults for progressive refinement (no heuristics)
+
+constraints:
+  cloud: agnostic
+  language: agnostic
+  platform: agnostic
+  saas-providers: []
+  disallowed-saas-providers: []
+  tenantCount: 1
+  features:
+    caching: false
+    async_messaging: false
+    ai_inference: false
+    multi_tenancy: false
+    batch_processing: false
+    distributed_transactions: false
+    real_time_streaming: false
+    vector_search: false
+    document_store: false
+    key_value_store: false
+    graph_database: false
+    time_series_db: false
+    oltp_workload: true
+    olap_workload: false
+    cold_archive_tiering: false
+    messaging_delivery_guarantee: null
+
+nfr:
+  availability:
+    target: 0.95
+  rpo_minutes: 60
+  rto_minutes: 60
+  latency:
+    p95Milliseconds: 500
+    p99Milliseconds: 1000
+    jobStartP95Seconds: null
+    jobStartP99Seconds: null
+  throughput:
+    peak_jobs_per_hour: null
+    peak_query_per_second_read: 5
+    peak_query_per_second_write: 1
+  data:
+    retention_days: 90
+    pii: false
+    compliance:
+      gdpr: false
+      gdpr_rtbf: false
+      ccpa: false
+      hipaa: false
+      sox: false
+  consistency:
+    needsReadYourWrites: false
+  durability:
+    strict: false
+  security:
+    auth: oauth2_oidc
+    tenant_isolation: n/a
+    audit_logging: false
+
+operating_model:
+  on_call: false
+  deploy_freq: weekly
+  ops_team_size: 0
+  single_resource_monthly_ops_usd: 10000
+  amortization_months: 24
+
+cost:
+  intent:
+    priority: minimize-opex
+  ceilings:
+    monthly_operational_usd: 500
+    one_time_setup_usd: 1000
+  preferences:
+    prefer_free_tier_if_possible: true
+    prefer_saas_first: false

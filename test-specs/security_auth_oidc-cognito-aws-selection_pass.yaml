@@ -1,0 +1,25 @@
+# Security - OIDC Cognito AWS Selection
+#
+# A spec with nfr.security.auth: oauth2_oidc and cloud: aws, with no
+# saas-providers declared. Tests that idp-oidc--cognito is selected because
+# it gates on cloud: aws (AWS-native service). idp-oidc--auth0 and
+# idp-oidc--okta are excluded because they require saas-providers containing
+# their respective provider names, which is absent here.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - idp-oidc--cognito is selected
+#   - idp-oidc--auth0 and idp-oidc--okta are NOT selected (no saas-providers)
+
+project:
+  name: OIDC Cognito AWS
+  domain: test
+functional:
+  summary: 'Test scenario: OIDC with AWS Cognito'
+constraints:
+  platform: api
+  cloud: aws
+  language: agnostic
+nfr:
+  security:
+    auth: oauth2_oidc

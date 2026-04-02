@@ -1,0 +1,321 @@
+{
+  "id": "ops-low-cost-observability",
+  "version": "1.0.0",
+  "title": "Low-Cost Observability Baseline",
+  "description": "Adopt metrics-first + sampled tracing + structured logs with retention/tiering to control observability spend.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 2000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 5000,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Low-cost observability focuses on controlling telemetry costs through sampling and retention policies. Min ($50) represents a small application (1-3 services) using provider free tiers plus minimal paid metrics/logs (e.g., AWS CloudWatch ~$20-30/month for metrics, Datadog free tier + $20-30 for basic logs). Max ($2000) represents a medium-scale production system (10-50 services) with sampled tracing, structured logs with 30-day retention, and metrics aggregation across multiple environments. This is intentionally lower than full observability ($5000+) due to sampling (90-95% trace reduction), log filtering/tiering (storing only errors/warnings), and retention policies (7-30 days vs 90+ days). Assumes OpenTelemetry for vendor flexibility and cost optimization through filtering before egress.",
+      "adoptionCost": "Medium-high complexity adoption requiring: (1) OpenTelemetry SDK integration across services (instrumentation libraries, context propagation) - 40-60 hours; (2) Implementing sampling strategies (head-based, tail-based) and configuring collectors - 20-30 hours; (3) Establishing log structuring standards (JSON formatting, field normalization) - 15-25 hours; (4) Setting up retention/tiering policies and cost alerting - 10-15 hours; (5) Training team on metrics-first debugging and trace analysis - 8-12 hours. Total 93-142 hours at $25-35/hour blended rate (with AI coding assistants reducing manual configuration by 30-40%). Lower than full observability ($5000+) because pattern explicitly limits scope to cost-effective essentials.",
+      "licenseCost": "Open-source based pattern using OpenTelemetry (Apache 2.0 license), Prometheus (Apache 2.0), Grafana (AGPL/free tier), or similar CNCF tools. Pattern is cloud/vendor-agnostic and designed to work with native cloud provider tools (CloudWatch, Azure Monitor, Cloud Logging) or open-source alternatives. Commercial observability platforms (Datadog, New Relic, Honeycomb) may be used but pattern emphasizes free tiers and usage-based pricing rather than upfront licensing. No mandatory commercial licenses required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cost-aware-observability",
+      "confidence": "high",
+      "reasoning": "This pattern specifically focuses on implementing observability while controlling costs through metrics-first approach, sampling, and retention policies. This capability accurately describes the pattern's primary value proposition."
+    },
+    {
+      "capability": "sampling-strategy",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly mentions 'sampled tracing' as a core technique for reducing observability costs. Providing a sampling strategy is a key implementation detail of this pattern."
+    },
+    {
+      "capability": "log-retention-management",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly mentions 'retention/tiering' as a cost control mechanism, providing policies and strategies for managing log data lifecycle."
+    },
+    {
+      "capability": "data-tiering",
+      "confidence": "high",
+      "reasoning": "The pattern includes retention/tiering as a core technique for cost control, implementing different storage tiers based on data age and access patterns."
+    },
+    {
+      "capability": "observability-baseline",
+      "confidence": "medium",
+      "reasoning": "This pattern establishes a foundational observability approach combining metrics, traces, and logs that other patterns could build upon while maintaining cost effectiveness."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "metrics-collection",
+      "confidence": "high",
+      "reasoning": "The pattern adopts a 'metrics-first' approach, which requires an underlying capability to collect and store metrics. This is foundational to the pattern's implementation.",
+      "optional": false
+    },
+    {
+      "capability": "structured-logging",
+      "confidence": "high",
+      "reasoning": "The pattern explicitly mentions 'structured logs' as part of the observability baseline. A structured logging capability must exist to implement this pattern effectively.",
+      "optional": false
+    },
+    {
+      "capability": "distributed-tracing",
+      "confidence": "high",
+      "reasoning": "The pattern mentions 'sampled tracing', which requires an underlying distributed tracing capability. The pattern adds sampling on top of base tracing functionality.",
+      "optional": false
+    },
+    {
+      "capability": "telemetry-backend",
+      "confidence": "high",
+      "reasoning": "The metrics-first approach requires a backend that stores and queries time-series metric data. Prometheus (part of obs-telemetry-backend) provides this storage natively \u2014 this is distinct from application-level time-series databases (InfluxDB, TimescaleDB) which serve different use cases.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "obs-open-telemetry-baseline"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "observability",
+    "sampling",
+    "retention",
+    "metrics"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Sampling and metrics-first observability can achieve up to four nines availability detection."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 10,
+      "reason": "Structured logs with metrics enable root cause analysis within 10+ minute RTO windows."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Metrics scrape intervals and log buffer flush (1-5 min) align with RPO >= 5 minutes."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Sampling and tiering strategies handle up to ~28 jobs/second (100K/hour) without excessive cost."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Metrics-first observability is compatible with GDPR compliance requirements when properly configured."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Low-cost observability can be configured to meet HIPAA requirements with appropriate retention policies."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Observability baseline supports CCPA compliance through proper data retention and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cost-optimized observability can support SOX compliance with appropriate retention and audit trails."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Observability baseline applies to any cloud environment or on-premises deployment."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Observability patterns apply to applications written in any language with metrics, logs, and traces."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Observability strategies apply to all platform types from web apps to batch jobs."
+    }
+  ],
+  "defaultConfig": {
+    "metrics_retention_days": 30,
+    "trace_sampling_rate": 0.01,
+    "log_retention_days": 7,
+    "log_sampling_strategy": "error-always-info-sampled",
+    "metrics_aggregation_interval": 60,
+    "enable_log_tiering": true,
+    "high_value_trace_retention_days": 30,
+    "sampled_trace_retention_days": 7
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "metrics_retention_days": {
+        "type": "integer",
+        "enum": [
+          7,
+          15,
+          30,
+          90,
+          365
+        ],
+        "description": "How long to retain metrics data. Longer retention increases storage costs but enables historical analysis and trend detection"
+      },
+      "trace_sampling_rate": {
+        "type": "number",
+        "enum": [
+          0.001,
+          0.01,
+          0.05,
+          0.1,
+          1.0
+        ],
+        "description": "Percentage of traces to capture (0.01 = 1%). Lower rates reduce costs dramatically but may miss rare issues. Use 1.0 only for low-traffic services"
+      },
+      "log_retention_days": {
+        "type": "integer",
+        "enum": [
+          1,
+          3,
+          7,
+          14,
+          30
+        ],
+        "description": "How long to retain logs in hot storage. Shorter retention significantly reduces costs. Consider tiering to cold storage for compliance needs"
+      },
+      "log_sampling_strategy": {
+        "type": "string",
+        "enum": [
+          "all",
+          "error-always-info-sampled",
+          "error-warn-only",
+          "adaptive"
+        ],
+        "description": "Which logs to keep. 'error-always-info-sampled' keeps all errors but samples info logs. 'adaptive' increases sampling during incidents"
+      },
+      "metrics_aggregation_interval": {
+        "type": "integer",
+        "enum": [
+          10,
+          30,
+          60,
+          300
+        ],
+        "description": "Seconds between metric data points. Higher intervals reduce cardinality and costs but decrease resolution for troubleshooting"
+      },
+      "enable_log_tiering": {
+        "type": "boolean",
+        "description": "Move older logs to cheaper cold storage automatically. Reduces costs 80-90% but increases query latency for historical data"
+      },
+      "high_value_trace_retention_days": {
+        "type": "integer",
+        "enum": [
+          7,
+          14,
+          30,
+          90
+        ],
+        "description": "Retention for error traces and high-latency requests. Keep longer than sampled traces to debug recurring issues"
+      },
+      "sampled_trace_retention_days": {
+        "type": "integer",
+        "enum": [
+          1,
+          3,
+          7,
+          14
+        ],
+        "description": "Retention for successfully sampled traces. Short retention minimizes costs while maintaining recent visibility"
+      }
+    }
+  },
+  "warn_nfr": []
+}

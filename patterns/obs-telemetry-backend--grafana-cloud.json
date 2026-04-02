@@ -1,0 +1,265 @@
+{
+  "id": "obs-telemetry-backend--grafana-cloud",
+  "version": "1.0.0",
+  "title": "Telemetry Backend \u2014 Grafana Cloud",
+  "description": "Managed Grafana Cloud stack (Grafana + Mimir metrics + Loki logs + Tempo traces). OSS-compatible APIs on a fully managed SaaS backend; no infrastructure to operate.",
+  "types": [
+    "ops",
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 800.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 500,
+    "costNotes": "Free tier: 10k active metrics, 50GB logs, 50GB traces, 50GB profiles. Pro tier is consumption-based. Small production (~50k metrics, 100GB logs/month): ~$50-100/month. Medium (~500k metrics, 500GB logs/month): ~$200-500/month.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Grafana Cloud pricing (2025): Metrics $8/1M active series over free tier; Logs $0.50/GB over 50GB/month; Traces $0.50/GB over 50GB/month. Min ($0): free tier covers most small apps and side projects. Max ($500): medium production with 500k active metrics + 500GB/month logs + 200GB traces.",
+      "adoptionCost": "OSS-compatible APIs (Prometheus remote-write, Loki push, OTLP) mean minimal migration effort. Setup: agent/OTel collector config (~8h), dashboard migration or creation (~12h). Total ~20h at $40/hour = ~$800.",
+      "licenseCost": "No upfront license; free tier available, paid tiers are consumption-based.",
+      "source": "LLM analysis (as of 25-Mar-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "telemetry-backend",
+      "confidence": "high",
+      "reasoning": "Grafana Cloud is a fully managed observability backend. Accepts Prometheus remote-write for metrics, Loki push API for logs, and OTLP or Jaeger for traces via Grafana Tempo."
+    },
+    {
+      "capability": "structured-logging",
+      "confidence": "high",
+      "reasoning": "Grafana Loki (managed) ingests structured log streams with label-based indexing. Supports JSON log parsing and LogQL for querying. Correlates logs with traces via trace_id fields."
+    },
+    {
+      "capability": "timeseries-storage",
+      "confidence": "high",
+      "reasoning": "Grafana Mimir provides horizontally scalable, multi-tenant, long-term Prometheus-compatible metrics storage with PromQL query support."
+    },
+    {
+      "capability": "distributed-tracing",
+      "confidence": "high",
+      "reasoning": "Grafana Tempo (managed) provides cost-efficient distributed tracing storage with TraceQL query language and native integration with Grafana dashboards for trace-metric correlation."
+    },
+    {
+      "capability": "event-tracking",
+      "confidence": "high",
+      "reasoning": "Grafana Cloud captures and stores discrete application events through Loki log streams, Mimir counter metrics, and Tempo trace events, providing event-tracking infrastructure for observability and compliance."
+    }
+  ],
+  "requires": [],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "obs-telemetry-backend",
+      "obs-telemetry-backend--datadog",
+      "obs-telemetry-backend--aws-cloudwatch"
+    ]
+  },
+  "tags": [
+    "observability",
+    "grafana-cloud",
+    "prometheus",
+    "loki",
+    "tempo",
+    "saas"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Free tier available; commercially available SaaS with no access restrictions"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.9,
+      "reason": "Telemetry backend is meaningful from 90% availability upward; below that, service reliability is the primary concern, not observability infrastructure."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Grafana Cloud's paid SLA is 99.9%; at 4-nines availability targets a secondary observability path is needed beyond this single SaaS backend."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Grafana Cloud supports audit logging for paid tiers; compatible with or without this requirement."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Grafana Cloud is a managed SaaS with 99.9% SLA; agent reconnection after restart completes in seconds. RTO >= 5 minutes is supported."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 1000000,
+      "reason": "Grafana Mimir and Loki are designed for horizontal scale; they handle millions of time-series samples and log lines per hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Grafana Agent/Alloy collects metrics asynchronously; telemetry forwarding does not add per-request overhead to application read paths."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Grafana Cloud ingestion is asynchronous and batched; it does not constrain application write throughput."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Grafana Cloud offers EU data residency options and is GDPR compliant; compatible with or without GDPR requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Grafana Cloud Enterprise offers HIPAA-compliant configurations with data isolation and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Grafana Cloud data privacy controls are compatible with CCPA requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Grafana Cloud audit logging and access controls on paid plans support SOX compliance requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Grafana Cloud is cloud-agnostic and accepts telemetry from any environment via standard APIs."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "grafana-cloud"
+      ],
+      "reason": "Grafana Cloud variant is only selected when the user has explicitly approved grafana-cloud as an acceptable SaaS provider."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Grafana Cloud ingests via standard protocols (OTLP, Prometheus, Loki) \u2014 language-agnostic."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Grafana Cloud supports monitoring all platform types via standard telemetry protocols."
+    }
+  ],
+  "defaultConfig": {
+    "metrics_retention_days": 13,
+    "log_retention_days": 30,
+    "traces_enabled": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "metrics_retention_days": {
+        "type": "integer",
+        "enum": [
+          13,
+          90,
+          395
+        ],
+        "description": "Metrics retention period. 13 months on free/pro; longer requires enterprise plan."
+      },
+      "log_retention_days": {
+        "type": "integer",
+        "enum": [
+          30,
+          90,
+          365
+        ],
+        "description": "Log retention in Grafana Cloud Loki. Longer retention increases monthly cost."
+      },
+      "traces_enabled": {
+        "type": "boolean",
+        "description": "Enable Grafana Tempo for distributed tracing. Free tier includes 50GB/month; consumption-based beyond that."
+      }
+    }
+  },
+  "warn_nfr": []
+}

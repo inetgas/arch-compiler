@@ -1,0 +1,247 @@
+{
+  "id": "ui-ssr",
+  "version": "1.0.0",
+  "title": "Server-Side Rendering (SSR)",
+  "description": "Server-rendered pages for SEO and fast first paint; more backend complexity and caching needs.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "SSR requires compute resources to render pages on each request. Min ($50) represents a small Next.js/Nuxt app on a single t3.small EC2 instance (~$15) + ALB (~$20) + CloudFront CDN (~$15) handling low traffic. Max ($5000) represents production-scale SSR with multiple app servers (3-5 c5.xlarge instances ~$1500), managed load balancing (~$100), CDN with high traffic (~$500), Redis/Memcached for caching rendered content (~$300), RDS for data (~$500), and higher bandwidth/egress costs (~$2000). SSR generates 3-10x more backend CPU load than static or CSR sites due to rendering on every request, though aggressive caching can reduce this. Costs scale with traffic volume and page complexity.",
+      "adoptionCost": "Medium-high complexity. Requires: (1) Framework selection and setup (Next.js, Nuxt, SvelteKit, etc.) - 2-3 days, (2) Converting existing CSR components to support SSR with proper data fetching patterns (getServerSideProps, loader functions) - 5-10 days, (3) Implementing caching strategy (CDN, Redis, stale-while-revalidate) - 3-5 days, (4) Handling SSR-specific concerns (window/document undefined, hydration mismatches, memory leaks) - 3-5 days, (5) Setting up build/deployment pipeline for server bundles - 2-3 days, (6) Performance optimization and monitoring - 2-3 days. Total 17-29 days of senior developer effort. Backend complexity increases significantly vs. static sites. Team needs expertise in Node.js runtime, server optimization, and caching strategies. With AI coding assistants reducing boilerplate by 30-40%, estimate ~$3500 (vs $5000+ without).",
+      "licenseCost": "All major SSR frameworks are open source and free: Next.js (MIT), Nuxt (MIT), SvelteKit (MIT), Remix (MIT), Angular Universal (MIT), Astro (MIT). No licensing costs for the pattern itself. Commercial hosting platforms like Vercel or Netlify offer SSR support with free tiers and paid plans based on usage (covered in monthly costs). Enterprise support contracts optional but not required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "seo-optimized-content",
+      "confidence": "high",
+      "reasoning": "SSR renders complete HTML on the server before sending to the client, making all content immediately available to search engine crawlers without requiring JavaScript execution. This ensures maximum indexability and SEO performance."
+    },
+    {
+      "capability": "fast-initial-page-load",
+      "confidence": "high",
+      "reasoning": "SSR delivers fully-rendered HTML on the first request, enabling immediate visual rendering and fast Time to First Paint and First Contentful Paint metrics without waiting for client-side JavaScript to execute."
+    },
+    {
+      "capability": "server-rendered-html",
+      "confidence": "high",
+      "reasoning": "The fundamental capability of SSR - generating complete HTML markup on the server before sending to the client, distinguishing it from client-side or static rendering approaches."
+    },
+    {
+      "capability": "hydration",
+      "confidence": "medium",
+      "reasoning": "Modern SSR frameworks like Next.js and Nuxt hydrate the server-rendered HTML on the client, attaching event handlers and making the page interactive while preserving the initial server-rendered content."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "http-caching",
+      "confidence": "high",
+      "reasoning": "SSR generates content on every request, requiring caching strategies (CDN, edge caching, reverse proxy, HTTP headers) to avoid server overload, reduce latency, and maintain performance at scale.",
+      "optional": false
+    },
+    {
+      "capability": "server-runtime",
+      "confidence": "high",
+      "reasoning": "SSR fundamentally requires a server-side execution environment (Node.js, Deno, Bun, etc.) to render pages on each request, unlike static site generation or pure client-side rendering.",
+      "optional": true
+    },
+    {
+      "capability": "routing",
+      "confidence": "high",
+      "reasoning": "SSR needs server-side routing logic to match incoming HTTP requests to the appropriate page components or templates for rendering before sending the response to the client.",
+      "optional": true
+    },
+    {
+      "capability": "state-management",
+      "confidence": "medium",
+      "reasoning": "Complex SSR applications need to serialize application state on the server and deserialize it on the client during hydration to ensure consistency between server-rendered content and client-side interactivity.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "ui-spa"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ui",
+    "frontend"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "SSR's minimum 50ms floor makes aggressive sub-100ms p95 targets challenging; the pattern's sweet spot is 100-500ms where rendering time is acceptable."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "SSR p99 latency includes rendering complexity, API calls, and cache misses requiring at least 200ms."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "SSR introduces rendering server dependencies and dynamic generation complexity that limits availability to four nines."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SSR is compatible with GDPR requirements through server-side data controls and consent management."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SSR supports HIPAA compliance through secure server-side rendering and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SSR is compatible with CCPA requirements through server-side privacy controls and data management."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SSR supports SOX compliance through server-side audit trails and access logging."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "SSR is a rendering approach that works on any cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "==",
+      "value": "web",
+      "reason": "SSR is specifically a web pattern that renders HTML pages on the server for browser consumption."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "javascript",
+        "typescript",
+        "python",
+        "php",
+        "ruby",
+        "java",
+        "csharp",
+        "go"
+      ],
+      "reason": "SSR requires backend runtime capabilities to render UI; supports languages with server-side frameworks."
+    }
+  ],
+  "defaultConfig": {
+    "rendering_strategy": "full-ssr",
+    "hydration": "full",
+    "caching_layer": "cdn",
+    "cache_ttl_seconds": 300,
+    "static_generation": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "rendering_strategy": {
+        "type": "string",
+        "enum": [
+          "full-ssr",
+          "streaming-ssr",
+          "progressive-ssr"
+        ],
+        "description": "How pages are rendered: full-ssr sends complete HTML (simpler, slower TTFB), streaming-ssr sends chunks as ready (faster perceived load, complex), progressive-ssr renders critical content first (balanced approach)"
+      },
+      "hydration": {
+        "type": "string",
+        "enum": [
+          "full",
+          "partial",
+          "none"
+        ],
+        "description": "Client-side JavaScript activation: full hydration makes entire page interactive (heavier bundle), partial hydration only for interactive components (islands architecture, lighter), none for static content only (fastest, no interactivity)"
+      },
+      "caching_layer": {
+        "type": "string",
+        "enum": [
+          "cdn",
+          "application",
+          "database",
+          "none"
+        ],
+        "description": "Where to cache rendered pages: cdn for edge caching (fastest, global), application for in-memory cache (fast, single region), database for persistent cache (slower, shared state), none for always-fresh content"
+      },
+      "cache_ttl_seconds": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 86400,
+        "description": "How long to cache rendered pages in seconds. Lower values (0-60) for dynamic content, medium (300-3600) for semi-static, higher (3600+) for rarely changing content. 0 disables caching."
+      },
+      "static_generation": {
+        "type": "boolean",
+        "description": "Pre-render pages at build time when possible (SSG hybrid). True for mostly static content (faster, cheaper), false for purely dynamic SSR (always fresh, higher server load)"
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 10,
+      "reason": "SSR adds server rendering overhead and infrastructure complexity; at <10 req/s, static site generation or client-side rendering may be simpler and more cost-effective.",
+      "message": "ui-ssr: peak read QPS is {actual} req/s (<10). SSR server overhead may not be justified at this scale; consider static generation or CSR."
+    }
+  ]
+}

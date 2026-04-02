@@ -1,0 +1,504 @@
+{
+  "id": "db-vector--pinecone",
+  "version": "1.0.0",
+  "title": "Vector Database (Pinecone)",
+  "description": "Pinecone is a fully-managed vector database service optimized for AI/ML applications. Offers serverless architecture, automatic scaling, and low-latency similarity search. Best for: production RAG systems, semantic search, recommendation engines. Provides managed infrastructure with minimal ops overhead.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-vector--pgvector"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "vector-storage",
+      "description": "Managed vector storage with automatic scaling",
+      "confidence": "medium",
+      "reasoning": "Pinecone's core capability is storing high-dimensional vectors (embeddings) for AI/ML applications. This is semantically correct and appropriately specific."
+    },
+    {
+      "capability": "similarity-search",
+      "description": "Low-latency nearest-neighbor search",
+      "confidence": "medium",
+      "reasoning": "Pinecone specializes in finding similar vectors using distance metrics (cosine, euclidean, etc.). This is a fundamental capability for semantic search and RAG applications."
+    },
+    {
+      "capability": "metadata-filtering",
+      "description": "Filter search results by metadata",
+      "confidence": "medium",
+      "reasoning": "Pinecone supports filtering vector search results based on metadata fields, which is essential for production use cases where results need to be constrained by business logic or access control."
+    },
+    {
+      "capability": "vector-database",
+      "confidence": "high",
+      "reasoning": "Pinecone is specifically a purpose-built vector database, which is more specific than just vector-storage and helps distinguish it from general embedding storage solutions."
+    },
+    {
+      "capability": "managed-infrastructure",
+      "confidence": "high",
+      "reasoning": "Pinecone is a fully-managed service with automatic scaling and minimal ops overhead, eliminating infrastructure management responsibilities."
+    },
+    {
+      "capability": "real-time-indexing",
+      "confidence": "high",
+      "reasoning": "Pinecone supports immediate availability of inserted vectors for search, enabling real-time updates to the vector index without delays."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "embeddings",
+      "confidence": "high",
+      "reasoning": "Pinecone stores and searches vectors but does not generate embeddings from raw data. It requires an external service (like OpenAI, Cohere, or custom models) to convert text/images into vector embeddings before storage.",
+      "optional": true
+    },
+    {
+      "capability": "rest-api",
+      "confidence": "high",
+      "reasoning": "As a cloud service, Pinecone requires API connectivity (HTTP/gRPC) to interact with the database. Applications need to make API calls to perform vector operations.",
+      "optional": false
+    }
+  ],
+  "preferredProviders": [
+    "pinecone"
+  ],
+  "defaultConfig": {
+    "provider": "pinecone",
+    "distance_metric": "cosine",
+    "vector_dimensions": 1536,
+    "index_type": "serverless",
+    "cloud_provider": "aws",
+    "cloud_region": "us-east-1",
+    "pod_type": "p1.x1",
+    "replicas": 1,
+    "service_auth_method": "api_key"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "pinecone"
+        ],
+        "description": "Vector database provider (Pinecone managed service)"
+      },
+      "distance_metric": {
+        "type": "string",
+        "enum": [
+          "cosine",
+          "euclidean",
+          "dot_product"
+        ],
+        "description": "Distance metric for similarity calculation. Cosine: normalized similarity (most common for embeddings), Euclidean: absolute distance, Dot product: raw similarity score"
+      },
+      "vector_dimensions": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20000,
+        "description": "Dimensionality of vectors stored in the index. Must match your embedding model output (e.g., 1536 for OpenAI text-embedding-ada-002, 768 for sentence-transformers)"
+      },
+      "index_type": {
+        "type": "string",
+        "enum": [
+          "serverless",
+          "pod-based"
+        ],
+        "description": "Index deployment type. Serverless: auto-scaling, pay-per-use, no infrastructure management. Pod-based: dedicated resources, predictable performance, manual scaling"
+      },
+      "cloud_provider": {
+        "type": "string",
+        "enum": [
+          "aws",
+          "gcp",
+          "azure"
+        ],
+        "description": "Cloud provider for Pinecone index deployment. Choose based on data residency requirements and proximity to your application"
+      },
+      "cloud_region": {
+        "type": "string",
+        "enum": [
+          "us-east-1",
+          "us-west-2",
+          "eu-west-1",
+          "asia-southeast-1"
+        ],
+        "description": "Cloud region for index deployment. Select region closest to your application for lowest latency"
+      },
+      "pod_type": {
+        "type": "string",
+        "enum": [
+          "p1.x1",
+          "p1.x2",
+          "p1.x4",
+          "p1.x8",
+          "s1.x1",
+          "s1.x2",
+          "s1.x4"
+        ],
+        "description": "Pod type for pod-based indexes. p1: performance-optimized (lower latency), s1: storage-optimized (cost-effective for large datasets). Number indicates capacity multiplier"
+      },
+      "replicas": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10,
+        "description": "Number of replicas for high availability and increased query throughput. More replicas = higher availability and QPS but increased cost"
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "api_key"
+        ],
+        "description": "Pinecone authenticates all API requests via an API key passed in the Authorization header. Store in environment variables, never in code."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "adoptionCost": 1500.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Pinecone offers a free Starter plan (1 pod, 5M vectors, 100 queries/day) suitable for development/testing. Production costs: Standard plan starts at ~$70/month (1 s1 pod, 1M vectors, unlimited queries). Enterprise production with multiple pods, higher dimensions, and replicas can reach $500-2000/month. Max represents a production deployment with 3-5 pods for high availability, handling 10-50M vectors with p2 pods ($300-500 each). Costs scale with: number of pods, pod type (s1/p1/p2), vector dimensions, and number of replicas for availability.",
+      "adoptionCost": "Medium-high complexity. Implementation requires: understanding vector embeddings and similarity search concepts (2-3 days learning), integrating with embedding models (OpenAI, Cohere, etc.), implementing indexing strategies and metadata filtering (2-3 days), building query patterns for RAG/semantic search (2-3 days), testing and optimizing query performance (1-2 days), and implementing error handling/retry logic for API calls. Team needs skills in: vector database concepts, ML/AI fundamentals for embeddings, and API integration. With AI coding assistants available for boilerplate SDK integration, complexity is reduced but domain knowledge around vector search optimization still requires 5-8 developer days (~$1500 at $200/day blended rate).",
+      "licenseCost": "Pinecone is a SaaS platform with usage-based pricing, no upfront license fees. Free Starter tier available for development. Costs are consumption-based (included in monthly operational costs) with no separate licensing model. No enterprise license purchase required - pricing scales with usage through subscription tiers.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "vector",
+    "ai-ml",
+    "similarity-search"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Pinecone standard tier provides up to 99.9% availability with multi-AZ replication as the maximum ceiling."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Vector database similarity search operations have a minimum p95 latency floor of 10ms for query processing."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Vector database query tail latency has a minimum p99 floor of 50ms under load conditions."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Pinecone managed service recovery from regional failures requires at least 5 minutes for failover."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Pinecone serverless architecture supports up to 360M vector operations per hour as throughput ceiling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 1000,
+      "reason": "Pinecone vector database can handle up to 1000 read queries per second for similarity search workloads."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Pinecone supports up to 10000 write queries per second for vector upsert and indexing operations."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone supports optional audit logging for enterprise tiers but does not require it for all deployments."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Pinecone supports namespace-based isolation in shared indexes or dedicated indexes for tenant isolation."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone vector database can store embeddings with or without PII metadata depending on use case."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone supports GDPR-compliant deployments with data residency controls but does not enforce it by default."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone enterprise tier offers HIPAA-compliant configurations with BAA but standard tier does not require it."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone supports CCPA compliance features for California data privacy but does not mandate it universally."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone can support SOX compliance requirements through audit controls but does not enforce it by default."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone provides eventual consistency by default but supports read-your-writes consistency when configured."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone provides durable storage with multi-AZ replication and automatic backups supporting strict durability."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Pinecone is a cloud-agnostic SaaS service accessible from AWS, Azure, GCP, or any environment via API."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Pinecone provides official SDKs for Python, JavaScript/TypeScript, Java, Go and REST API for all languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Pinecone is a managed database service accessible via API from any platform type including web, mobile, and ML."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "==",
+      "value": true,
+      "reason": "Pinecone is a vector database specifically designed for vector similarity search as its primary capability."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "pinecone"
+      ],
+      "reason": "Pattern specifically requires pinecone as the database service"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone vector database works with or without additional caching layers depending on architecture requirements."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone supports both synchronous query patterns and asynchronous indexing workflows for vector operations."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone is primarily used for AI inference scenarios like RAG but can store vectors for any purpose."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone supports multi-tenant architectures through namespaces or dedicated indexes for tenant isolation."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone supports both real-time and batch vector upsert operations for bulk indexing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone does not provide distributed transaction support as a vector database focused on similarity search."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone supports real-time vector indexing and can be integrated with streaming pipelines for live updates."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone stores vector embeddings with optional metadata but is not a primary document-oriented database."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone provides key-value access to vectors by ID but is not a general-purpose key-value store."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone is a vector database, not a graph database, though it can complement graph-based architectures."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone is not a time-series database but can store timestamped vector embeddings with metadata."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone supports transactional vector upserts and queries but is not designed for traditional OLTP workloads."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pinecone is optimized for similarity search queries, not analytical OLAP workloads or aggregations."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "Pinecone is a managed SaaS service with operational overhead and cost. At very low query volumes (<1 req/s), simpler storage solutions may be more cost-effective.",
+      "message": "db-vector--pinecone: peak read QPS is {actual} req/s (<1). Managed vector database overhead may not be justified at this scale; consider simpler alternatives for low-volume workloads."
+    }
+  ]
+}

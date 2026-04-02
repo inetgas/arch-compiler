@@ -1,0 +1,22 @@
+# Platform - Worker Platform for Background Jobs (Without Batch Feature)
+#
+# A worker platform spec on AWS with Python, intended for background job
+# processing, but without the batch_processing feature flag set. The worker
+# platform requires batch_processing to be enabled in order to select the
+# necessary patterns, so compilation fails.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - worker platform requires batch_processing feature flag
+#   - compiler rejects due to missing required feature for the selected platform
+
+constraints:
+  platform: worker
+  cloud: aws
+  language: python
+project:
+  name: Worker Platform (Background Jobs)
+  domain: test
+functional:
+  summary: 'Test scenario: Worker Platform (Background Jobs)'
+nfr: {}

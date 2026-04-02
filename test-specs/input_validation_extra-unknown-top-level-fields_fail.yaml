@@ -1,0 +1,23 @@
+# Input Validation - Extra Unknown Top-Level Fields
+#
+# An API spec that includes unknown fields: constraints.unknown_field and
+# nfr.custom_metric. The canonical schema uses strict validation and does not
+# allow additional properties beyond the defined schema, so these unknown
+# fields should trigger a validation error.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - schema validation error: unknown fields are not allowed
+#   - compiler rejects before pattern selection
+
+constraints:
+  platform: api
+  cloud: aws
+  unknown_field: value
+nfr:
+  custom_metric: 100
+project:
+  name: Extra Unknown Fields
+  domain: test
+functional:
+  summary: 'Test scenario: Extra Unknown Fields'

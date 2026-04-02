@@ -1,0 +1,364 @@
+{
+  "id": "hosting-static-frontend--vercel",
+  "version": "1.0.0",
+  "title": "Static Frontend Hosting on Vercel",
+  "description": "Host static frontends and JAMstack sites on Vercel with zero-config deployments, automatic HTTPS, per-branch preview environments, and serverless function support. First-class Next.js integration including ISR, Edge Middleware, and API routes.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "vercel"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier (Hobby): 100GB bandwidth/month, 100GB-hours serverless function execution/month, unlimited deployments, automatic HTTPS, preview deployments for every PR. Pro plan ($20/month) for teams and increased limits.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "This pattern explicitly targets Vercel's Hobby (free) tier, which provides 100GB bandwidth/month, 100GB-hours serverless function execution/month, unlimited personal deployments, and automatic HTTPS at $0/month. The min=0 and max=0 reflect that this pattern is specifically designed to remain within free tier limits. If usage exceeds free tier limits or team collaboration is required, users would transition to Vercel Pro ($20/month), but that represents a different pattern. This pattern is only applicable when traffic and function usage remain within Hobby tier boundaries.",
+      "adoptionCost": "Low adoption cost due to Vercel's streamlined, zero-config deployment model and first-class Next.js support. Implementation involves: (1) Structuring application as JAMstack/Next.js architecture (1-2 hours for developers familiar with React/Next.js), (2) Configuring Git-based deployment via vercel.json or zero-config defaults (15-30 minutes), (3) Setting up serverless API routes if needed (1-2 hours), (4) Configuring environment variables and preview deployments (30 minutes). Total: 3-5 hours at $50/hour blended rate with AI coding assistants = $150-$250. AI tools like GitHub Copilot significantly reduce boilerplate for Next.js API routes and configuration. Vercel's zero-config defaults and tight Next.js integration reduce setup time compared to similar platforms.",
+      "licenseCost": "Vercel's Hobby tier requires no license fees or upfront payments. The service operates on a freemium SaaS model where the Hobby tier is permanently available for personal and non-commercial projects. No commercial licenses, enterprise agreements, or per-seat costs for the free tier. Note: Vercel's free tier is intended for personal/hobby use; commercial projects require a Pro or Enterprise plan. The core hosting, serverless functions, and preview deployment features are genuinely free for qualifying projects.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "static-hosting",
+      "confidence": "high",
+      "reasoning": "Vercel's core offering is hosting static and server-side rendered sites, with particular optimization for Next.js applications."
+    },
+    {
+      "capability": "serverless-functions",
+      "confidence": "high",
+      "reasoning": "Vercel Serverless Functions and Edge Functions allow backend logic execution without server management, essential for JAMstack backends."
+    },
+    {
+      "capability": "cdn-distribution",
+      "confidence": "high",
+      "reasoning": "Vercel includes a global edge network for content delivery with the Hobby tier's 100GB bandwidth, optimized for Next.js static and ISR content."
+    },
+    {
+      "capability": "build-automation",
+      "confidence": "high",
+      "reasoning": "Vercel provides CI/CD pipeline capability with automatic deployments triggered by Git commits and preview deployments for every pull request."
+    },
+    {
+      "capability": "git-based-deployment",
+      "confidence": "high",
+      "reasoning": "Vercel's deployment model is fundamentally Git-based with GitHub/GitLab/Bitbucket integration, enabling continuous deployment from repository changes."
+    },
+    {
+      "capability": "preview-deployments",
+      "confidence": "high",
+      "reasoning": "Vercel automatically creates preview deployments for every pull request, enabling teams to review changes before merging to production."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "static-site-hosting",
+      "confidence": "high",
+      "reasoning": "JAMstack architecture requires a tool to build static HTML/CSS/JS (e.g., Next.js, Vite, Astro) before deployment to Vercel.",
+      "optional": true
+    },
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Vercel's continuous deployment model requires source code to be in a Git repository for automatic builds and deployments.",
+      "optional": true
+    },
+    {
+      "capability": "frontend-framework",
+      "confidence": "medium",
+      "reasoning": "JAMstack prototypes/MVPs typically need React/Vue/Svelte or similar framework; Vercel is especially optimized for Next.js (which Vercel created).",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "hosting-static-frontend",
+      "hosting-static-frontend--netlify",
+      "hosting-static-frontend--cloudflare-pages",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "free-tier",
+    "vercel",
+    "jamstack",
+    "static-hosting",
+    "nextjs",
+    "frontend",
+    "mvp"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Vercel is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Hobby tier lacks enterprise SLA, multi-region redundancy guarantees, and priority support needed for high availability targets."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Vercel's edge network delivers fast static content, but serverless function cold starts introduce minimum p95 latency of 50ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 150,
+      "reason": "Serverless function cold start variability and free-tier resource contention result in p99 latency floor of 150ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Vercel supports instant rollback to previous deployments via dashboard or CLI, enabling RTO as low as 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000,
+      "reason": "Hobby tier bandwidth limit of 100GB/month and serverless function execution limits cap peak throughput to 36000 jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 100,
+      "reason": "Hobby tier bandwidth and serverless function concurrency limits constrain read QPS to 100 maximum."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50,
+      "reason": "Hobby tier function execution limits cap write QPS at 50 maximum."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel Hobby/Pro tiers do not offer a HIPAA BAA; PHI must not be processed or stored via Vercel serverless functions."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Vercel is a cloud-agnostic SaaS platform that abstracts underlying infrastructure (runs on AWS) from users."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Vercel supports static site generators and serverless functions in multiple languages, with first-class support for JavaScript and TypeScript (Next.js)."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api"
+      ],
+      "reason": "Vercel is specifically designed for web hosting, JAMstack applications, and API serverless functions."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "vercel"
+      ],
+      "reason": "Pattern specifically requires Vercel as the hosting provider."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Vercel edge network provides built-in CDN caching and Next.js ISR (Incremental Static Regeneration), but pattern works with or without application-level caching."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is supported at small scale with external free-tier databases, but not a pattern requirement."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel serverless functions have execution time limits (10s Hobby tier) that preclude batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel serverless architecture and Hobby tier limitations do not support complex distributed transaction coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel Hobby tier does not include WebSocket or real-time streaming capabilities for live data."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Free tiers of external vector databases (Pinecone, Supabase) can be integrated for limited vector search in prototypes."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel does not provide database services; document storage requires external services outside this pattern."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel does not provide persistent key-value storage; requires external services like Redis Cloud or Upstash."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel does not provide database services; graph database requirements need external providers."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel is not designed for time-series data storage; requires external time-series database services."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Free-tier external databases can support OLTP workloads at small scale, but pattern works for both OLTP and non-OLTP."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Vercel is not designed for analytical processing workloads; optimized for static sites and lightweight serverless functions."
+    }
+  ],
+  "defaultConfig": {
+    "framework": "next",
+    "function_runtime": "nodejs",
+    "enable_preview_deployments": true,
+    "edge_functions": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "framework": {
+        "type": "string",
+        "enum": [
+          "next",
+          "vite",
+          "remix",
+          "astro",
+          "nuxt",
+          "sveltekit",
+          "angular",
+          "gatsby"
+        ],
+        "description": "Frontend framework. Next.js has first-class Vercel support (zero config, ISR, Edge Runtime). Remix and Astro offer strong SSR/SSG capabilities. Vite and SvelteKit are lighter alternatives."
+      },
+      "function_runtime": {
+        "type": "string",
+        "enum": [
+          "nodejs",
+          "edge"
+        ],
+        "description": "Serverless function runtime. Node.js provides full Node.js API and broader npm ecosystem. Edge runtime executes at the CDN edge with faster cold starts but limited APIs (no fs, http modules)."
+      },
+      "enable_preview_deployments": {
+        "type": "boolean",
+        "description": "Enable automatic preview deployments for every pull request. Provides unique URLs for each PR, enabling stakeholder review before merging. Recommended for team workflows."
+      },
+      "edge_functions": {
+        "type": "boolean",
+        "description": "Enable Edge Functions for middleware and low-latency compute at the CDN edge. Useful for A/B testing, authentication redirects, and geolocation-based routing. Adds complexity but reduces latency for eligible use cases."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.99,
+      "reason": "At 99% availability, Vercel Hobby has no formal SLA \u2014 any SLO target above 99% (e.g., ops-slo-error-budgets defaulting to 99.9%) will be architecturally unachievable with this tier.",
+      "message": "hosting-static-frontend--vercel: availability target {actual} (99%) is the maximum supported by Hobby tier (no formal SLA). Any SLO target above 99% \u2014 e.g., ops-slo-error-budgets at 99.9% \u2014 burns error budget ~10\u00d7 faster than the budget allows. Consider Vercel Pro for a contractual 99.99% SLA."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 50,
+      "reason": "Hobby tier bandwidth limit of 100GB/month can be exhausted quickly at sustained high QPS, leading to service interruption.",
+      "message": "hosting-static-frontend--vercel: peak read QPS is {actual} req/s (>50). Hobby tier 100GB/month bandwidth may be exhausted quickly, causing service interruption mid-month."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 25,
+      "reason": "Hobby tier serverless function execution limits (100GB-hours/month) can be exhausted at sustained high write QPS.",
+      "message": "hosting-static-frontend--vercel: peak write QPS is {actual} req/s (>25). Hobby tier function execution limits may be exhausted, causing throttling or service interruption."
+    }
+  ]
+}

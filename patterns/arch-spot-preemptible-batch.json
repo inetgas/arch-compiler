@@ -1,0 +1,382 @@
+{
+  "id": "arch-spot-preemptible-batch",
+  "version": "1.0.0",
+  "title": "Spot/Preemptible Compute for Batch Jobs",
+  "description": "Use spot/preemptible instances for batch processing to reduce compute cost; design for interruptions (checkpointing, idempotency).",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 15.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 300,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Spot/preemptible instances typically offer 60-90% savings over on-demand pricing. Min represents small-scale batch jobs (e.g., 2-3 spot instances running ~100 hours/month for ETL or data processing: $0.05/hour spot \u00d7 3 instances \u00d7 100 hours = $15). Max represents moderate production batch workloads (e.g., daily data processing with 10-20 spot instances running 250 hours/month: $0.20/hour \u00d7 10 instances \u00d7 250 hours = $500). Costs scale with instance types, workload frequency, and region. Heavy batch processing (ML training, large-scale analytics) could exceed this range but would cost 60-90% less than equivalent on-demand pricing. Actual costs vary by cloud provider spot market dynamics and availability zones.",
+      "adoptionCost": "Medium-high complexity adoption cost. Requires significant engineering work: (1) Implementing checkpointing mechanisms to save job state before interruptions (4-8 hours), (2) Building idempotent job handlers to safely retry interrupted tasks (6-10 hours), (3) Adding interruption signal handlers (2-4 hours on AWS/Azure, 1-2 hours on GCP), (4) Implementing job retry logic and state management (8-12 hours), (5) Testing interruption scenarios and recovery paths (6-8 hours), (6) Updating CI/CD pipelines and infrastructure-as-code (4-6 hours). Total: 30-50 engineering hours at $100-150/hour loaded cost = $3,000-$7,500. Mid-range of $3,500 assumes moderate team familiarity with cloud batch systems. Teams experienced with AWS Batch, Azure Batch, or GCP Batch may reduce this by 30-40%. Additional complexity for stateful workloads or complex job dependencies.",
+      "licenseCost": "Spot/preemptible instances are a pricing model, not a licensed product. All major cloud providers (AWS Spot Instances, Azure Spot VMs, GCP Preemptible/Spot VMs) offer this as a native compute option with no additional licensing fees beyond standard instance costs. Open-source tools for job orchestration (Apache Airflow, Kubernetes with KEDA) are free. Commercial batch orchestration tools (AWS Batch, Azure Batch, GCP Batch) are also free services that only charge for underlying compute resources. No separate license required.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cost-optimized-compute",
+      "confidence": "high",
+      "reasoning": "This pattern specifically provides compute resources at reduced cost (typically 60-90% cheaper) through spot/preemptible instances, implementing an intentional cost optimization strategy for batch processing workloads."
+    },
+    {
+      "capability": "interruption-tolerant-compute",
+      "confidence": "high",
+      "reasoning": "The pattern provides compute resources designed to handle interruptions through checkpointing mechanisms and idempotent operations, enabling graceful handling and recovery from instance terminations."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "object-storage",
+      "confidence": "high",
+      "reasoning": "Persistent storage is essential for saving job state and checkpoints when spot instances are terminated, enabling work to resume after preemption without data loss.",
+      "optional": true
+    },
+    {
+      "capability": "job-orchestration",
+      "confidence": "high",
+      "reasoning": "Orchestration is required to manage job queuing, handle retries on interruption, and control the lifecycle of preemptible compute resources in batch processing workflows.",
+      "optional": false
+    },
+    {
+      "capability": "idempotent-operations",
+      "confidence": "high",
+      "reasoning": "Jobs must be designed to safely retry without side effects when instances are interrupted and work is restarted, which is a core requirement explicitly mentioned in the pattern.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "cost",
+    "spot",
+    "preemptible",
+    "batch",
+    "checkpointing"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.95,
+      "reason": "Spot/preemptible instances can be interrupted at any time, limiting availability guarantees."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Recovery requires restarting interrupted jobs and restoring from checkpoints, taking several minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "RPO is determined by checkpoint frequency; frequent checkpointing increases storage costs."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Batch processing on spot instances can scale to millions of jobs per hour with proper orchestration."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Spot/preemptible instances are available on AWS (Spot), Azure (Spot VMs), and GCP (Preemptible VMs)."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Infrastructure pattern for compute resources; compatible with all programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "batch",
+        "worker",
+        "data-pipeline",
+        "ml-training"
+      ],
+      "reason": "Pattern targets batch processing, background workers, data pipelines, and ML training workloads."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Caching can be used or not used in batch jobs; pattern is compatible with both approaches."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may use async messaging for coordination or run independently; both are supported."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Spot instances can run AI inference batch jobs or non-AI workloads; pattern is neutral to workload type."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs can serve single or multi-tenant architectures; compute pricing model is independent."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically targets batch processing workloads that can tolerate interruptions."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may or may not require distributed transactions; pattern supports both scenarios."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch processing can include streaming data ingestion or operate on static datasets; both are compatible."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may include vector indexing or search operations or not; pattern is neutral to data operations."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may use document stores for data persistence or other storage types; pattern is storage-agnostic."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may use key-value stores for state or checkpoints or other storage types; pattern is neutral."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may process graph data or other data types; pattern is neutral to data model."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may process time-series data or other data types; pattern is neutral to data model."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may include transactional processing steps or be purely analytical; both are compatible."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Batch jobs may include analytical processing or transactional processing; pattern supports both."
+    }
+  ],
+  "defaultConfig": {
+    "spot_strategy": "mixed",
+    "max_interruption_tolerance": "high",
+    "checkpointing_enabled": true,
+    "checkpoint_interval_minutes": 15,
+    "retry_strategy": "exponential_backoff",
+    "max_retries": 3,
+    "fallback_to_on_demand": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "spot_strategy": {
+        "type": "string",
+        "enum": [
+          "spot_only",
+          "mixed",
+          "spot_with_on_demand_fallback"
+        ],
+        "description": "How to balance spot/preemptible vs on-demand instances. spot_only: maximum cost savings but higher interruption risk. mixed: blend of spot and on-demand for reliability. spot_with_on_demand_fallback: start with spot, fall back to on-demand on repeated failures."
+      },
+      "max_interruption_tolerance": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "description": "How well the workload handles interruptions. high: jobs can be interrupted frequently (stateless, short tasks). medium: occasional interruptions acceptable (checkpointing required). low: minimize interruptions (use diversified instance types, fallback strategies)."
+      },
+      "checkpointing_enabled": {
+        "type": "boolean",
+        "description": "Enable automatic checkpointing to save progress and resume after interruptions. Essential for long-running jobs on spot instances."
+      },
+      "checkpoint_interval_minutes": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 60,
+        "description": "How frequently to save checkpoints in minutes. Lower values reduce lost work on interruption but increase I/O overhead. Recommended: 10-20 minutes for most workloads."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "immediate",
+          "exponential_backoff",
+          "scheduled"
+        ],
+        "description": "How to retry interrupted jobs. immediate: restart immediately (for quick tasks). exponential_backoff: gradually increase delay between retries (handles capacity issues). scheduled: retry at specific times (for time-sensitive batch windows)."
+      },
+      "max_retries": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10,
+        "description": "Maximum number of retry attempts before marking job as failed. Higher values increase resilience but may delay failure detection."
+      },
+      "fallback_to_on_demand": {
+        "type": "boolean",
+        "description": "Automatically switch to on-demand instances after exhausting retries on spot instances. Ensures job completion at higher cost vs complete failure."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "Spot/preemptible instances add operational complexity (checkpointing, interruption handling). At very low job volumes, the cost savings may not justify the overhead.",
+      "message": "arch-spot-preemptible-batch: peak_jobs_per_hour is {actual} (<10). Low job volume may not justify spot instance complexity and overhead."
+    }
+  ]
+}

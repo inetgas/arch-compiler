@@ -1,0 +1,19 @@
+# Test dependencies for pattern registry regression tests
+
+# Test framework
+pytest>=7.0.0
+
+# YAML parsing (for schema validation)
+pyyaml>=6.0
+
+# JSON Schema validation
+jsonschema>=4.0.0
+
+# Optional: Enhanced test output
+pytest-cov>=4.0.0
+
+# Optional: Parallel test execution
+pytest-xdist>=3.0.0
+
+# Optional: HTML test reports
+pytest-html>=3.1.0

@@ -1,0 +1,21 @@
+# Cost Ceiling - No Ceiling Specified (Unconstrained)
+#
+# An API spec with no cost section at all, only a 99.9% availability nfr target.
+# This tests that the compiler functions correctly when cost is entirely omitted,
+# treating the budget as unconstrained.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns are selected based on availability target alone
+#   - no cost-related errors for missing cost section
+
+constraints:
+  platform: api
+nfr:
+  availability:
+    target: 0.999
+project:
+  name: No Cost Ceiling Specified
+  domain: test
+functional:
+  summary: 'Test scenario: No Cost Ceiling Specified'

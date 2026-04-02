@@ -1,0 +1,413 @@
+{
+  "id": "ui-cross-platform",
+  "version": "1.0.0",
+  "title": "Cross-Platform UI Framework (Generic)",
+  "description": "Build mobile/desktop applications with single codebase using cross-platform UI frameworks. This generic pattern helps you choose between Flutter, React Native, Xamarin, and other options based on team skills and requirements.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 150.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "flutter",
+      "react-native",
+      "xamarin"
+    ],
+    "costCeilingCompatibleUsd": 100,
+    "costNotes": "Primary costs are development labor, not infrastructure. Choose framework based on team skills and target platforms.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Cross-platform UI frameworks run on client devices with minimal infrastructure costs. Min=$0 represents pure mobile apps (only $25-99/year app store fees, amortized to ~$2-8/mo). Max=$150 accounts for: Apple Developer ($99/yr = $8/mo) + Google Play ($25 one-time = $2/mo amortized) + web deployment with CDN/hosting ($20-50/mo for Netlify/Vercel Pro) + basic analytics/crash reporting ($30-50/mo for Firebase/Sentry) + CI/CD pipeline costs ($20-40/mo for Codemagic/Bitrise for mobile builds). Desktop-only apps have $0/mo infrastructure cost.",
+      "adoptionCost": "High complexity due to: (1) Framework-specific learning curve - Flutter requires Dart proficiency (2-3 weeks), React Native needs React + native bridge understanding (2-4 weeks), Xamarin requires C#/.NET (1-3 weeks). (2) Platform-specific nuances - iOS/Android differences in navigation, permissions, and UI paradigms require 1-2 weeks to master. (3) Build toolchain setup - Xcode, Android Studio, platform SDKs, signing certificates (1 week). (4) Testing strategy across platforms (1 week). With AI coding assistants, this reduces from ~6-8 weeks to 4-6 weeks for a proficient developer ($150/hr \u00d7 160 hours = $24,000 traditional; with AI assistance: $150/hr \u00d7 100 hours = $15,000). For team adoption: $3,500 represents training, initial proof-of-concept, and tooling setup for a small team (2-3 developers, 1-2 weeks part-time).",
+      "licenseCost": "All major cross-platform frameworks are open source with permissive licenses: Flutter (BSD), React Native (MIT), Xamarin/.NET MAUI (MIT). Platform development tools are also free: Android Studio (Apache 2.0), Xcode (free with macOS). Only recurring costs are app store registration fees ($99/yr Apple, $25 one-time Google) which are operational, not license costs. No commercial IDE licenses required (VS Code is free). Optional enterprise support contracts exist but are not mandatory for framework usage.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cross-platform-ui",
+      "confidence": "strong",
+      "reasoning": "This is the core capability of the pattern - enabling UI development that works across multiple platforms (iOS, Android, Web, Desktop) from a single codebase."
+    },
+    {
+      "capability": "mobile-ui",
+      "confidence": "strong",
+      "reasoning": "Cross-platform frameworks like Flutter and React Native primarily target mobile platforms, making this a fundamental provided capability."
+    },
+    {
+      "capability": "desktop-ui",
+      "confidence": "high",
+      "reasoning": "Many modern cross-platform frameworks (Flutter, Electron, React Native for Windows/macOS) now support desktop platforms as first-class targets."
+    },
+    {
+      "capability": "web-ui",
+      "confidence": "medium",
+      "reasoning": "Several cross-platform frameworks support web deployment (Flutter Web, React Native Web), though this may vary by framework choice and maturity."
+    },
+    {
+      "capability": "shared-ui-components",
+      "confidence": "high",
+      "reasoning": "Cross-platform frameworks enable creation of reusable UI components that work across all targeted platforms, providing consistent user experiences."
+    },
+    {
+      "capability": "shared-business-logic",
+      "confidence": "high",
+      "reasoning": "Business logic can be written once and shared across all platforms, reducing duplication and maintenance overhead."
+    },
+    {
+      "capability": "hot-reload",
+      "confidence": "high",
+      "reasoning": "Most modern cross-platform frameworks offer hot-reload or live-reload capabilities for rapid development iteration without full recompilation."
+    },
+    {
+      "capability": "declarative-ui",
+      "confidence": "high",
+      "reasoning": "Modern cross-platform frameworks use declarative UI paradigms (Flutter widgets, React components) for building user interfaces."
+    },
+    {
+      "capability": "platform-abstraction",
+      "confidence": "high",
+      "reasoning": "The pattern provides abstraction over platform-specific differences, allowing developers to write platform-agnostic code while accessing native features when needed."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "platform-toolchains",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Cross-platform frameworks require native platform toolchains (Android SDK, Xcode, etc.) to compile and package applications for their target platforms."
+    },
+    {
+      "capability": "build-system",
+      "confidence": "high",
+      "reasoning": "A build system is essential for compiling cross-platform code, managing platform-specific builds, and generating deployable artifacts.",
+      "optional": true
+    },
+    {
+      "capability": "package-manager",
+      "confidence": "high",
+      "reasoning": "Package managers are required for managing framework dependencies, third-party libraries, and maintaining consistent development environments.",
+      "optional": true
+    },
+    {
+      "capability": "native-platform-apis",
+      "confidence": "medium",
+      "reasoning": "Access to native platform APIs is necessary for platform-specific features, device capabilities, and optimal user experiences that go beyond framework abstractions.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "ui-cross-platform--flutter",
+      "ui-cross-platform--react-native",
+      "ui-cross-platform--xamarin"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ui",
+    "frontend",
+    "mobile",
+    "cross-platform",
+    "framework-selection"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Generic pattern for open-source frameworks."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "Client-side framework availability limited by device/browser issues and OS/platform compatibility."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 60,
+      "reason": "Mobile deployments via app stores take 24-48hrs for review; web deployments achieve faster RTO."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks support GDPR-compliant implementations through data minimization and user controls."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks can implement HIPAA-compliant applications with proper encryption and access controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks support CCPA compliance through user data management and deletion capabilities."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks can enforce SOX compliance through audit trails and access controls."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Cross-platform UI frameworks are cloud-agnostic and run on any infrastructure."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "mobile",
+        "desktop",
+        "web"
+      ],
+      "reason": "Cross-platform UI frameworks target mobile (iOS/Android), desktop (Windows/macOS/Linux), and web platforms."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "dart",
+        "javascript",
+        "typescript",
+        "csharp",
+        "kotlin",
+        "swift"
+      ],
+      "reason": "This pattern supports specific cross-platform UI frameworks: Flutter (Dart), React Native (JavaScript/TypeScript), Xamarin (C#), and native bridges."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks support optional client-side caching for offline-first and performance optimization."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks can integrate with async messaging for real-time updates via WebSockets or push notifications."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks support on-device AI inference through native ML libraries and platform APIs."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks support multi-tenant applications through user context management and backend integration."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks can trigger and display batch processing results but delegate execution to backend."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks coordinate distributed transactions through backend APIs and optimistic UI patterns."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks support real-time streaming through WebSockets, SSE, and platform-specific push APIs."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks can display vector search results and integrate with vector databases via backend APIs."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks interact with document stores through backend APIs and can cache documents locally."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks use key-value stores for local storage and session management via platform APIs."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks can visualize graph data and query graph databases through backend services."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks render time-series data visualizations and charts from backend time-series databases."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks support OLTP workloads through transactional forms and real-time data updates."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cross-platform UI frameworks support OLAP workloads through analytics dashboards and data visualization components."
+    }
+  ],
+  "defaultConfig": {
+    "framework": "flutter",
+    "target_platforms": [
+      "ios",
+      "android"
+    ],
+    "state_management": "provider",
+    "native_integration": "minimal",
+    "ui_approach": "native-components"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "framework": {
+        "type": "string",
+        "enum": [
+          "flutter",
+          "react-native",
+          "xamarin",
+          "dotnet-maui",
+          "kotlin-multiplatform"
+        ],
+        "description": "Cross-platform framework choice. Flutter: fast rendering, single codebase. React Native: web developer friendly, large ecosystem. Xamarin/.NET MAUI: enterprise C# integration. Kotlin Multiplatform: native performance with shared business logic."
+      },
+      "target_platforms": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "ios",
+            "android",
+            "web",
+            "windows",
+            "macos",
+            "linux"
+          ]
+        },
+        "description": "Target platforms for deployment. More platforms increase maintenance complexity but maximize reach."
+      },
+      "state_management": {
+        "type": "string",
+        "enum": [
+          "provider",
+          "bloc",
+          "redux",
+          "mobx",
+          "riverpod"
+        ],
+        "description": "State management approach. Provider: simple, built-in. BLoC: structured, testable. Redux: predictable, verbose. MobX: reactive, less boilerplate. Riverpod: compile-safe provider evolution."
+      },
+      "native_integration": {
+        "type": "string",
+        "enum": [
+          "minimal",
+          "moderate",
+          "extensive"
+        ],
+        "description": "Level of platform-specific native code integration. Minimal: pure cross-platform. Moderate: some native modules. Extensive: heavy native customization (increases platform-specific maintenance)."
+      },
+      "ui_approach": {
+        "type": "string",
+        "enum": [
+          "custom-rendering",
+          "native-components",
+          "hybrid"
+        ],
+        "description": "UI rendering strategy. Custom-rendering: consistent look across platforms (Flutter). Native-components: platform-native feel (React Native). Hybrid: mix of both approaches."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,34 @@
+# NFR Compliance - CCPA Enabled for California-Facing SaaS
+#
+# A California-facing SaaS product API on AWS with TypeScript and CCPA compliance
+# enabled. Consumer data is present but PII is not strictly flagged. CCPA requires
+# data subject rights handling (opt-out, deletion) which the ccpa compliance pattern
+# provides. Audit logging is enabled to support compliance obligations.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - ccpa compliance pattern IS selected
+#   - audit logging and data rights patterns are selected
+#   - no errors for CCPA without HIPAA or SOX
+
+project:
+  name: California SaaS Platform
+  domain: saas
+functional:
+  summary: Consumer-facing SaaS platform serving California users
+constraints:
+  platform: api
+  cloud: aws
+  language: typescript
+nfr:
+  data:
+    pii: true
+    compliance:
+      ccpa: true
+  security:
+    audit_logging: true
+  availability:
+    target: 0.99
+cost:
+  ceilings:
+    monthly_operational_usd: 2000

@@ -1,0 +1,24 @@
+# NFR Availability - 99% Target (Standard)
+#
+# An agnostic API spec with a standard 99% availability target. This is the
+# most common commercial SLA tier, testing that the compiler selects patterns
+# appropriate for standard availability without triggering the more expensive
+# high-availability pattern gates.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - patterns appropriate for 99% availability are selected
+#   - patterns requiring >= 99.9% availability are not mandatory
+
+nfr:
+  availability:
+    target: 0.99
+project:
+  name: Standard Availability (99%)
+  domain: test
+functional:
+  summary: 'Test scenario: Standard Availability (99%)'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic

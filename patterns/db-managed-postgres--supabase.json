@@ -1,0 +1,470 @@
+{
+  "id": "db-managed-postgres--supabase",
+  "version": "1.0.0",
+  "title": "Managed PostgreSQL on Supabase",
+  "description": "Supabase managed PostgreSQL with bundled Auth, Storage, and Realtime subscriptions. Free tier (500 MB database, 1 GB storage, 50K MAU) suits prototypes and MVPs; validate free-tier constraints (pausing, connection limits) before committing to production.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 750.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "supabase"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: 500MB database, 1GB file storage, 2GB bandwidth, 50K MAU. Projects pause after 1 week of inactivity; upgrade to Pro ($25/month) for always-on and increased limits.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "This pattern specifically targets the Supabase free tier which provides $0/month service cost. The free tier includes 500MB database, 1GB file storage, 2GB bandwidth, and 50K monthly active users. Min represents a small prototype or MVP staying within free tier limits. Max is also $0 because this pattern is explicitly designed for free-tier usage. Note: Projects pause after 1 week of inactivity on free tier. If usage exceeds free tier limits or always-on availability is needed, the Pro plan at $25/month would be required, but that would be a different pattern (not free-tier-first).",
+      "adoptionCost": "Medium-low complexity implementation. Supabase provides well-documented SDKs for JavaScript/TypeScript with straightforward APIs for database, authentication, storage, and realtime features. With modern AI coding assistants, developers can quickly integrate Supabase client libraries. Implementation involves: setting up Supabase project (30 mins), configuring auth flows (2-3 hours), implementing database queries with PostgreSQL (3-4 hours), setting up file storage (1-2 hours), and integrating realtime subscriptions if needed (2-3 hours). Total ~12-15 hours at $50-75/hour developer rate with AI assistance. The learning curve is gentle due to excellent documentation and similarity to Firebase. Lower than custom backend development but requires understanding of Supabase-specific patterns and PostgreSQL.",
+      "licenseCost": "Supabase free tier has no license cost. The platform is open-source (Apache 2.0 and MIT licenses) and can be self-hosted, but this pattern uses the hosted free tier service. No commercial licenses, seats, or upfront fees required. The free tier includes all core features: PostgreSQL database, authentication (email, social providers), storage, realtime subscriptions, and Edge Functions (limited invocations). Paid features and higher limits require upgrading to Pro ($25/month) or Team/Enterprise tiers, but those are runtime costs, not license costs.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "Supabase free tier provides a fully managed PostgreSQL database with 500MB storage included, handling database infrastructure, backups, and maintenance without requiring user management of the underlying database server."
+    },
+    {
+      "capability": "authentication",
+      "confidence": "high",
+      "reasoning": "Supabase Auth is a core feature providing user authentication and session management with support for multiple providers and JWT-based sessions."
+    },
+    {
+      "capability": "object-storage",
+      "confidence": "high",
+      "reasoning": "Supabase free tier includes 1GB of S3-compatible object storage through its Storage API, allowing applications to store and serve files with built-in access controls and CDN delivery."
+    },
+    {
+      "capability": "realtime-subscriptions",
+      "confidence": "high",
+      "reasoning": "Supabase Realtime enables WebSocket-based subscriptions to database changes, allowing clients to receive live updates when data changes occur."
+    },
+    {
+      "capability": "rest-api",
+      "confidence": "high",
+      "reasoning": "Supabase auto-generates RESTful APIs from PostgreSQL schemas using PostgREST, providing instant API access to database tables without manual endpoint creation."
+    },
+    {
+      "capability": "backend-as-a-service",
+      "confidence": "high",
+      "reasoning": "This pattern fundamentally provides a complete BaaS solution combining database, authentication, storage, and APIs in a unified platform for rapid application development."
+    },
+    {
+      "capability": "authorization",
+      "confidence": "high",
+      "reasoning": "Supabase includes PostgreSQL Row Level Security (RLS) for fine-grained access control, allowing developers to define authorization policies directly at the database level."
+    },
+    {
+      "capability": "row-level-security",
+      "confidence": "high",
+      "reasoning": "Supabase exposes PostgreSQL's native RLS with a first-class UI policy editor and auth.uid() helper, making per-tenant row isolation a first-class feature."
+    },
+    {
+      "capability": "tenant-identification",
+      "confidence": "high",
+      "reasoning": "Supabase Auth issues JWTs with user/tenant claims that are available inside PostgreSQL RLS policies via auth.uid() and custom JWT claims, enabling tenant-aware query enforcement at the database layer."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "reasoning": "As a SaaS platform, this pattern requires internet connectivity to access Supabase's hosted services and infrastructure.",
+      "optional": true
+    },
+    {
+      "capability": "client-application",
+      "confidence": "high",
+      "reasoning": "This pattern requires a client application (web, mobile, or desktop) to consume the Supabase services, as it provides backend infrastructure that must be accessed by frontend applications.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-managed-postgres",
+      "db-managed-postgres--render",
+      "db-managed-postgres--railway",
+      "db-managed-postgres--neon",
+      "db-managed-mysql--planetscale",
+      "arch-microservices",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "free-tier",
+    "supabase",
+    "baas",
+    "mvp"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Supabase is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.99,
+      "reason": "Free tier lacks enterprise SLA guarantees and dedicated resources; maximum practical availability is 99%."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Free-tier shared infrastructure and potential cold starts contribute to minimum p95 latency of 100ms."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "Free-tier shared resources and cold starts contribute to p99 latency floor of 200ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 10,
+      "reason": "Free tier automated failover and service recovery typically completes within 10-15 minutes minimum."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 15,
+      "reason": "Free tier PostgreSQL uses write-ahead logging with 15-minute backup intervals for point-in-time recovery."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Free tier bandwidth (2GB/month) and resource constraints limit sustained peak throughput to approximately 50K jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 100,
+      "reason": "Free tier 500MB database and shared connection pool limit read query throughput to approximately 100 QPS."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50,
+      "reason": "Free tier write throughput constrained by single PostgreSQL instance and limited resources to approximately 50 QPS."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Supabase provides built-in OAuth2/OIDC and password auth, but can be paired with any auth mechanism (JWT, mTLS, API key) or none specified (n/a) at the application layer."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Supabase provides basic audit logging through PostgreSQL logs and auth event tracking, optional for applications."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "n/a",
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "unknown"
+      ],
+      "reason": "Free tier supports PostgreSQL row-level security (RLS) for shared database isolation or schema-per-tenant patterns."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": false,
+      "reason": "PII with compliance requirements may require paid plans with BAA/compliance agreements not available in free tier."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "==",
+      "value": false,
+      "reason": "Supabase supports GDPR compliance features but free tier may lack full compliance guarantees for production use."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier does not include HIPAA BAA; HIPAA compliance requires paid tier with signed agreements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "==",
+      "value": false,
+      "reason": "Supabase provides data access and deletion capabilities for CCPA but free tier lacks compliance SLAs."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier lacks audit trail guarantees and retention policies required for SOX compliance in production."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PostgreSQL with synchronous replication provides read-your-writes consistency by default for single-region deployments."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier does not guarantee strict durability; backup retention is limited to 7 days with best-effort recovery."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Supabase is a cloud-agnostic SaaS platform accessible from any environment with internet connectivity."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "javascript",
+        "typescript",
+        "python",
+        "dart",
+        "go",
+        "kotlin",
+        "swift",
+        "csharp",
+        "rust"
+      ],
+      "reason": "Supabase provides official SDKs for JavaScript/TypeScript, Python, Dart (Flutter), Go, Kotlin, Swift, C#, and Rust."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Supabase is a backend-as-a-service that supports web applications, mobile apps (iOS/Android), API backends, and CLI tools."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "supabase"
+      ],
+      "reason": "Pattern specifically requires Supabase as the backend provider"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        false,
+        true
+      ],
+      "reason": "Free-tier caching can be implemented with external services or application-level caching for small-scale needs."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        false,
+        true
+      ],
+      "reason": "Basic async messaging can work on free tiers but high-volume message queues typically require paid services."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        false,
+        true
+      ],
+      "reason": "Some free-tier AI providers (Hugging Face, limited OpenAI credits) support prototype AI inference alongside Supabase."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        false,
+        true
+      ],
+      "reason": "Multi-tenancy is supported at small scale on free tiers, but row-level security and tenant isolation require careful design."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Supabase free tier does not include serverless functions or batch processing capabilities natively."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Single PostgreSQL instance; no distributed transaction coordination across services in free tier."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Supabase includes built-in Realtime subscriptions for live data streaming via WebSockets."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Supabase supports pgvector extension for vector similarity search and AI embeddings on free tier."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Supabase PostgreSQL supports JSONB for document-oriented data patterns alongside relational tables."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier does not include dedicated key-value store; use PostgreSQL tables instead for simple key-value needs."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": false,
+      "reason": "Supabase does not provide native graph database capabilities; use dedicated graph database for relationship-heavy queries."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier PostgreSQL not optimized for high-volume time-series workloads; use dedicated time-series database instead."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Supabase PostgreSQL is optimized for OLTP workloads with transactional consistency and row-level operations."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Free tier 500MB database unsuitable for analytical workloads; use dedicated OLAP database or data warehouse."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "supabase",
+    "auth_providers": "email",
+    "storage_enabled": true,
+    "realtime_enabled": true,
+    "row_level_security": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "supabase"
+        ],
+        "description": "Backend-as-a-Service provider for free-tier architecture"
+      },
+      "auth_providers": {
+        "type": "string",
+        "enum": [
+          "email",
+          "email-social",
+          "magic-link",
+          "phone"
+        ],
+        "description": "Authentication strategy: email (password-based), email-social (add OAuth providers like Google/GitHub), magic-link (passwordless), or phone (SMS-based). Social and phone may have additional costs beyond free tier."
+      },
+      "storage_enabled": {
+        "type": "boolean",
+        "description": "Enable file storage (1GB free tier). Disable if only using database to simplify architecture."
+      },
+      "realtime_enabled": {
+        "type": "boolean",
+        "description": "Enable realtime subscriptions for live data updates. Disable for simpler request-response patterns to reduce complexity and bandwidth usage."
+      },
+      "row_level_security": {
+        "type": "boolean",
+        "description": "Enable PostgreSQL Row Level Security for database access control. Recommended for production but can be disabled for rapid prototyping. Critical for multi-tenant applications."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 80,
+      "reason": "Free tier is constrained to ~100 QPS read throughput; approaching this limit risks throttling and performance degradation.",
+      "message": "db-managed-postgres--supabase: peak read QPS is {actual} req/s (>80). Free tier supports up to ~100 QPS; consider upgrading to paid tier for headroom."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 40,
+      "reason": "Free tier is constrained to ~50 QPS write throughput; approaching this limit risks throttling and write latency spikes.",
+      "message": "db-managed-postgres--supabase: peak write QPS is {actual} req/s (>40). Free tier supports up to ~50 QPS; consider upgrading to paid tier for write-heavy workloads."
+    }
+  ]
+}

@@ -1,0 +1,445 @@
+{
+  "id": "db-timeseries--timestream",
+  "version": "1.0.0",
+  "title": "Time-Series Database (Amazon Timestream)",
+  "description": "Amazon Timestream is a fully-managed serverless time-series database with automatic tiering. Stores recent data in memory for fast queries, automatically moves old data to cost-optimized storage. Best for: AWS-native applications, IoT at scale, serverless architectures. Integrated with AWS services (Lambda, Kinesis, IoT Core).",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-timeseries--influxdb",
+      "db-timeseries--influxdb-cloud",
+      "db-timeseries--timescaledb",
+      "db-timeseries--timescale-cloud"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "timeseries-database",
+      "confidence": "high",
+      "reasoning": "Amazon Timestream is a purpose-built time-series database that efficiently stores and manages time-stamped data with automatic tiering, retention policies, and time-based query capabilities."
+    },
+    {
+      "capability": "serverless-compute",
+      "confidence": "high",
+      "reasoning": "Timestream is fully-managed and serverless, requiring no infrastructure provisioning or management, automatically scaling to handle workload demands."
+    },
+    {
+      "capability": "automatic-data-tiering",
+      "confidence": "high",
+      "reasoning": "Core feature that automatically moves recent data from in-memory storage for fast queries to cost-optimized storage as data ages, based on configurable retention policies."
+    },
+    {
+      "capability": "adaptive-query-processing",
+      "description": "Automatic query optimization based on data access patterns",
+      "confidence": "medium",
+      "reasoning": "Timestream optimizes query execution based on data location (memory vs storage tier) and query patterns to balance performance and cost."
+    },
+    {
+      "capability": "aws-integration",
+      "description": "Native integration with AWS IoT, Lambda, Kinesis, QuickSight",
+      "confidence": "medium",
+      "reasoning": "Native integration with AWS services including Lambda, Kinesis, and IoT Core, enabling seamless data ingestion and processing within the AWS ecosystem."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "aws-account",
+      "confidence": "high",
+      "reasoning": "Amazon Timestream is an AWS-exclusive managed service that requires an active AWS account and infrastructure to provision and use.",
+      "optional": true
+    }
+  ],
+  "defaultConfig": {
+    "retention_days": 90,
+    "memory_store_hours": 24,
+    "magnetic_store_enabled": true,
+    "encryption_enabled": true,
+    "multi_measure_enabled": false,
+    "partition_key_enforcement": "optional",
+    "service_auth_method": "iam_role"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "retention_days": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 73000,
+        "description": "Total data retention period in days (memory + magnetic store). Longer retention increases storage costs but enables historical analysis."
+      },
+      "memory_store_hours": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 8766,
+        "description": "Hours to keep recent data in memory store for fast queries. Higher values improve query performance but increase costs significantly."
+      },
+      "magnetic_store_enabled": {
+        "type": "boolean",
+        "description": "Enable magnetic store for long-term cost-optimized storage. Disable only for short-term use cases where all data fits in memory store."
+      },
+      "encryption_enabled": {
+        "type": "boolean",
+        "description": "Enable encryption at rest using AWS KMS. Required for compliance (HIPAA, PCI-DSS) but adds minimal latency and cost."
+      },
+      "multi_measure_enabled": {
+        "type": "boolean",
+        "description": "Enable multi-measure records to store multiple metrics per timestamp. Reduces storage and improves query performance for correlated metrics."
+      },
+      "partition_key_enforcement": {
+        "type": "string",
+        "enum": [
+          "required",
+          "optional"
+        ],
+        "description": "Partition key enforcement level. Required improves query performance by enforcing partition key in queries, optional allows flexible querying."
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "iam_role",
+          "iam_user"
+        ],
+        "description": "AWS Timestream uses IAM for access control. 'iam_role' (EC2/ECS task role) is preferred over static IAM user credentials."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": true,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 2000.0
+    },
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Amazon Timestream pricing is based on writes, memory storage, magnetic storage, and queries. Minimum $0 covers free tier (up to 1GB memory store, 1,000 write requests, limited queries). Low usage scenario ($50-100): 1M writes/day (~1GB data), 1GB memory storage ($0.036/GB-hour = $25/month), basic queries. Medium usage ($200-500): 10M writes/day, 10GB memory storage, 100GB magnetic storage ($0.03/GB-month = $3), moderate query load. High usage ($1000-2000): 100M+ writes/day (IoT fleet, DevOps monitoring), 50GB memory storage, 1TB magnetic storage ($30), heavy query workload ($500-1000/month for scan bytes). Costs scale with data ingestion rate and query patterns. Memory storage is most expensive component at $25.6/GB-month (prorated hourly), while magnetic storage is much cheaper for historical data.",
+      "adoptionCost": "Medium-high complexity adoption. Requires understanding time-series data modeling concepts (measures, dimensions, time granularity), Timestream-specific query language (similar to SQL but with time-series extensions), data ingestion patterns (batch vs streaming via Kinesis/IoT Core), retention policies, and memory-to-magnetic tiering configuration. Team needs to learn AWS SDKs for Timestream (write/query APIs), optimize write batching for cost efficiency, design efficient queries using time-based predicates, and integrate with existing AWS services (Lambda, Grafana, QuickSight). Migration from existing time-series solutions (InfluxDB, TimescaleDB) requires schema redesign and data transformation. Estimated 2-4 weeks for PoC implementation, schema design, query optimization, and integration testing. Lower complexity than self-managed solutions but requires AWS-specific expertise.",
+      "licenseCost": "Amazon Timestream is a fully-managed AWS service with pay-as-you-go pricing model. No upfront license fees, no minimum commitments, and no software licenses required. Customers only pay for actual usage (writes, storage, queries). Free tier available for initial testing and small workloads. No separate commercial licenses needed for production use.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "time-series",
+    "metrics",
+    "iot"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Fully-managed serverless service with multi-AZ deployment achieves up to 99.99% availability."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "Time-series database queries have minimum p95 latency of 5ms for in-memory tier data."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Query processing with automatic tiering introduces p99 latency floor of 50ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Automatic multi-AZ failover provides RTO starting at 1 minute for failure detection."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Serverless architecture with automatic scaling supports up to 100K writes/sec (360M jobs/hour)."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Time-series database optimized for time-range queries supports up to 50K read QPS ceiling."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Serverless ingestion with automatic scaling supports up to 100K writes per second ceiling."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CloudTrail integration provides optional comprehensive audit logging for all Timestream API calls."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Database service supports all tenant isolation strategies through IAM policies and table design."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database can store any data type including PII with proper encryption at rest and in transit."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS compliance framework and data retention controls support GDPR requirements when configured properly."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timestream is HIPAA-eligible with BAA support for healthcare time-series data workloads."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "AWS data protection features and retention policies support CCPA compliance when configured."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Audit logging and immutable storage tier support SOX compliance for financial time-series data."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timestream provides eventual consistency by default but supports read-your-writes when configured properly."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-AZ replication with S3-backed magnetic tier provides strict durability when enabled."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "Amazon Timestream is an AWS-specific managed service not available on other cloud providers."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Timestream accessible via AWS SDK available in all major programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "web",
+        "mobile",
+        "iot",
+        "agnostic"
+      ],
+      "reason": "Time-series database supports API services, background workers, batch processing, data pipelines, and IoT workloads."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically requires time-series database capability as its core function and purpose."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern works with or without external caching layer as Timestream has built-in memory tier."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Database pattern compatible with both synchronous and asynchronous data ingestion workflows."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series data can support AI/ML inference workloads for predictive analytics but not required."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Database supports multi-tenant architectures through table design and IAM policies or single-tenant deployments."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timestream supports both real-time ingestion and batch data loading for time-series workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database does not require distributed transactions and works with or without them."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Integrates with Kinesis and IoT Core for real-time streaming ingestion but also supports batch loads."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database pattern is independent of vector search requirements."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database is distinct from document stores but can coexist in polyglot persistence architectures."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database is distinct from key-value stores but can complement them in hybrid architectures."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series database is distinct from graph databases but can coexist for different data access patterns."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Timestream optimized for time-series writes but can support OLTP-style point queries for recent data."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Adaptive query processing and magnetic tier support analytical queries over historical time-series data."
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 10,
+      "reason": "Timestream is a serverless time-series database optimized for high-volume ingestion. At very low write rates, simpler storage solutions may be more cost-effective.",
+      "message": "db-timeseries--timestream: peak write QPS is {actual} req/s (<10). For low-volume time-series data, simpler storage (e.g., RDS, DynamoDB) may be more cost-effective than Timestream's serverless pricing model."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 5,
+      "reason": "Timestream's automatic tiering and query optimization are designed for moderate to high query volumes. Very low read rates may not justify the overhead.",
+      "message": "db-timeseries--timestream: peak read QPS is {actual} req/s (<5). Timestream's adaptive query processing and automatic tiering may introduce unnecessary overhead for very low query volumes."
+    }
+  ]
+}

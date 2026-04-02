@@ -1,0 +1,229 @@
+{
+  "id": "dev-trunk-based-development",
+  "version": "1.0.0",
+  "title": "Trunk-Based Development",
+  "description": "Small frequent merges to main; feature flags; reduces long-lived branch pain; needs strong CI.",
+  "types": [
+    "coding"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 2500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Trunk-based development requires robust CI/CD infrastructure to safely merge frequently. Min ($100) covers small teams using basic CI/CD SaaS (GitHub Actions ~$50/month for private repos, basic feature flag service like LaunchDarkly starter tier ~$50). Max ($2500) represents larger teams with extensive CI needs: enterprise GitHub Actions (~$500), advanced feature flag platform (LaunchDarkly Pro ~$500-800), enhanced monitoring/observability for continuous deployment (~$500), additional compute for running comprehensive test suites on every commit (~$500-700). The pattern itself doesn't add infrastructure but the supporting tooling required for safe trunk-based workflows has real monthly costs.",
+      "adoptionCost": "Medium-high complexity adoption. Requires significant cultural and process changes: (1) Team training on trunk-based workflows and feature flags (8-16 hours/developer, ~$1000), (2) CI/CD pipeline enhancement to support continuous integration with comprehensive automated testing (~40-60 hours, ~$1500), (3) Feature flag system implementation and integration (~20-30 hours, ~$800), (4) Establishing code review processes for rapid merges (~$200). The pattern demands strong CI maturity, disciplined testing practices, and coordinated team behavior changes. Teams transitioning from long-lived feature branches face steeper learning curves around breaking work into small increments and managing incomplete features via flags.",
+      "licenseCost": "No inherent license costs for the development practice itself. Core tooling can use open-source options: Git is free, Jenkins/GitLab CI are open source, basic feature flag libraries are open source. However, most teams opt for commercial SaaS solutions (GitHub, CircleCI, LaunchDarkly) which are captured in monthly costs rather than upfront licenses. If purchasing enterprise licenses upfront (rare), costs would shift to $5000-20000, but typical model is subscription-based monthly fees.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "fast-integration",
+      "confidence": "high",
+      "reasoning": "Trunk-based development directly enables rapid integration of code changes into the main branch through small, frequent merges, reducing integration overhead and merge conflicts."
+    },
+    {
+      "capability": "reduced-merge-conflicts",
+      "confidence": "high",
+      "reasoning": "Small frequent merges to main naturally reduce the complexity and frequency of merge conflicts by preventing long-lived branches from diverging significantly from the trunk."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "continuous-integration",
+      "confidence": "high",
+      "reasoning": "Trunk-based development requires robust CI pipelines with automated testing and quality gates to ensure that frequent merges to main don't break the codebase.",
+      "optional": true
+    },
+    {
+      "capability": "feature-toggling",
+      "confidence": "high",
+      "reasoning": "Feature flags are essential for trunk-based development to allow incomplete features to be merged safely to main while keeping them hidden from production users.",
+      "optional": false
+    },
+    {
+      "capability": "automated-testing",
+      "confidence": "high",
+      "reasoning": "Trunk-based development depends heavily on comprehensive automated test suites to maintain code quality and catch defects with frequent integrations to the main branch.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "dev-gitflow"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cicd",
+    "governance"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Trunk-Based Development is the recommended release cadence for GDPR-regulated systems as it reduces integration risk and supports frequent, auditable deployments that simplify compliance posture."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Trunk-Based Development is the recommended release cadence for CCPA-regulated systems as it reduces integration risk and supports frequent, auditable deployments that simplify compliance posture."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Trunk-Based Development is the recommended release cadence for HIPAA-regulated systems as it reduces integration risk and supports frequent, auditable deployments that simplify compliance posture."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Trunk-Based Development is the recommended release cadence for SOX-regulated systems as it reduces integration risk and supports frequent, auditable deployments that simplify compliance posture."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Trunk-based development is a version control workflow pattern that works with any cloud provider."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Trunk-based development is a source control workflow pattern applicable to all programming languages."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Trunk-based development is a development workflow pattern applicable to any platform type."
+    }
+  ],
+  "defaultConfig": {
+    "merge_frequency": "daily",
+    "feature_flag_strategy": "runtime",
+    "ci_trigger": "every_commit",
+    "branch_lifetime": "same_day",
+    "code_review_requirement": "pre_merge"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "merge_frequency": {
+        "type": "string",
+        "enum": [
+          "multiple_daily",
+          "daily",
+          "every_2_days"
+        ],
+        "description": "How often developers merge to trunk. Multiple daily is ideal but requires strong CI; daily is standard; every 2 days is minimum for trunk-based (longer becomes feature branching)."
+      },
+      "feature_flag_strategy": {
+        "type": "string",
+        "enum": [
+          "runtime",
+          "build_time",
+          "hybrid"
+        ],
+        "description": "How incomplete features are hidden. Runtime flags allow production testing and gradual rollout but add complexity; build-time flags are simpler but less flexible; hybrid uses both."
+      },
+      "ci_trigger": {
+        "type": "string",
+        "enum": [
+          "every_commit",
+          "every_push",
+          "scheduled"
+        ],
+        "description": "When CI runs. Every commit provides fastest feedback; every push reduces CI load; scheduled is insufficient for trunk-based development."
+      },
+      "branch_lifetime": {
+        "type": "string",
+        "enum": [
+          "same_day",
+          "1_2_days",
+          "up_to_3_days"
+        ],
+        "description": "Maximum time a branch can live before merging. Same day is ideal; 1-2 days is acceptable; beyond 3 days defeats trunk-based benefits and increases merge conflicts."
+      },
+      "code_review_requirement": {
+        "type": "string",
+        "enum": [
+          "pre_merge",
+          "post_merge",
+          "pair_programming"
+        ],
+        "description": "When code review happens. Pre-merge is standard but can slow velocity; post-merge with strong CI enables faster flow; pair programming eliminates separate review step."
+      }
+    }
+  },
+  "warn_nfr": []
+}

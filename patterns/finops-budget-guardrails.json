@@ -1,0 +1,306 @@
+{
+  "id": "finops-budget-guardrails",
+  "version": "1.0.0",
+  "title": "FinOps Budget Guardrails and Spend Controls",
+  "description": "Implement budgets, alerts, tagging, and policy-as-code guardrails to enforce cost ceilings and prevent runaway spend.",
+  "types": [
+    "cost",
+    "design",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 500.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "FinOps budget guardrails are primarily organizational processes and policies with minimal direct infrastructure costs. The min is $0 because native cloud provider tools (AWS Budgets, Azure Cost Management, GCP Budget Alerts) are free for basic budget and alert functionality. The max of $500 represents organizations that adopt third-party FinOps platforms (CloudHealth, Apptio Cloudability, Vantage) for advanced governance, multi-cloud visibility, and anomaly detection. Enterprise FinOps platforms can range $2,000-$10,000+/month but those are typically for large-scale organizations managing $100K+/month cloud spend; for the typical pattern implementation, $500 covers mid-tier SaaS tooling. The pattern itself has no compute/storage costs\u2014it's about configuring policies, tags, and alerts on existing infrastructure.",
+      "adoptionCost": "Medium-high complexity due to organizational and technical factors: (1) Cross-functional alignment\u2014requires coordination between finance, engineering, and operations teams to define cost allocation models, tagging taxonomies, and approval workflows (10-20 hours of meetings/workshops); (2) Technical implementation\u2014setting up budget alerts, configuring policy-as-code tools (OPA, Sentinel, Cloud Custodian), implementing tagging standards across existing resources (20-40 hours engineering time); (3) Documentation and training\u2014creating runbooks, cost ownership matrices, and training teams on new approval processes (10-15 hours); (4) Integration work\u2014connecting budgets to ticketing systems, Slack/Teams notifications, and potentially ITSM tools (5-10 hours). Total estimated 45-85 hours at blended rate of $75-100/hour for mix of architects, engineers, and FinOps practitioners. With modern AI coding assistants reducing policy-as-code scaffolding time by 30-40%, this lands at $2,500 for a mid-sized team implementing comprehensive guardrails.",
+      "licenseCost": "Open source and native cloud tools cover core capabilities at no cost. AWS Budgets, Azure Cost Management + Budgets, and GCP Budget Alerts are included with cloud accounts. Policy-as-code frameworks are open source: Open Policy Agent (OPA), HashiCorp Sentinel (free tier available), Cloud Custodian (Apache 2.0), and cloud-native policy engines (AWS Service Control Policies, Azure Policy, GCP Organization Policy) have no licensing fees. The FinOps Framework itself is open and community-driven. Organizations may optionally purchase commercial FinOps platforms ($1,000-$10,000+/month) but these are operational expenses, not required licenses for the pattern. Setting license cost to $0 reflects that the pattern can be fully implemented with zero-cost tooling.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "cost-ceiling-enforcement",
+      "confidence": "high",
+      "reasoning": "This pattern directly implements mechanisms to enforce spending limits through budgets and policy-as-code, preventing costs from exceeding defined thresholds."
+    },
+    {
+      "capability": "tagging-standards",
+      "confidence": "medium",
+      "reasoning": "Tagging standards are a core component of FinOps guardrails, enabling cost allocation, tracking, and policy enforcement across cloud resources."
+    },
+    {
+      "capability": "budget-alerting",
+      "confidence": "high",
+      "reasoning": "Alert mechanisms for budget thresholds are a fundamental feature of this pattern, providing proactive notification of spending anomalies or limit approaches."
+    },
+    {
+      "capability": "cost-governance",
+      "confidence": "high",
+      "reasoning": "This pattern provides overall cost governance through policy enforcement and guardrails, capturing the broader governance aspect beyond just ceiling enforcement."
+    },
+    {
+      "capability": "spend-visibility",
+      "confidence": "high",
+      "reasoning": "Budget tracking and alerting inherently provide spend visibility across resources and teams as a key outcome of implementing this pattern."
+    },
+    {
+      "capability": "cost-allocation",
+      "confidence": "medium",
+      "reasoning": "Tagging standards enable cost attribution to teams, projects, or departments, supporting cost allocation and chargeback mechanisms."
+    },
+    {
+      "capability": "cost-anomaly-detection",
+      "confidence": "medium",
+      "reasoning": "The pattern includes automated detection of unusual spending patterns beyond simple threshold alerts through budget monitoring and alerting mechanisms."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "cloud-provider",
+      "confidence": "high",
+      "reasoning": "This pattern requires integration with cloud provider APIs (AWS Cost Explorer, Azure Cost Management, GCP Billing) to retrieve cost data and set budget policies.",
+      "optional": true
+    },
+    {
+      "capability": "monitoring",
+      "confidence": "high",
+      "reasoning": "Continuous monitoring of resource usage and costs is essential to detect spending patterns, trigger alerts, and enforce budget guardrails.",
+      "optional": false
+    },
+    {
+      "capability": "policy-enforcement",
+      "confidence": "high",
+      "reasoning": "Policy-as-code mechanisms (like OPA, AWS SCP, Azure Policy) are required to enforce tagging standards and prevent non-compliant resource creation.",
+      "optional": false
+    },
+    {
+      "capability": "notification-delivery",
+      "confidence": "high",
+      "reasoning": "Alert notifications need a delivery mechanism (email, Slack, PagerDuty, etc.) to reach stakeholders when budget thresholds are breached.",
+      "optional": true
+    },
+    {
+      "capability": "user-identification",
+      "confidence": "medium",
+      "reasoning": "Identity management is required to control who can modify budgets and exemptions from guardrails, ensuring proper authorization and governance.",
+      "optional": false
+    },
+    {
+      "capability": "resource-inventory",
+      "confidence": "medium",
+      "reasoning": "A resource inventory is needed to track and tag all cloud resources effectively, enabling comprehensive cost governance and tagging enforcement.",
+      "optional": true
+    }
+  ],
+  "tags": [
+    "cost",
+    "finops",
+    "budgets",
+    "guardrails",
+    "policy"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Budget guardrails may limit high-availability infrastructure to enforce cost ceilings, capping availability at four nines."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 30,
+      "reason": "Recovery may be delayed by budget approval processes and resource provisioning constraints to stay within cost limits."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 60,
+      "reason": "Continuous backup and replication may be limited by budget constraints, reducing backup frequency to control costs."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "FinOps budget guardrails require cloud provider cost management APIs and services available on AWS, Azure, and GCP."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "This is an infrastructure/FinOps pattern that provisions cloud budgets and policies independent of application language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Budget guardrails and cost controls apply to all cloud resources regardless of platform or workload type."
+    }
+  ],
+  "defaultConfig": {
+    "budget_period": "monthly",
+    "alert_thresholds": [
+      50,
+      80,
+      100
+    ],
+    "enforcement_action": "alert",
+    "tagging_strategy": "mandatory",
+    "policy_enforcement": "soft",
+    "cost_allocation_level": "project"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "budget_period": {
+        "type": "string",
+        "enum": [
+          "monthly",
+          "quarterly",
+          "annual"
+        ],
+        "description": "Budget reset period. Monthly provides tighter control, quarterly/annual better for seasonal workloads."
+      },
+      "alert_thresholds": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "description": "Percentage thresholds for budget alerts (e.g., [50, 80, 100] alerts at 50%, 80%, and 100% of budget)"
+      },
+      "enforcement_action": {
+        "type": "string",
+        "enum": [
+          "alert",
+          "prevent",
+          "throttle"
+        ],
+        "description": "Action when budget exceeded: alert (notify only), prevent (block new resources), throttle (rate-limit provisioning)"
+      },
+      "tagging_strategy": {
+        "type": "string",
+        "enum": [
+          "mandatory",
+          "recommended",
+          "optional"
+        ],
+        "description": "Cost allocation tag enforcement: mandatory (block untagged resources), recommended (warn), optional (no enforcement)"
+      },
+      "policy_enforcement": {
+        "type": "string",
+        "enum": [
+          "soft",
+          "hard",
+          "audit"
+        ],
+        "description": "Policy enforcement mode: soft (warn on violations), hard (block violations), audit (log only for review)"
+      },
+      "cost_allocation_level": {
+        "type": "string",
+        "enum": [
+          "project",
+          "team",
+          "environment",
+          "service"
+        ],
+        "description": "Granularity for cost tracking and budget allocation: project, team, environment (dev/prod), or individual service"
+      }
+    }
+  },
+  "warn_nfr": []
+}

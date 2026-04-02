@@ -1,0 +1,399 @@
+{
+  "id": "distributed-2pc",
+  "version": "1.0.0",
+  "title": "Distributed Transactions (2PC)",
+  "description": "Two-phase commit across multiple resource managers for strong consistency; high coupling and fragility.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 7500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "2PC requires transaction coordinator infrastructure and multiple resource managers (databases). Min ($100): development environment with 2-3 small database instances (e.g., 2x PostgreSQL t3.small at ~$30 each, 1x MySQL t3.small at ~$30, basic monitoring ~$10). Max ($5000): production setup with high-availability database clusters across multiple regions (3x primary databases with replicas ~$800 each = $2400, transaction coordinator service with HA ~$400, enhanced monitoring/observability ~$300, network/VPN costs for distributed coordination ~$200, increased storage and backup retention ~$400, data transfer between distributed nodes ~$300, load balancers ~$500, additional compute for transaction management overhead ~$500). 2PC creates significant infrastructure overhead due to blocking during prepare phase and need for high-availability coordinator to avoid being a single point of failure.",
+      "adoptionCost": "High complexity implementation requiring deep distributed systems expertise. Factors include: (1) Implementing transaction coordinator with proper state management and recovery protocols (~40 hours at $150/hr = $6000), (2) Integrating 2PC protocol with multiple heterogeneous resource managers and handling vendor-specific XA implementations (~20 hours = $3000), (3) Building timeout and failure recovery mechanisms for prepare/commit phases (~15 hours = $2250), (4) Implementing deadlock detection and resolution across distributed resources (~12 hours = $1800), (5) Building comprehensive testing for network partitions, coordinator failures, and participant failures (~20 hours = $3000), (6) Documentation and operational runbooks for handling stuck transactions (~8 hours = $1200), (7) Training team on distributed transaction semantics and troubleshooting (~5 hours = $750). Total ~$18,000, but with modern XA-compatible databases and transaction managers (e.g., Atomikos, Narayana), implementation time reduces to ~50 hours = $7500. Pattern is fragile and requires significant ongoing operational expertise.",
+      "licenseCost": "Open-source transaction managers available (Atomikos Transactions Essentials, Narayana/JBoss TA, Apache Geronimo TxManager are all free under Apache/LGPL licenses). Most modern databases support XA protocol natively (PostgreSQL, MySQL, Oracle). Commercial transaction manager licenses (e.g., Atomikos ExtremeTransactions) exist but are optional. Enterprise database licenses (Oracle, SQL Server) may have higher costs but 2PC support is included in base licensing. Pattern itself is protocol-based with no inherent licensing requirements.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "distributed-transaction",
+      "confidence": "high",
+      "reasoning": "Two-phase commit (2PC) is specifically designed to provide ACID-compliant distributed transactions across multiple resource managers. This is the core capability of this pattern."
+    },
+    {
+      "capability": "strong-consistency",
+      "confidence": "high",
+      "reasoning": "2PC guarantees ACID properties and strong consistency across all participating resource managers by ensuring all participants either commit or rollback together, maintaining a consistent state across the distributed system."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "distributed-transaction-management",
+      "confidence": "high",
+      "reasoning": "The two-phase commit protocol requires transaction managers (both coordinator and participants) to orchestrate the prepare and commit phases across distributed resources. Each participating system must have a transaction manager capable of responding to coordinator requests and managing local transaction state.",
+      "optional": true
+    },
+    {
+      "capability": "xa-protocol",
+      "confidence": "medium",
+      "reasoning": "2PC implementations typically rely on standardized transaction protocols like X/Open XA to ensure interoperability between the coordinator and resource managers. This provides the standard interface for prepare, commit, and rollback operations across heterogeneous systems.",
+      "optional": false
+    },
+    {
+      "capability": "distributed-transaction-coordination",
+      "confidence": "medium",
+      "reasoning": "2PC coordinators need locking mechanisms to prevent split-brain scenarios and ensure exclusive coordination during the two-phase protocol. Locks are held on resources during the prepare phase until commit or rollback completes.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "saga-orchestration",
+      "saga-choreography",
+      "event-sourcing"
+    ],
+    "incompatibleAssumptions": [
+      "consistencyModel"
+    ]
+  },
+  "tags": [
+    "transactions",
+    "consistency"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC strong consistency model inherently supports read-your-writes semantics and weaker consistency models."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC supports both strict durability with synchronous writes and relaxed durability configurations."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "requires_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "2PC requires minimum two network round-trips for prepare and commit phases resulting in 100ms+ p95."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "2PC tail latencies from multi-phase protocol coordination and lock contention create 200ms+ p99 floor."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "2PC recovery requires coordinator restart, transaction log replay, and participant reconnection taking 2+ minutes."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 0,
+      "reason": "2PC ACID guarantees ensure all-or-nothing atomicity with zero data loss achieving RPO of zero."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 36000,
+      "reason": "2PC locking overhead, coordinator bottleneck, and coordination latency limit practical throughput to 10 TPS (36K/hour)."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 5000,
+      "reason": "2PC distributed locking and coordination overhead create contention at high read throughput. Above 5K read QPS, the locking overhead significantly impacts performance and suggests CQRS, read replicas, or eventual consistency patterns would be more scalable."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 1000,
+      "reason": "2PC two-phase commit protocol with blocking coordination limits write throughput to 1K QPS ceiling."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "2PC is a cloud-agnostic distributed transaction protocol implementable across all cloud and on-premises environments."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Two-phase commit protocol can be implemented in any programming language with networking capabilities."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "2PC coordination protocol is applicable to any platform requiring distributed transaction guarantees."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC supports distributed transactions across resources in both single-tenant and multi-tenant architectures."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC can coordinate transactions for both interactive and batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern specifically implements distributed transaction coordination using two-phase commit protocol."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC distributed transactions are compatible with systems using or not using vector search capabilities."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC can coordinate transactions across document stores and other database types."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC supports distributed transactions involving key-value stores and other resource managers."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC transaction coordination works with graph databases and other database paradigms."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC can coordinate distributed transactions involving time-series databases and other data stores."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Although 2PC is designed for OLTP workloads in general requiring ACID guarantees across distributed resources, it also works with service mesh for cross-service ACID requirements which isn't always OLTP in the traditional sense."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "2PC primarily targets OLTP but can coordinate transactions in mixed OLTP/OLAP environments."
+    }
+  ],
+  "defaultConfig": {
+    "coordinator_type": "centralized",
+    "timeout_seconds": 30,
+    "participant_failure_handling": "abort",
+    "log_persistence": "durable",
+    "retry_strategy": "none"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "coordinator_type": {
+        "type": "string",
+        "enum": [
+          "centralized",
+          "decentralized"
+        ],
+        "description": "Centralized uses a single transaction coordinator; decentralized distributes coordination logic across participants. Centralized is simpler but creates a single point of failure."
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 5,
+        "maximum": 300,
+        "description": "Maximum time to wait for participant responses in each phase. Shorter timeouts reduce lock duration but increase false abort rates; longer timeouts improve success but hold resources longer."
+      },
+      "participant_failure_handling": {
+        "type": "string",
+        "enum": [
+          "abort",
+          "retry_with_timeout",
+          "manual_intervention"
+        ],
+        "description": "How to handle participant failures during commit. Abort ensures consistency but reduces availability; retry improves success rate but extends lock duration; manual intervention for critical transactions."
+      },
+      "log_persistence": {
+        "type": "string",
+        "enum": [
+          "durable",
+          "memory",
+          "hybrid"
+        ],
+        "description": "Transaction log storage strategy. Durable (disk) ensures recovery after crashes; memory improves performance but risks data loss; hybrid balances both with async flushing."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "none",
+          "exponential_backoff",
+          "fixed_interval"
+        ],
+        "description": "Retry behavior for transient failures. None fails fast; exponential backoff reduces load during outages; fixed interval for predictable retry patterns."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<",
+      "value": 1,
+      "reason": "2PC introduces significant coordination overhead (2 network round-trips, locking, blocking phases). At very low write throughput (<1 QPS), a simpler single-database transaction or eventual consistency pattern would avoid this complexity.",
+      "message": "distributed-2pc: peak write QPS is {actual} req/s (<1). 2PC coordination overhead may not be justified; consider single-database transactions or eventual consistency patterns."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": ">",
+      "value": 0.999,
+      "reason": "2PC's blocking protocol means coordinator failure causes hung transactions until recovery. Achieving >99.9% availability requires HA coordinator infrastructure and clustered resource managers, adding significant operational complexity.",
+      "message": "distributed-2pc: availability target is {actual} (>99.9%). 2PC's blocking commit phase creates coordinated failure risk \u2014 ensure HA coordinator and clustered databases are in place, or consider saga patterns which tolerate partial failures more gracefully."
+    }
+  ]
+}

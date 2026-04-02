@@ -1,0 +1,35 @@
+# Feature - Time-Series Database Feature Flag
+#
+# An IoT metrics collection API on AWS with Python and time_series_db: true
+# feature flag. The use case involves storing and querying high-frequency sensor
+# readings and device telemetry. The time_series_db feature activates time-series
+# database patterns (generic, TimescaleDB, InfluxDB, AWS Timestream, etc.).
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - time-series database patterns are selected
+#   - high-write-throughput infrastructure patterns are included
+
+project:
+  name: IoT Metrics Collection Platform
+  domain: iot
+functional:
+  summary: High-frequency IoT sensor data ingestion and time-series storage
+constraints:
+  platform: api
+  cloud: aws
+  language: python
+  features:
+    time_series_db: true
+    async_messaging: true
+    messaging_delivery_guarantee: at-least-once
+nfr:
+  data:
+    pii: false
+  availability:
+    target: 0.999
+  throughput:
+    peak_query_per_second_write: 10000
+cost:
+  ceilings:
+    monthly_operational_usd: 3000

@@ -1,0 +1,404 @@
+{
+  "id": "idp-saml--okta",
+  "version": "1.0.0",
+  "title": "Okta as SAML Identity Provider",
+  "description": "Use Okta as a SAML 2.0 Identity Provider for enterprise SSO federation. Industry-leading enterprise IdP for workforce identity (employee SSO, Active Directory/LDAP integration, lifecycle management) and CIAM. Okta issues signed SAML assertions to applications acting as Service Providers, with deep AD/LDAP sync, adaptive MFA, and comprehensive audit logging. No free tier \u2014 trial and paid plans only. Best fit for enterprise B2B, regulated industries, and organizations requiring AD/LDAP as the source of truth.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 200.0,
+      "max": 1000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "okta"
+    ],
+    "costCeilingCompatibleUsd": 200,
+    "costNotes": "Okta Workforce Identity pricing starts at ~$2/user/month for SSO. 100 users: ~$200/month. SAML SSO included in base Workforce plan. Adaptive MFA, lifecycle management, and advanced features add cost. CIAM (customer identity) pricing differs. No permanent free tier \u2014 30-day trial only.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Okta Workforce Identity SSO starts at ~$2/user/month. For 100 users: $200/month. For 500 users with MFA add-on: ~$1,000/month. Min=200 reflects minimum viable deployment (100 users, SSO only); max=1,000 reflects moderate-scale deployment with MFA and lifecycle management.",
+      "adoptionCost": "Okta SAML setup involves: AD/LDAP agent installation and sync configuration (3-4 hours), SAML SP registration per application (1-2 hours each), MFA policy configuration (1-2 hours), user provisioning/deprovisioning setup (2-3 hours), testing with enterprise IT team (2 hours). Total: ~10 hours at $50/hour = $500 with AI tools. More complex than Auth0 due to enterprise IT coordination and AD integration.",
+      "licenseCost": "Okta charges per-user SaaS pricing; no separate license fee. All SAML IdP features included in the Workforce SSO plan.",
+      "source": "LLM analysis (as of March 2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "identity-provider",
+      "confidence": "high",
+      "reasoning": "Okta acts as the SAML IdP, authenticating users against AD/LDAP or Okta's own directory and issuing signed SAML assertions."
+    },
+    {
+      "capability": "saml-identity-provider",
+      "confidence": "high",
+      "reasoning": "Okta implements the full SAML 2.0 IdP role with metadata endpoint, SSO/SLO endpoints, signed assertion issuance, and SP registration management."
+    },
+    {
+      "capability": "single-sign-on",
+      "confidence": "high",
+      "reasoning": "Okta's core product is enterprise SSO \u2014 users authenticate once with Okta and access all registered SP applications without re-entering credentials."
+    },
+    {
+      "capability": "enterprise-federation",
+      "confidence": "high",
+      "reasoning": "Okta federates with enterprise directories (Active Directory, LDAP, HR systems) and upstream IdPs (ADFS, Ping, Azure AD) as authoritative user sources."
+    },
+    {
+      "capability": "certificate-management",
+      "confidence": "high",
+      "reasoning": "Okta manages SAML signing certificates, provides certificate rotation tooling, and exposes metadata endpoints so SPs always have current certificate trust configuration."
+    },
+    {
+      "capability": "mfa",
+      "confidence": "high",
+      "reasoning": "Okta provides adaptive MFA (risk-based), step-up authentication, and supports hardware tokens (YubiKey), TOTP, push notifications, and biometrics."
+    },
+    {
+      "capability": "user-lifecycle-management",
+      "confidence": "high",
+      "reasoning": "Okta automates user provisioning and deprovisioning via SCIM, HR system integrations (Workday, BambooHR), and AD sync \u2014 ensuring SP access reflects current employment status."
+    },
+    {
+      "capability": "directory-integration",
+      "confidence": "high",
+      "reasoning": "Okta AD Agent provides real-time sync with on-premises Active Directory and LDAP, enabling AD as the source of truth for Okta identities."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Okta is a cloud SaaS; both IdP and SP endpoints require internet access. On-prem AD sync uses the Okta AD Agent which initiates outbound-only connections."
+    },
+    {
+      "capability": "enterprise-directory",
+      "confidence": "medium",
+      "optional": true,
+      "reasoning": "Okta Workforce Identity typically syncs with Active Directory or LDAP as the authoritative user store. Okta also supports its own user directory without AD."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "idp-saml--auth0"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "auth",
+    "saml",
+    "sso",
+    "enterprise",
+    "federation",
+    "okta",
+    "identity",
+    "active-directory",
+    "workforce-identity",
+    "b2b"
+  ],
+  "availability": {
+    "tier": "pro",
+    "reason": "Okta has no free tier \u2014 trial and paid plans only"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/security/auth",
+      "op": "==",
+      "value": "saml",
+      "reason": "Okta SAML IdP pattern is only applicable when SAML is the authentication mechanism. OAuth2/OIDC specs should use idp-oidc--okta instead."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Okta's enterprise SLA is 99.99% uptime for paid plans. Targets above this require custom high-availability IdP architecture."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "SAML SSO involves browser redirects to Okta's SSO endpoint plus AD/LDAP directory lookups \u2014 minimum p95 latency is ~200ms for the authentication flow."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "Enterprise directory lookups, adaptive MFA evaluation, and SAML assertion signing can push p99 latency to 500ms+ under load."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Okta is a managed SaaS; RTO depends on Okta service availability and AD Agent connectivity, not application deployment."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Okta supports HIPAA via BAA on Healthcare and Enterprise plans. SAML-based authentication workflows are covered."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Okta is GDPR-compliant with EU data residency (Okta EU cell), DPA agreements, and data subject request APIs."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Okta supports CCPA compliance with data subject request handling and privacy controls."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Okta SOC 2 Type II and ISO 27001 certifications support SOX audit requirements. Comprehensive access logging satisfies SOX access control requirements."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Okta is a cloud-agnostic SaaS IdP. SAML federation works regardless of where the Service Provider application is hosted. On-prem SP applications are supported via Okta's on-prem SP agent."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "swift",
+        "dart",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "SAML 2.0 is an XML-based standard with SP libraries available in all major languages. Okta provides official SDKs for Java, .NET, Python, Node.js, Go, and PHP."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api"
+      ],
+      "reason": "SAML SSO is primarily browser-based (web), targeting enterprise workforce applications. Mobile apps can use SAML via webview. API-to-API use cases typically prefer OAuth2 bearer tokens."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "okta"
+      ],
+      "reason": "Pattern requires Okta as the SAML IdP. For Auth0-based SAML, use idp-saml--auth0."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Okta supports multi-tenant SAML for B2B SaaS via separate Okta orgs per enterprise customer or multi-tenant application configuration."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to caching requirements."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to async messaging requirements."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to AI inference requirements."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to batch processing requirements."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to distributed transaction requirements."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to real-time streaming requirements."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to vector search requirements."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to document store requirements."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to key-value store requirements."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to graph database requirements."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to time-series database requirements."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to OLTP workload requirements."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Identity provider pattern is orthogonal to OLAP workload requirements."
+    }
+  ],
+  "defaultConfig": {
+    "saml_binding": "post",
+    "name_id_format": "email",
+    "sign_assertions": true,
+    "session_lifetime_hours": 8,
+    "ad_sync_enabled": false
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "saml_binding": {
+        "type": "string",
+        "enum": [
+          "post",
+          "redirect"
+        ],
+        "description": "SAML binding for SSO requests. POST binding sends the SAML message in the HTTP body (more secure, no URL length limits). Redirect binding encodes the message in the query string. POST is recommended for production."
+      },
+      "name_id_format": {
+        "type": "string",
+        "enum": [
+          "email",
+          "persistent",
+          "transient",
+          "unspecified"
+        ],
+        "description": "NameID format sent in SAML assertions. email: user's email address (most common). persistent: opaque stable identifier per user per SP (better for privacy). transient: anonymous per-session. unspecified: SP determines. For AD-sourced identities, email is typical."
+      },
+      "sign_assertions": {
+        "type": "boolean",
+        "description": "Whether Okta signs individual SAML assertions in addition to signing the response envelope. Signing assertions provides stronger non-repudiation guarantees. Required by some strict enterprise SPs. Okta always signs the response; this controls assertion-level signing."
+      },
+      "session_lifetime_hours": {
+        "type": "integer",
+        "description": "Okta session lifetime in hours before re-authentication is required. 8 hours aligns with a typical enterprise workday. Shorter sessions improve security posture; longer sessions reduce friction. Separate from individual SP session management."
+      },
+      "ad_sync_enabled": {
+        "type": "boolean",
+        "description": "Enable Active Directory sync via Okta AD Agent. When true, Okta syncs user accounts, group memberships, and password policies from on-premises AD in near-real-time. Required for workforce identity scenarios where AD is the source of truth. Requires installing the Okta AD Agent on a domain-joined Windows server."
+      }
+    }
+  },
+  "warn_nfr": []
+}

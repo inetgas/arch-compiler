@@ -1,0 +1,270 @@
+{
+  "id": "iac-bicep",
+  "version": "1.0.0",
+  "title": "Infrastructure as Code (Bicep)",
+  "description": "Azure-native IaC with Bicep/ARM; Azure-specific.",
+  "types": [
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "azure"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Bicep is an Infrastructure as Code (IaC) language that compiles to ARM templates. It has no direct runtime or service costs - there are no charges for using Bicep itself, authoring templates, or deploying resources. The actual monthly costs depend entirely on the Azure resources provisioned using Bicep (VMs, databases, storage, etc.), not the IaC tool. Similar to Terraform or CloudFormation, the pattern itself is cost-free; only the infrastructure it manages incurs costs.",
+      "adoptionCost": "Medium-high adoption cost due to several factors: (1) Learning curve - Bicep syntax is simpler than ARM JSON but requires understanding Azure resource schemas, dependencies, and deployment scopes; (2) Team training - developers need 2-4 weeks to become proficient, especially understanding modules, best practices, and CI/CD integration; (3) Migration effort - converting existing infrastructure or ARM templates to Bicep requires 40-80 hours for typical organizations; (4) Tooling setup - VS Code extensions, linting, testing frameworks, and pipeline integration need configuration; (5) However, if team already knows Azure and ARM, adoption is faster. AI assistants can help significantly with syntax and template generation, reducing complexity from what would be $3000-4000 to approximately $2000.",
+      "licenseCost": "Bicep is completely free and open-source under MIT license. Microsoft provides it at no cost as part of Azure Resource Manager. All tooling is free: Bicep CLI, VS Code extension, Azure CLI integration, and deployment engines. No subscription, seat licenses, or commercial fees. Organizations only pay for the Azure resources they deploy, never for the Bicep tooling itself.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "iac-management",
+      "confidence": "medium",
+      "reasoning": "Bicep is specifically designed for Infrastructure as Code management on Azure, enabling declarative infrastructure definitions and deployments."
+    },
+    {
+      "capability": "azure-resource-provisioning",
+      "confidence": "high",
+      "reasoning": "Bicep directly provisions and manages Azure resources through ARM, which is a core function distinct from general IaC management."
+    },
+    {
+      "capability": "infrastructure-orchestration",
+      "confidence": "high",
+      "reasoning": "Bicep orchestrates resource dependencies and deployment order automatically, a key capability for complex infrastructure deployments."
+    },
+    {
+      "capability": "infrastructure-validation",
+      "confidence": "high",
+      "reasoning": "Bicep includes built-in validation and what-if operations that allow testing and previewing infrastructure changes before deployment."
+    },
+    {
+      "capability": "infrastructure-as-code-versioning",
+      "confidence": "high",
+      "reasoning": "Bicep templates are version-controllable text-based artifacts that can be tracked, branched, and managed through standard version control systems."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "azure-subscription",
+      "confidence": "high",
+      "reasoning": "Bicep requires an Azure subscription to deploy resources to, regardless of the subscription's organizational structure.",
+      "optional": true
+    },
+    {
+      "capability": "azure-credentials",
+      "confidence": "high",
+      "reasoning": "Bicep needs authentication credentials (service principal, managed identity, or user credentials) to interact with Azure Resource Manager for deployments.",
+      "optional": true
+    },
+    {
+      "capability": "azure-credentials",
+      "confidence": "medium",
+      "reasoning": "Bicep deployments require appropriate resource providers to be registered in the subscription before resources of those types can be provisioned.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "iac-terraform",
+      "iac-cloudformation"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "iac",
+    "azure"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bicep provisions the Azure infrastructure that processes PII; the pattern applies regardless and is used to declaratively enforce PII-appropriate security controls such as encryption, private endpoints, and access policies."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bicep is the recommended pattern for GDPR-regulated Azure environments as it enables reproducible, auditable, code-reviewed infrastructure changes \u2014 directly supporting GDPR compliance posture and data residency controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bicep is the recommended pattern for CCPA-regulated Azure environments as it enables reproducible, auditable, code-reviewed infrastructure changes \u2014 supporting CCPA compliance posture and data handling controls."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bicep is the recommended pattern for HIPAA-regulated Azure environments as it enables reproducible, auditable, code-reviewed infrastructure changes with consistent security configurations for PHI environments."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bicep is the recommended pattern for SOX-regulated Azure environments as it enables reproducible, auditable, code-reviewed infrastructure changes \u2014 supporting SOX IT general controls and change management requirements."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bicep provisions Azure data infrastructure that can be configured for any consistency requirement; the IaC pattern itself is orthogonal to read-your-writes consistency settings which are configured within the provisioned resources."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Bicep provisions and configures Azure storage replication, backup policies, geo-redundancy, and durability settings declaratively; the pattern is applicable for all durability requirements including strict configurations."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "azure",
+      "reason": "Bicep is Azure's native Infrastructure as Code language and exclusively targets the Azure cloud platform."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Bicep provisions Azure infrastructure that can host applications written in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli"
+      ],
+      "reason": "Bicep provisions Azure infrastructure that can support any application platform type through diverse Azure service offerings."
+    }
+  ],
+  "defaultConfig": {
+    "deployment_scope": "resource_group",
+    "environment": "dev",
+    "naming_convention": "azure_standard",
+    "module_organization": "modular",
+    "parameter_handling": "parameter_files"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "deployment_scope": {
+        "type": "string",
+        "enum": [
+          "resource_group",
+          "subscription",
+          "management_group",
+          "tenant"
+        ],
+        "description": "Scope at which Bicep templates are deployed. Resource group for most apps, subscription for shared services, management group for enterprise governance, tenant for organization-wide policies."
+      },
+      "environment": {
+        "type": "string",
+        "enum": [
+          "dev",
+          "staging",
+          "production"
+        ],
+        "description": "Target environment affecting resource sizing, redundancy, and cost. Dev uses minimal resources, staging mirrors production at smaller scale, production includes HA and DR configurations."
+      },
+      "naming_convention": {
+        "type": "string",
+        "enum": [
+          "azure_standard",
+          "custom_prefix",
+          "environment_suffix"
+        ],
+        "description": "Resource naming strategy. Azure standard follows Microsoft CAF conventions, custom prefix adds organization identifier, environment suffix appends env name for clarity."
+      },
+      "module_organization": {
+        "type": "string",
+        "enum": [
+          "monolithic",
+          "modular",
+          "layered"
+        ],
+        "description": "How Bicep code is structured. Monolithic keeps all resources in one file (simple but hard to maintain), modular splits by resource type (reusable), layered separates by architectural tier (network/compute/data)."
+      },
+      "parameter_handling": {
+        "type": "string",
+        "enum": [
+          "parameter_files",
+          "key_vault",
+          "inline"
+        ],
+        "description": "How configuration values are managed. Parameter files for environment-specific configs, Key Vault for secrets and sensitive data, inline for static values (least flexible)."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,24 @@
+# Misc Regression - E-Commerce API Full Stack
+#
+# A full-stack e-commerce product API on AWS with JavaScript, 99.9% availability,
+# and no additional features or cost constraints. This is a representative
+# regression test for the core e-commerce use case, ensuring the compiler
+# consistently produces the expected pattern set for a standard production API.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - AWS JavaScript API patterns are selected
+#   - availability patterns for 99.9% target are included
+
+project:
+  name: E-Commerce Product API
+  domain: ecommerce
+functional:
+  summary: Product API
+constraints:
+  platform: api
+  cloud: aws
+  language: javascript
+nfr:
+  availability:
+    target: 0.999

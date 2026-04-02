@@ -1,0 +1,401 @@
+{
+  "id": "saga-choreography",
+  "version": "1.0.0",
+  "title": "Saga Pattern (Choreography)",
+  "description": "Services publish/subscribe to events for local transactions; avoids coordinator but harder to reason about.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 8000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Saga choreography requires event infrastructure (message broker/event bus) plus multiple distributed services. Min ($100): Small-scale deployment with 3-5 services using AWS SNS/SQS ($20-30), EventBridge ($10-20), Lambda functions ($20-30), and DynamoDB for event sourcing ($20-30). Max ($5000): Production enterprise deployment with high-throughput Kafka/MSK cluster ($2000-2500), multiple microservices on ECS/EKS ($1500-2000), RDS for each service database ($800-1000), monitoring/observability stack ($400-500), and data egress costs ($200-300). Costs scale with number of services, event volume, and required durability/retention.",
+      "adoptionCost": "Very high complexity pattern requiring: (1) Deep understanding of distributed transactions and eventual consistency (40-60 hours learning/design), (2) Event schema design and versioning strategy (20-30 hours), (3) Implementing compensating transactions for each service (30-50 hours), (4) Building event routing and dead-letter handling (20-30 hours), (5) Complex debugging/tracing across services (20-30 hours), (6) Testing distributed failure scenarios (30-40 hours). Harder to reason about than orchestration-based sagas due to implicit control flow. Requires senior-level distributed systems expertise. Even with AI assistants, debugging event chains and ensuring saga correctness is labor-intensive. Total: 160-240 engineering hours at $50-80/hour blended rate.",
+      "licenseCost": "Pattern implementation uses open-source tools: Apache Kafka, RabbitMQ, or cloud-native services (SNS/SQS, EventBridge, Pub/Sub) with pay-as-you-go pricing. No proprietary saga orchestration engine required since choreography is event-driven. Monitoring tools like Jaeger, Prometheus, Grafana are open-source. Commercial options (Confluent Cloud, commercial APM tools) are optional enhancements, not requirements. Core pattern is implementable with $0 licensing costs.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "distributed-transaction-management",
+      "confidence": "high",
+      "reasoning": "Saga choreography provides distributed transaction management across microservices through event-driven coordination, allowing long-running business processes to span multiple services without a central coordinator."
+    },
+    {
+      "capability": "eventual-consistency",
+      "confidence": "high",
+      "reasoning": "This pattern inherently provides eventual consistency as services react to events asynchronously, with transactions being completed over time rather than atomically."
+    },
+    {
+      "capability": "loose-coupling",
+      "confidence": "high",
+      "reasoning": "Services are decoupled through event-driven communication, where services only need to know about events rather than direct dependencies on other services."
+    },
+    {
+      "capability": "event-bus",
+      "confidence": "high",
+      "reasoning": "Saga choreography IS an event bus pattern \u2014 services communicate exclusively through domain events, and this pattern establishes the event-driven coordination topology."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "event-bus",
+      "confidence": "high",
+      "reasoning": "Choreography-based sagas require an event bus or message broker for services to publish and subscribe to events that coordinate the distributed workflow.",
+      "optional": false
+    },
+    {
+      "capability": "schema-contract",
+      "confidence": "medium",
+      "reasoning": "Event schema governance is critical; using event-schema-registry is more specific and aligns with common tooling like Confluent Schema Registry or AWS Glue Schema Registry to ensure services agree on event formats.",
+      "optional": true
+    },
+    {
+      "capability": "idempotent-operations",
+      "confidence": "high",
+      "reasoning": "Services must handle duplicate events gracefully since event-driven systems may deliver messages more than once; idempotency ensures saga steps can be safely retried.",
+      "optional": false
+    },
+    {
+      "capability": "compensation-logic",
+      "confidence": "high",
+      "reasoning": "Sagas require the ability to rollback/undo operations when failures occur; each service must implement compensating logic to reverse its local transaction.",
+      "optional": true
+    },
+    {
+      "capability": "distributed-tracing",
+      "confidence": "high",
+      "reasoning": "Critical for debugging and monitoring choreographed workflows across services; without distributed tracing, it's extremely difficult to understand the flow of events and diagnose failures in multi-service sagas.",
+      "optional": false
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "distributed-2pc",
+      "saga-orchestration"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "saga",
+    "events",
+    "consistency"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Choreography with distributed event coordination across services limits availability to four nines due to cascading failure domains."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 100,
+      "reason": "Event-driven choreography introduces asynchronous processing overhead with message broker round-trips and service coordination delays."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Tail latency increases due to potential queue backpressure, retry storms, and cascading compensating transaction chains."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Recovery requires each service to restore state from event log and replay compensating transactions across the choreography graph."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000000,
+      "reason": "Throughput ceiling limited by event broker capacity and the overhead of publishing, routing, and processing choreographed saga events."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 50000,
+      "reason": "Read query throughput bounded by event sourcing materialized view refresh rates and eventual consistency propagation delays."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 10000,
+      "reason": "Write throughput constrained by distributed saga coordination overhead and compensating transaction processing across multiple services."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">=",
+      "value": 5,
+      "reason": "Saga choreography introduces significant async coordination overhead (event publishing, broker routing, compensating transactions). At very low write throughput, simpler synchronous patterns or orchestration may be more appropriate."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern supports audit logging through event streams but does not mandate it, allowing flexibility in compliance implementation."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compliance can be met with encrypted event streams and audit trails but requires additional security controls beyond the pattern itself."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA requirements for data deletion can be implemented via compensating transactions across choreographed services but are not enforced by the pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX financial controls are supported through immutable event logs and audit trails inherent to choreography but must be configured explicitly."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Choreography inherently provides eventual consistency with asynchronous event propagation and cannot guarantee read-your-writes semantics."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Strict durability is achievable through persistent event stores and synchronous broker acknowledgments but can be relaxed for performance."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Saga choreography is a cloud-agnostic architectural pattern implementable on any infrastructure with event messaging capabilities."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Choreography pattern is language-agnostic as services communicate via events with language-independent message formats like JSON or Protobuf."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Pattern applies to backend platforms where distributed transactions span multiple services including APIs, workers, and data pipelines."
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "==",
+      "value": true,
+      "reason": "Choreography fundamentally requires asynchronous event-driven messaging infrastructure for decentralized service coordination."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": true,
+      "reason": "Saga choreography is specifically designed to manage distributed transactions across multiple services without a central coordinator."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Real-time streaming platforms like Kafka can serve as the event backbone but simpler message queues also support choreography."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Document stores can be used for service state persistence but are not required for event-driven choreography coordination."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Key-value stores may be used for idempotency tracking or state storage but are not mandatory for saga choreography."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Graph databases are not required for saga choreography though event relationships and saga flows could be modeled as graphs."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Time-series databases are not inherent to choreography but may store event timelines for observability and debugging purposes."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLTP workloads commonly use sagas for transactional consistency but OLAP analytical workloads can also employ event choreography."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "OLAP analytical workloads can use choreography for distributed data transformations though pattern is more common in OLTP scenarios."
+    }
+  ],
+  "defaultConfig": {
+    "event_broker": "kafka",
+    "compensation_strategy": "automatic",
+    "event_ordering": "per_partition",
+    "idempotency_handling": "required",
+    "timeout_strategy": "exponential_backoff"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "event_broker": {
+        "type": "string",
+        "enum": [
+          "kafka",
+          "rabbitmq",
+          "aws_sns_sqs",
+          "azure_service_bus",
+          "google_pubsub"
+        ],
+        "description": "Message broker for event choreography. Kafka offers high throughput and ordering, RabbitMQ provides flexible routing, cloud options offer managed services with different consistency guarantees."
+      },
+      "compensation_strategy": {
+        "type": "string",
+        "enum": [
+          "automatic",
+          "manual",
+          "hybrid"
+        ],
+        "description": "How to handle rollback when saga fails. Automatic triggers compensating transactions immediately, manual requires operator intervention for critical operations, hybrid uses automatic with manual override capability."
+      },
+      "event_ordering": {
+        "type": "string",
+        "enum": [
+          "per_partition",
+          "global",
+          "none"
+        ],
+        "description": "Event ordering guarantees. Per-partition ensures order within same entity/key, global ensures total ordering (lower throughput), none allows maximum parallelism but no ordering."
+      },
+      "idempotency_handling": {
+        "type": "string",
+        "enum": [
+          "required",
+          "optional",
+          "none"
+        ],
+        "description": "Whether services must implement idempotent event handlers. Required prevents duplicate processing but adds complexity, optional allows services to choose, none simplifies implementation but risks duplicate effects."
+      },
+      "timeout_strategy": {
+        "type": "string",
+        "enum": [
+          "exponential_backoff",
+          "fixed_retry",
+          "circuit_breaker",
+          "none"
+        ],
+        "description": "How to handle service timeouts and failures. Exponential backoff gradually increases retry intervals, fixed retry uses constant intervals, circuit breaker fails fast after threshold, none requires manual intervention."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,23 @@
+# Platform - Batch Platform Without Batch Feature Flag
+#
+# A batch platform spec on GCP with a high throughput target (10,000 jobs/hour)
+# but without the batch_processing feature flag enabled. The batch platform
+# type requires the batch_processing feature to activate the necessary patterns,
+# so compilation fails when the feature is absent.
+#
+# Expected outcome:
+#   - compilation FAILS
+#   - batch platform requires batch_processing feature flag to be set
+#   - compiler rejects due to missing required feature for the batch platform
+
+constraints:
+  platform: batch
+  cloud: gcp
+nfr:
+  throughput:
+    peak_jobs_per_hour: 10000
+project:
+  name: Batch Platform
+  domain: test
+functional:
+  summary: 'Test scenario: Batch Platform'

@@ -1,0 +1,277 @@
+{
+  "id": "obs-golden-signals",
+  "version": "1.0.0",
+  "title": "Golden Signals Monitoring",
+  "description": "Monitor latency/traffic/errors/saturation; define SLIs and alert policies.",
+  "types": [
+    "ops",
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 3000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 5000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 3000,
+    "costNotes": "Seeded via heuristics; validate against current pricing and expected workload (throughput, storage, retention, egress).",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Golden Signals monitoring requires metrics collection, storage, and alerting infrastructure. Min ($100): Small-scale deployment with ~5-10 services using managed observability platforms (e.g., Datadog free tier + small overages, Grafana Cloud starter, or self-hosted Prometheus/Grafana on minimal compute ~$50 + alert management ~$50). Covers basic metrics ingestion (~100K metrics/min), 15-day retention, and simple alerting. Max ($5000): Enterprise-scale with 100+ microservices, high-cardinality metrics (~10M+ metrics/min), 90-day retention, distributed tracing integration, and advanced alerting. Includes costs for: metrics storage ($1500-2000), log aggregation for error tracking ($1000-1500), APM/tracing ($1000-1500), alert management platform ($500-1000). Variables: service count, metric cardinality, retention period, ingestion rate, and whether using managed SaaS (Datadog $15-31/host, New Relic $0.30/GB) vs self-hosted (compute + storage + maintenance).",
+      "adoptionCost": "Medium-high complexity pattern requiring significant implementation effort. Breakdown: (1) Learning curve: Understanding SLI/SLO concepts, alert design, and avoiding alert fatigue (8-16 hours, $400-800). (2) Instrumentation: Adding latency/traffic/error/saturation metrics to existing services, may require code changes across multiple services (20-40 hours, $1000-2000). (3) Dashboard creation: Building meaningful visualizations for each golden signal per service (8-16 hours, $400-800). (4) Alert policy definition: Establishing thresholds, determining appropriate SLIs, configuring escalation policies, testing alert accuracy (12-24 hours, $600-1200). (5) Integration: Connecting monitoring stack to incident management, on-call rotation setup (8-16 hours, $400-800). Total assumes mid-level DevOps/SRE expertise ($50-75/hour effective rate with AI assistance reducing time by 30-40%). Lower with pre-existing observability infrastructure, higher for greenfield or legacy systems requiring extensive instrumentation.",
+      "licenseCost": "Open-source tooling dominates this space with no mandatory licensing costs. Core stack can use: Prometheus (metrics collection/storage), Grafana (visualization), Alertmanager (alert routing), all under Apache 2.0 or AGPL licenses. OpenTelemetry instrumentation libraries are fully open-source. Optional commercial platforms (Datadog, New Relic, Grafana Cloud) operate on consumption-based SaaS models (accounted in monthly costs) rather than upfront licenses. Even enterprise features (SSO, RBAC, advanced analytics) are typically included in SaaS pricing tiers without separate license fees. Organizations may choose commercial support contracts ($5000-20000/year) but these are optional operational expenses, not required licenses for pattern implementation.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "sli-slo-monitoring",
+      "confidence": "high",
+      "reasoning": "Golden Signals monitoring directly provides the ability to define and track Service Level Indicators (SLIs) and Service Level Objectives (SLOs) through the four golden signals (latency, traffic, errors, saturation). This pattern actively monitors and measures these metrics."
+    },
+    {
+      "capability": "sli-definition",
+      "confidence": "high",
+      "reasoning": "Defining SLIs is a core activity of the Golden Signals pattern \u2014 latency, traffic, error rate, and saturation are the four canonical SLI dimensions. This capability satisfies ops-slo-error-budgets which requires SLI definitions to calculate error budgets."
+    },
+    {
+      "capability": "operational-alerting",
+      "confidence": "high",
+      "reasoning": "This pattern explicitly includes defining alert policies based on golden signals thresholds, providing a structured alerting capability that notifies teams when services deviate from expected performance levels."
+    },
+    {
+      "capability": "service-health-metrics",
+      "confidence": "high",
+      "reasoning": "The four golden signals (latency, traffic, errors, saturation) collectively provide comprehensive service health metrics that other patterns or systems can consume to understand service reliability and performance."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "metrics-collection",
+      "confidence": "high",
+      "reasoning": "Golden Signals monitoring requires the ability to collect metrics including latency measurements, request counts, error rates, and resource utilization. Without metrics collection, the pattern cannot gather the observability data needed to track these signals.",
+      "optional": false
+    },
+    {
+      "capability": "timeseries-storage",
+      "confidence": "high",
+      "reasoning": "To track SLIs/SLOs over time and calculate error budgets, this pattern requires time-series data storage for historical metric analysis and trend detection. This enables meaningful SLO compliance tracking and alerting.",
+      "optional": false
+    }
+  ],
+  "tags": [
+    "observability",
+    "sre"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": ">=",
+      "value": 0.99,
+      "reason": "Golden Signals monitoring and SLO tracking are most valuable for high-availability services where observability directly impacts reliability goals."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 2,
+      "reason": "Alert policies on Golden Signals enable rapid incident detection within 1-2 minutes, supporting RTO targets of 2 minutes or greater."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Golden Signals monitoring inherently captures traffic patterns and error metrics but does not require dedicated audit logging."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 1000000,
+      "reason": "Alerting and SLO tracking apply to high-throughput systems; Golden Signals scales to millions of requests/hour via aggregated metrics."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "Error rate and saturation tracking via aggregated counters scales to high write QPS without imposing per-request overhead."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Golden Signals monitoring is compatible with GDPR when metric labels are configured to exclude PII."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SLI/SLO monitoring is compatible with HIPAA environments when telemetry data does not contain PHI."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Aggregated metrics and alerting are compatible with CCPA compliance requirements."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Golden Signals observability supports SOX audit readiness through error rate and availability tracking."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Golden Signals monitoring methodology is cloud-agnostic and can be implemented with any cloud provider or on-premises infrastructure."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp",
+        "n/a"
+      ],
+      "reason": "Golden Signals monitoring is a language-agnostic observability pattern that applies to systems built in any programming language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training",
+        "ml-inference",
+        "iot",
+        "library",
+        "cli",
+        "n/a"
+      ],
+      "reason": "Golden Signals apply to any backend system that serves requests or processes workloads regardless of platform type."
+    }
+  ],
+  "defaultConfig": {
+    "latency_percentile": "p95",
+    "error_rate_threshold": "1_percent",
+    "saturation_metric": "cpu_memory",
+    "sli_window": "30_days",
+    "alert_severity_levels": "critical_warning"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "latency_percentile": {
+        "type": "string",
+        "enum": [
+          "p50",
+          "p95",
+          "p99",
+          "p99.9"
+        ],
+        "description": "Percentile to track for latency SLI. p50 for general health, p95 for user experience, p99/p99.9 for tail latency and critical services."
+      },
+      "error_rate_threshold": {
+        "type": "string",
+        "enum": [
+          "0.1_percent",
+          "1_percent",
+          "5_percent"
+        ],
+        "description": "Acceptable error rate for SLO. 0.1% for critical services (99.9% availability), 1% for standard services (99% availability), 5% for non-critical services."
+      },
+      "saturation_metric": {
+        "type": "string",
+        "enum": [
+          "cpu_memory",
+          "queue_depth",
+          "connection_pool",
+          "disk_io"
+        ],
+        "description": "Primary saturation metric to monitor. CPU/memory for compute-bound, queue depth for async workers, connection pool for databases, disk I/O for storage systems."
+      },
+      "sli_window": {
+        "type": "string",
+        "enum": [
+          "7_days",
+          "30_days",
+          "90_days"
+        ],
+        "description": "Rolling window for SLI calculation. 7 days for fast iteration, 30 days for standard SLO tracking, 90 days for long-term reliability trends."
+      },
+      "alert_severity_levels": {
+        "type": "string",
+        "enum": [
+          "critical_only",
+          "critical_warning",
+          "critical_warning_info"
+        ],
+        "description": "Alert severity tiers. Critical-only for minimal noise, critical+warning for balanced alerting, all three levels for comprehensive monitoring with on-call escalation."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<",
+      "value": 1,
+      "reason": "At very low traffic volumes, the operational overhead of comprehensive Golden Signals monitoring and alerting may outweigh the benefits.",
+      "message": "obs-golden-signals: peak read QPS is {actual} req/s (<1). Golden Signals monitoring infrastructure may be over-engineered for this traffic volume."
+    }
+  ]
+}

@@ -1,0 +1,446 @@
+{
+  "id": "db-managed-mysql--planetscale",
+  "version": "1.0.0",
+  "title": "Serverless MySQL (PlanetScale)",
+  "description": "PlanetScale is a serverless MySQL-compatible database powered by Vitess. Key features: non-blocking schema changes (no downtime migrations), database branching, horizontal sharding, and deploy requests for schema migrations. Ideal for teams needing MySQL compatibility with cloud-native scalability and safe schema deployment workflows.",
+  "types": [
+    "data",
+    "platform"
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "db-managed-postgres",
+      "db-managed-postgres--render",
+      "db-managed-postgres--supabase",
+      "db-managed-postgres--railway",
+      "db-managed-postgres--neon",
+      "arch-microservices",
+      "policy-no-free-saas-for-pii"
+    ]
+  },
+  "provides": [
+    {
+      "capability": "relational-database",
+      "confidence": "high",
+      "reasoning": "PlanetScale is a fully-managed MySQL-compatible relational database powered by Vitess, providing ACID transactions and SQL query support."
+    },
+    {
+      "capability": "auto-scaling",
+      "confidence": "high",
+      "reasoning": "PlanetScale uses Vitess under the hood to provide horizontal sharding and automatic scaling across multiple database shards."
+    },
+    {
+      "capability": "non-blocking-schema-migrations",
+      "confidence": "high",
+      "reasoning": "PlanetScale's deploy request workflow enables schema changes without table locks, a unique capability that differentiates it from traditional MySQL deployments."
+    },
+    {
+      "capability": "database-branching",
+      "confidence": "high",
+      "reasoning": "PlanetScale provides a branching model for databases similar to git branches, allowing safe development and staging workflows for schema changes."
+    },
+    {
+      "capability": "connection-pooling",
+      "confidence": "high",
+      "reasoning": "PlanetScale includes built-in connection pooling via PlanetScale Proxy, enabling high concurrency without exhausting database connections."
+    },
+    {
+      "capability": "managed-database",
+      "confidence": "high",
+      "reasoning": "PlanetScale is a fully-managed serverless database service with automated backups, monitoring, and zero-downtime deployments."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "internet-connectivity",
+      "confidence": "high",
+      "reasoning": "As a cloud SaaS database, PlanetScale requires internet connectivity for application connections to the managed database clusters.",
+      "optional": true
+    },
+    {
+      "capability": "mysql-client",
+      "confidence": "high",
+      "reasoning": "PlanetScale is MySQL-compatible and requires any MySQL-compatible driver or client library for connecting from application code.",
+      "optional": true
+    }
+  ],
+  "preferredProviders": [
+    "planetscale"
+  ],
+  "defaultConfig": {
+    "provider": "planetscale",
+    "connection_pooling": true,
+    "schema_migrations": "deploy-requests",
+    "enable_branching": true,
+    "boost_mode": false,
+    "ssl_mode": "require"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "planetscale"
+        ],
+        "description": "Serverless MySQL-compatible database provider (PlanetScale is the primary option for this pattern)"
+      },
+      "connection_pooling": {
+        "type": "boolean",
+        "description": "Enable PlanetScale's built-in connection pooling via PlanetScale Proxy (recommended for serverless and high-concurrency workloads)"
+      },
+      "schema_migrations": {
+        "type": "string",
+        "enum": [
+          "deploy-requests",
+          "direct"
+        ],
+        "description": "deploy-requests: use PlanetScale's safe migration workflow (recommended); direct: apply migrations directly (faster but less safe)"
+      },
+      "enable_branching": {
+        "type": "boolean",
+        "description": "Enable database branching for dev/staging workflows, allowing schema changes to be tested in isolated branches before production deployment"
+      },
+      "boost_mode": {
+        "type": "boolean",
+        "description": "Enable PlanetScale Boost for in-memory query caching (additional cost, improves read performance for repeated queries)"
+      },
+      "ssl_mode": {
+        "type": "string",
+        "enum": [
+          "require",
+          "verify-identity"
+        ],
+        "description": "PlanetScale requires TLS for all connections. 'verify-identity' adds certificate hostname validation."
+      }
+    }
+  },
+  "cost": {
+    "freeTierEligible": false,
+    "estimatedMonthlyRangeUsd": {
+      "min": 39.0,
+      "max": 500.0
+    },
+    "adoptionCost": 600.0,
+    "licenseCost": 0.0,
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "PlanetScale removed their free tier in March 2024. The cheapest available plan is Scaler Pro at $39/month (10GB storage, 1 production branch, 1 development branch). Mid-tier usage with more storage, branches, and higher throughput reaches $150-300/month. High-traffic production workloads with multiple production branches, horizontal sharding, PlanetScale Boost caching, and enterprise features can reach $500+/month. The $500 max represents a solid production deployment without enterprise tier pricing. Enterprise workloads with dedicated infrastructure and custom SLAs can exceed thousands per month.",
+      "adoptionCost": "Medium adoption complexity. Developers familiar with MySQL can connect quickly using existing MySQL drivers. However, PlanetScale has MySQL feature restrictions (no foreign key constraints by default, no full-text search in some configurations) that require schema adjustments. The deploy request workflow for schema changes is new for most teams (1-2 days to learn). Setting up branching strategies for dev/staging adds configuration overhead. Vitess-specific behaviors (e.g., scattered queries across shards) need awareness for performance-sensitive queries. With AI coding assistants, connection setup and query writing is straightforward; the main learning investment is in PlanetScale's migration and branching model.",
+      "licenseCost": "PlanetScale operates on a consumption-based SaaS pricing model with no upfront license fees. The underlying Vitess engine is open source (Apache 2.0), but PlanetScale itself is a commercial managed service. No separate database license purchase required; costs are entirely usage-based (storage, rows read/written, branches). The Scaler Pro plan starts at $39/month with no per-seat licensing. Enterprise agreements are available but optional.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "tags": [
+    "database",
+    "mysql",
+    "vitess",
+    "serverless",
+    "relational",
+    "planetscale",
+    "schema-migrations",
+    "branching"
+  ],
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "PlanetScale provides up to 99.99% availability with their managed Vitess clusters and automatic failover"
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 5,
+      "reason": "PlanetScale serverless MySQL has a minimum p95 latency of ~5ms for simple indexed queries due to connection overhead and network round-trip"
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "At p99, PlanetScale latency accounts for tail latency from Vitess routing overhead and connection pool contention, with a floor of ~20ms"
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "PlanetScale automated failover via Vitess typically completes within 1-2 minutes for primary failover events"
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 500000,
+      "reason": "PlanetScale with Vitess horizontal sharding supports up to ~500K read QPS across shards with proper schema and indexing"
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100000,
+      "reason": "PlanetScale write throughput scales horizontally via Vitess sharding up to ~100K write QPS across a distributed cluster"
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale provides query insights and audit logging capabilities available on higher tiers but optional for all workloads"
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "PlanetScale supports row-level isolation, schema-per-tenant via separate databases/branches, or full per-tenant database isolation patterns"
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale supports PII workloads with encryption at rest and in transit; works for both PII and non-PII data scenarios"
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale offers HIPAA BAA on enterprise plans; also suitable for non-healthcare applications without HIPAA requirements"
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale supports GDPR compliance through data residency options and deletion capabilities; works for both GDPR and non-GDPR use cases"
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA requirements can be met through standard data access controls and deletion workflows; pattern works for non-CCPA cases as well"
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compliance supported through audit trails and access controls on appropriate tiers; also applicable to non-financial applications"
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale with Vitess supports read-your-writes consistency when routing reads to the primary; optional for workloads tolerating eventual consistency on replicas"
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale provides strict durability via synchronous replication and automatic backups; also supports relaxed durability configurations for performance"
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "gcp"
+      ],
+      "reason": "PlanetScale infrastructure runs on AWS and GCP; accessible from any cloud or on-premises environment with internet connectivity"
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "c",
+        "cpp",
+        "swift",
+        "dart"
+      ],
+      "reason": "PlanetScale is MySQL-compatible and any language with a MySQL or compatible driver can connect to it, covering all major languages"
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "cli"
+      ],
+      "reason": "PlanetScale is a serverless relational database accessible from any platform type that can establish a MySQL connection over the internet"
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "planetscale"
+      ],
+      "reason": "Pattern specifically requires PlanetScale as the managed MySQL database provider"
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "==",
+      "value": true,
+      "reason": "PlanetScale is specifically designed for OLTP transactional workloads; this pattern is only applicable when OLTP workload is required"
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "PlanetScale is not suitable for OLAP analytical workloads; the pattern does not apply when olap_workload is required"
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale does not provide native vector search, but can coexist with a separate vector database service in the same architecture"
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "==",
+      "value": false,
+      "reason": "PlanetScale is a relational MySQL database and is not applicable when a document-oriented data model is required"
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale works with or without a separate caching layer; PlanetScale Boost provides optional in-memory query caching"
+    },
+    {
+      "path": "/constraints/features/async_messaging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale works alongside async messaging patterns and does not conflict with message queue architectures"
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale can store AI model metadata, inference results, and structured application data regardless of AI inference requirements"
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale supports multi-tenant architectures through row-level isolation, schema-per-tenant, or per-tenant database patterns"
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale supports batch processing workloads using standard MySQL queries and transactions alongside real-time OLTP workloads"
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale supports ACID transactions within a single shard; cross-shard transactions are possible via Vitess but with limitations"
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PlanetScale does not provide native change data capture streaming out of the box, but can be paired with external CDC tools"
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MySQL relational tables can serve simple key-value lookups, but PlanetScale is not a dedicated key-value store"
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": false,
+      "reason": "PlanetScale is a relational database and is not applicable when graph database capabilities are required"
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "MySQL can store time-series data with timestamp columns but is not optimized for high-volume time-series workloads; works for moderate time-series needs"
+    }
+  ],
+  "warn_nfr": [
+    {
+      "path": "/cost/ceilings/monthly_operational_usd",
+      "op": "<",
+      "value": 39,
+      "reason": "PlanetScale removed their free tier in March 2024. The minimum Scaler Pro plan starts at $39/month. This pattern is not suitable for zero-budget or sub-$39/month cost constraints.",
+      "message": "db-managed-mysql--planetscale: monthly cost ceiling is {actual} USD (<$39). PlanetScale's cheapest plan (Scaler Pro) starts at $39/month \u2014 no free tier is available. Consider a self-hosted MySQL or a free-tier alternative."
+    }
+  ]
+}

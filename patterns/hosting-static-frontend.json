@@ -1,0 +1,273 @@
+{
+  "id": "hosting-static-frontend",
+  "version": "1.0.0",
+  "title": "Static Frontend Hosting on Free/Low-Cost Platforms",
+  "description": "Host static frontends using free/low-cost static hosting platforms (e.g., Netlify/Vercel/Cloudflare Pages) to minimize hosting OPEX; validate quotas, SLAs, and compliance needs.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 750.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 200.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "netlify",
+      "vercel",
+      "cloudflare-pages",
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Estimates are intentionally conservative; verify against current pricing before committing. Free tiers are quota-limited; production use may require paid plans and compliance agreements.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($0) represents free tier usage for low-traffic sites (e.g., Netlify free: 100GB bandwidth, Vercel free: 100GB bandwidth, Cloudflare Pages unlimited requests on free tier). Max ($200) represents mid-tier paid plans needed when exceeding free quotas - typically 1TB+ bandwidth, custom domains, team collaboration features, and SLA guarantees. Production sites with moderate traffic (500K-1M monthly visitors) typically fall in $20-200/month range. High-traffic enterprise scenarios would exceed this range but aren't the primary use case for this cost-optimization pattern.",
+      "adoptionCost": "Medium complexity adoption. Requires: (1) Frontend build pipeline integration (2-4 hours: configuring CI/CD, build commands, environment variables), (2) DNS configuration and SSL setup (1-2 hours), (3) Migration of existing assets if applicable (2-8 hours depending on current hosting), (4) Testing deployment workflow and rollback procedures (2-4 hours), (5) Team training on platform-specific features like preview deployments, edge functions (2-4 hours). Total 10-20 engineer hours at $50-75/hour blended rate. Low learning curve for teams familiar with Git-based deployments, but requires understanding of platform limitations, quota monitoring, and fallback strategies for compliance requirements.",
+      "licenseCost": "All major static hosting platforms (Netlify, Vercel, Cloudflare Pages, AWS Amplify, Azure Static Web Apps, GCP Firebase Hosting) offer free tiers with no upfront license costs. These are usage-based SaaS platforms - costs scale with consumption (bandwidth, builds, team seats) rather than licensing. No proprietary tooling or software licenses required; uses standard web technologies and open-source build tools (webpack, Vite, Next.js, etc.).",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "static-hosting",
+      "confidence": "high",
+      "reasoning": "This pattern specifically provides static file hosting for frontend applications, which is its primary purpose. The capability name is clear and specific."
+    },
+    {
+      "capability": "cdn",
+      "confidence": "medium",
+      "reasoning": "Free/low-cost platforms like Netlify, Vercel, and Cloudflare Pages include global CDN distribution as a core feature, making this a valid provided capability for content delivery optimization."
+    },
+    {
+      "capability": "ssl-termination",
+      "confidence": "high",
+      "reasoning": "These platforms include free SSL certificates by default and handle HTTPS termination automatically for all hosted sites."
+    },
+    {
+      "capability": "automatic-deployment",
+      "confidence": "high",
+      "reasoning": "These platforms offer built-in deployment pipelines that automatically deploy on git push or merge, eliminating manual deployment steps."
+    },
+    {
+      "capability": "preview-environments",
+      "confidence": "high",
+      "reasoning": "Most of these platforms support branch/PR previews, automatically creating temporary preview URLs for each pull request or branch."
+    },
+    {
+      "capability": "domain-management",
+      "confidence": "medium",
+      "reasoning": "These platforms handle DNS configuration and custom domain setup, though the actual domain registration typically happens externally."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "build-artifacts",
+      "confidence": "high",
+      "reasoning": "Static hosting platforms require pre-built static assets (HTML, CSS, JS) to deploy. The pattern depends on a build process that produces these artifacts.",
+      "optional": true
+    },
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Platforms like Netlify, Vercel, and Cloudflare Pages typically integrate with Git repositories for automated deployments, making source control a practical requirement.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "policy-no-free-saas-for-pii",
+      "hosting-static-frontend--netlify",
+      "hosting-static-frontend--vercel",
+      "hosting-static-frontend--cloudflare-pages"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "cdn",
+    "static-hosting",
+    "netlify",
+    "frontend"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable broadly"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.995,
+      "reason": "Free/low-cost static hosting platforms lack SLA guarantees; availability targets above 99.5% may not be reliably met without enterprise-grade hosting."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "CDN-backed static hosting achieves p95 latency of at least 50ms including edge propagation."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 200,
+      "reason": "CDN cache misses and regional variations result in p99 latency of at least 200ms."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Static hosting platforms provide instant rollback to previous deployments achieving RTO of at least 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100000000,
+      "reason": "Free/low-cost tiers enforce bandwidth and request quotas limiting throughput to 100M jobs/hour."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 5000,
+      "reason": "Free/low-cost static hosting platforms have bandwidth and request quotas that may be exceeded at high traffic, risking service throttling or unexpected costs."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100,
+      "reason": "Static hosting write operations (deployments) are infrequent and rate-limited by CI/CD pipelines."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": false,
+      "reason": "Free/low-cost static hosting platforms may not provide compliance certifications (GDPR, HIPAA, SOC2) required for PII handling."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is GDPR-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is CCPA-agnostic; compliance depends on data handling in the application layer, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is HIPAA-agnostic; compliance depends on data handling and provider BAAs, not this pattern."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Pattern is SOX-agnostic; compliance depends on audit controls in the application layer, not this pattern."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Static hosting platforms like Netlify/Vercel/Cloudflare Pages are cloud-agnostic and multi-cloud compatible."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Static hosting serves pre-built HTML/CSS/JS assets regardless of the build language or framework used."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "==",
+      "value": "web",
+      "reason": "Static hosting platforms specifically serve web frontends via HTTP/HTTPS."
+    }
+  ],
+  "defaultConfig": {
+    "provider": "netlify",
+    "cdn_enabled": true,
+    "auto_ssl": true,
+    "build_command_required": false,
+    "preview_deployments": true
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "provider": {
+        "type": "string",
+        "enum": [
+          "netlify",
+          "vercel",
+          "cloudflare-pages"
+        ],
+        "description": "Static hosting provider choice. Netlify: generous free tier, simple setup. Vercel: optimized for Next.js/React, edge functions. Cloudflare Pages: global CDN, Workers integration, unlimited bandwidth on free tier"
+      },
+      "cdn_enabled": {
+        "type": "boolean",
+        "description": "Enable CDN edge caching for global distribution. Reduces latency and bandwidth costs but may complicate cache invalidation"
+      },
+      "auto_ssl": {
+        "type": "boolean",
+        "description": "Automatic SSL/TLS certificate provisioning and renewal. Essential for production but may require DNS configuration"
+      },
+      "build_command_required": {
+        "type": "boolean",
+        "description": "Whether platform should run build commands (npm run build) or deploy pre-built artifacts. Pre-built reduces build minutes usage on free tiers"
+      },
+      "preview_deployments": {
+        "type": "boolean",
+        "description": "Enable automatic preview deployments for pull requests. Useful for testing but consumes quota on free tiers"
+      }
+    }
+  },
+  "warn_nfr": []
+}

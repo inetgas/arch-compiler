@@ -1,0 +1,351 @@
+{
+  "id": "hosting-static-frontend--cloudflare-pages",
+  "version": "1.0.0",
+  "title": "Static Frontend Hosting on Cloudflare Pages",
+  "description": "Host static frontends and JAMstack sites on Cloudflare Pages, served from Cloudflare\u2019s global edge network with integrated Workers support for server-side logic. Provides edge-native performance for globally distributed audiences; no bandwidth caps differentiate it from other static hosts.",
+  "types": [
+    "cost",
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "cloudflare-pages"
+    ],
+    "costCeilingCompatibleUsd": 0,
+    "costNotes": "Free tier: unlimited bandwidth, unlimited requests for static assets, 500 builds/month, unlimited sites, Workers integration (100K requests/day). No bandwidth overages make this the most cost-predictable free hosting option.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Cloudflare Pages free tier provides unlimited bandwidth and unlimited requests for static assets, 500 builds/month, unlimited sites, and Cloudflare Workers integration at 100K requests/day. The min=0 and max=0 reflect that this pattern is designed to remain entirely within the free tier. Unlike Netlify (100GB bandwidth cap), Cloudflare Pages has no bandwidth ceiling, making cost overruns from traffic spikes impossible. Workers free tier covers 100K requests/day (3M/month), sufficient for most MVP use cases. If Workers usage exceeds free limits, the paid plan starts at $5/month, but that represents a different cost pattern.",
+      "adoptionCost": "Low adoption cost leveraging Cloudflare's streamlined deployment model. Implementation involves: (1) Structuring application as JAMstack with a static site generator (1-3 hours), (2) Configuring Git-based deployment via Cloudflare dashboard or wrangler CLI (30 minutes), (3) Setting up Workers Functions if needed (1-2 hours for basic edge logic), (4) Configuring D1 if simple edge database needed (1 hour). Total: 3-6 hours at $50/hour blended rate with AI coding assistants = $150-$300. Slightly lower than Netlify due to simpler configuration model and no built-in forms/identity to configure. The wrangler CLI and abundant documentation make setup straightforward.",
+      "licenseCost": "Cloudflare Pages free tier requires no license fees or upfront payments. The free tier is permanently available (not a trial) with unlimited bandwidth\u2014a significant cost advantage. No commercial licenses, enterprise agreements, or per-seat costs. The only potential costs are optional paid features (Workers Paid at $5/month, D1 beyond free limits) or KV storage beyond free limits, but the core hosting is genuinely $0 with no bandwidth ceiling.",
+      "source": "LLM analysis (as of 18-Feb-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "static-hosting",
+      "confidence": "high",
+      "reasoning": "Cloudflare Pages' core offering is globally distributed static site hosting on Cloudflare's edge network, making this a primary capability."
+    },
+    {
+      "capability": "serverless-functions",
+      "confidence": "high",
+      "reasoning": "Cloudflare Workers integration provides edge serverless functions with 100K requests/day free, enabling backend logic at the edge."
+    },
+    {
+      "capability": "cdn-distribution",
+      "confidence": "high",
+      "reasoning": "Cloudflare's global edge network (300+ data centers) provides best-in-class CDN distribution with automatic edge caching for all static assets."
+    },
+    {
+      "capability": "build-automation",
+      "confidence": "high",
+      "reasoning": "500 builds/month allocation provides CI/CD capability for automated deployments triggered by Git commits."
+    },
+    {
+      "capability": "git-based-deployment",
+      "confidence": "high",
+      "reasoning": "Cloudflare Pages is fundamentally Git-based with GitHub/GitLab integration, enabling continuous deployment from repository changes."
+    },
+    {
+      "capability": "edge-computing",
+      "confidence": "medium",
+      "reasoning": "Cloudflare Workers run at the edge in 300+ locations globally, enabling compute execution close to end users with sub-50ms latency."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "static-site-hosting",
+      "confidence": "high",
+      "reasoning": "JAMstack architecture requires a tool to build static HTML/CSS/JS (e.g., Next.js, Hugo, Astro, SvelteKit) before deployment to Cloudflare Pages.",
+      "optional": true
+    },
+    {
+      "capability": "git-repository",
+      "confidence": "high",
+      "reasoning": "Cloudflare Pages' continuous deployment model requires source code in a Git repository for automatic builds and deployments.",
+      "optional": true
+    },
+    {
+      "capability": "frontend-framework",
+      "confidence": "medium",
+      "reasoning": "JAMstack prototypes/MVPs typically need React/Vue/Svelte/Astro or similar framework to build static site content and interactive features.",
+      "optional": true
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "hosting-static-frontend",
+      "hosting-static-frontend--netlify",
+      "hosting-static-frontend--vercel",
+      "policy-no-free-saas-for-pii"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "cost",
+    "free-tier",
+    "cloudflare",
+    "cloudflare-pages",
+    "jamstack",
+    "static-hosting",
+    "edge",
+    "cdn",
+    "unlimited-bandwidth",
+    "mvp"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Cloudflare Pages is publicly available"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Cloudflare's global edge network provides very high availability even on free tier, with 300+ PoPs providing redundancy. No SLA on free tier but empirical uptime is consistently above 99.9%."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Cloudflare's global edge network delivers static assets from the nearest of 300+ PoPs, achieving sub-50ms p95 latency globally. Edge proximity makes this significantly faster than origin-based hosting."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 50,
+      "reason": "Cloudflare's edge network minimizes p99 latency by serving content from geographically close PoPs, with occasional cache misses introducing modest overhead."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Instant rollback to previous deployments via dashboard or wrangler CLI enables RTO as low as 1 minute."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 360000,
+      "reason": "Unlimited bandwidth for static assets with Workers capped at 100K requests/day (approximately 4,167/hour sustained, with burst headroom). Static asset throughput is effectively unlimited."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 500,
+      "reason": "Unlimited bandwidth for static reads allows very high read QPS. Workers-dependent reads are rate-limited by the 100K requests/day Workers free tier."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 50,
+      "reason": "Write operations require Workers or external services; constrained by 100K Workers requests/day free tier and external service limits."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "==",
+      "value": false,
+      "reason": "Cloudflare Pages free/standard tier does not offer a HIPAA BAA; not suitable for PHI."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem",
+        "n/a"
+      ],
+      "reason": "Cloudflare Pages is a cloud-agnostic SaaS platform that abstracts underlying infrastructure; backend services can reside on any cloud."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Cloudflare Pages supports static site generators and Workers functions in multiple languages. Workers supports JavaScript, TypeScript, Rust (via Wasm), and Python (beta)."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "api"
+      ],
+      "reason": "Cloudflare Pages is designed for web and JAMstack applications; Workers enables API endpoints; mobile apps can consume the hosted APIs and static assets."
+    },
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "cloudflare-pages"
+      ],
+      "reason": "Pattern specifically requires Cloudflare Pages as the hosting provider."
+    },
+    {
+      "path": "/constraints/features/caching",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloudflare's edge CDN provides automatic caching for all static assets; pattern works with or without application-level caching."
+    },
+    {
+      "path": "/constraints/features/multi_tenancy",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Multi-tenancy is supported at small scale with external free-tier databases or Workers KV, but not a pattern requirement."
+    },
+    {
+      "path": "/constraints/features/batch_processing",
+      "op": "==",
+      "value": false,
+      "reason": "Cloudflare Workers have CPU time limits (10ms free tier, 50ms paid) that preclude batch processing workloads."
+    },
+    {
+      "path": "/constraints/features/distributed_transactions",
+      "op": "==",
+      "value": false,
+      "reason": "Cloudflare Workers edge architecture and free tier limitations do not support complex distributed transaction coordination."
+    },
+    {
+      "path": "/constraints/features/real_time_streaming",
+      "op": "==",
+      "value": false,
+      "reason": "Cloudflare Pages free tier does not include WebSocket or real-time streaming capabilities; Durable Objects (paid) would be needed for stateful real-time features."
+    },
+    {
+      "path": "/constraints/features/vector_search",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Free tiers of external vector databases (Pinecone, Supabase) can be integrated via Workers for limited vector search in prototypes."
+    },
+    {
+      "path": "/constraints/features/document_store",
+      "op": "==",
+      "value": false,
+      "reason": "Cloudflare Pages does not provide document database services; document storage requires external services outside this pattern."
+    },
+    {
+      "path": "/constraints/features/key_value_store",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Cloudflare Workers KV provides limited free-tier key-value storage (1GB storage, 100K reads/day, 1K writes/day), suitable for lightweight caching or config storage."
+    },
+    {
+      "path": "/constraints/features/graph_database",
+      "op": "==",
+      "value": false,
+      "reason": "Cloudflare Pages does not provide graph database services; graph database requirements need external providers."
+    },
+    {
+      "path": "/constraints/features/time_series_db",
+      "op": "==",
+      "value": false,
+      "reason": "Cloudflare Pages is not designed for time-series data storage; requires external time-series database services."
+    },
+    {
+      "path": "/constraints/features/oltp_workload",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "D1 (Cloudflare's edge SQLite) provides limited free-tier OLTP support (10M rows/day reads, 1M writes/day); pattern works for both OLTP and non-OLTP use cases."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": false,
+      "reason": "Cloudflare Pages is not designed for analytical processing workloads; optimized for static sites and lightweight edge functions."
+    }
+  ],
+  "defaultConfig": {
+    "cdn_provider": "cloudflare",
+    "enable_workers": false,
+    "enable_d1": false,
+    "builds_per_month": 500
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "cdn_provider": {
+        "type": "string",
+        "enum": [
+          "cloudflare"
+        ],
+        "description": "CDN provider for static asset delivery. Cloudflare Pages exclusively uses Cloudflare's global edge network (300+ PoPs) for asset distribution."
+      },
+      "enable_workers": {
+        "type": "boolean",
+        "description": "Enable Cloudflare Workers for serverless edge functions (100K requests/day free). Workers run at the edge in 300+ locations, enabling sub-50ms serverless compute globally. Required for dynamic API routes or server-side logic."
+      },
+      "enable_d1": {
+        "type": "boolean",
+        "description": "Enable D1 SQLite database at edge (10M rows/day read, 1M writes/day free). Useful for simple data needs without external database. D1 runs co-located with Workers for minimal latency. Requires enable_workers=true."
+      },
+      "builds_per_month": {
+        "type": "integer",
+        "description": "Maximum builds per month on the free tier (500). Each Git push to connected branches triggers a build. Monitor usage to avoid exceeding the limit, which would halt deployments until the next billing cycle."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": ">",
+      "value": 100,
+      "reason": "While static asset reads are unlimited, very high QPS through Workers (>100 req/s sustained) will exhaust the 100K requests/day Workers free tier within minutes.",
+      "message": "hosting-static-frontend--cloudflare-pages: peak read QPS is {actual} req/s (>100). If requests route through Workers, the 100K requests/day free tier may be exhausted quickly. Static asset reads are unlimited and unaffected."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": ">",
+      "value": 25,
+      "reason": "Write operations through Workers will exhaust the 100K requests/day free tier at sustained rates above 25 req/s, causing 429 errors until the daily limit resets.",
+      "message": "hosting-static-frontend--cloudflare-pages: peak write QPS is {actual} req/s (>25). Workers free tier (100K requests/day) will be exhausted quickly at this rate, causing throttling."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+# Config Override - User Overrides Pattern Defaults
+#
+# An agnostic API spec with 99.9% availability target and on_call: false in the
+# operating model. This tests that user-supplied operating model values override
+# compiler inference - specifically that on_call can be explicitly set to false
+# even when the availability target might suggest otherwise.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - high-availability patterns are selected for 99.9% target
+#   - on_call: false is preserved in the compiled output (no inference override)
+
+nfr:
+  availability:
+    target: 0.999
+operating_model:
+  on_call: false
+project:
+  name: User Overrides Inference
+  domain: test
+functional:
+  summary: 'Test scenario: User Overrides Inference'
+constraints:
+  platform: api
+  cloud: agnostic
+  language: agnostic
