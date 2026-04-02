@@ -1,8 +1,8 @@
 # CHANGELOG - v1.0.0 (2026-04-02)
 
-## 🚀 Initial Release: AI Harness Engineering at the Architecture Layer
+## 🚀 Initial Release: An Architecture-Level AI Harness
 
-This release establishes the first **Architecture-Level AI Harness**. Moving beyond simple agent operation (context and tools), this system encodes architectural intelligence into a deterministic framework, ensuring AI agents make decisions *within your constraints*, not around them.
+This release establishes Architecture Compiler as an architecture-level AI harness: a deterministic compiler, a curated pattern registry, and three workflow skills that let humans and agents move from requirements to approved architecture and implementation with an explicit contract.
 
 ### 🧠 The Architecture Harness Philosophy
 - **The Registry is the Trajectory:** Phil Schmid's thesis—"competitive advantage is the trajectories your harness captures"—applied to architecture. Our 180+ pattern registry is the accumulated trajectory of architectural intelligence that future agents inherit.
@@ -17,12 +17,12 @@ This release establishes the first **Architecture-Level AI Harness**. Moving bey
 - **Full TCO Analysis:** Cost feasibility checking across Pattern OpEx, one-time CapEx, and operational labor costs.
 - **Explainable Infrastructure:** Verbose mode (`-v`) provides inline annotations for every spec field, turning the repo into a "living architectural contract."
 
-### 🤖 AI-Native Governance (The Domain Skills)
-The release introduces the two "Drivers" for the AI CPU:
-- **`compiling-architecture`:** Guides agents through requirements capture and deterministic pattern selection.
+### 🤖 AI-Native Governance (The Workflow Skills)
+The release introduces three workflow skills:
+- **`using-arch-compiler`:** Routes work to the correct workflow and sends it back for recompilation when architectural decisions change.
+- **`compiling-architecture`:** Guides agents through requirements capture, deterministic pattern selection, approval, and re-approval.
 - **`implementing-architecture`:** Ensures implementation strictly follows the approved architectural contract.
-- **Strict Staging:** A `patterns-staging/` workflow ensures no unvetted architectural logic enters the core registry.
-- **Immutable Schemas:** Protection of core spec and pattern contracts to prevent agentic drift.
+- **Immutable Schemas and Registry Boundaries:** Protection of core spec and pattern contracts to prevent agentic drift.
 
 ### 📦 The Pattern Registry (180+ Patterns)
 

@@ -1,7 +1,8 @@
 # Skills
 
-This repo publishes two reusable agent skills:
+This repo publishes three reusable agent skills:
 
+- `skills/using-arch-compiler`
 - `skills/compiling-architecture`
 - `skills/implementing-architecture`
 
@@ -9,9 +10,20 @@ Each skill is packaged as a self-contained folder with a top-level `SKILL.md`.
 
 ## Install in Codex
 
-Install directly from this GitHub repo by path:
+Recommended: install the whole skill pack via native Codex skill discovery.
 
 ```bash
+git clone https://github.com/inetgas/arch-compiler.git ~/.codex/arch-compiler
+mkdir -p ~/.agents/skills
+ln -s ~/.codex/arch-compiler/skills ~/.agents/skills/arch-compiler
+```
+
+Restart Codex after installing new skills.
+
+Advanced option: install directly from this GitHub repo by path:
+
+```bash
+scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/using-arch-compiler
 scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/compiling-architecture
 scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/implementing-architecture
 ```
@@ -19,11 +31,10 @@ scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/
 Or use the GitHub URL form:
 
 ```bash
+scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/using-arch-compiler
 scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/compiling-architecture
 scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/implementing-architecture
 ```
-
-Restart Codex after installing new skills.
 
 ## Use in Claude Code
 
@@ -31,6 +42,7 @@ Claude Code does not install Codex skills natively, but the same behavior can be
 
 This repo includes ready-to-copy command files:
 
+- `adapters/claude-code/commands/using-arch-compiler.md`
 - `adapters/claude-code/commands/compile-architecture.md`
 - `adapters/claude-code/commands/implement-architecture.md`
 
@@ -40,15 +52,18 @@ Copy them into your target repo at `.claude/commands/`:
 mkdir -p .claude/commands
 cp adapters/claude-code/commands/compile-architecture.md .claude/commands/
 cp adapters/claude-code/commands/implement-architecture.md .claude/commands/
+cp adapters/claude-code/commands/using-arch-compiler.md .claude/commands/
 ```
 
 These create Claude Code commands:
 
+- `/using-arch-compiler`
 - `/compile-architecture`
 - `/implement-architecture`
 
 They point Claude at the canonical skill files in this repo:
 
+- `skills/using-arch-compiler/SKILL.md`
 - `skills/compiling-architecture/SKILL.md`
 - `skills/implementing-architecture/SKILL.md`
 

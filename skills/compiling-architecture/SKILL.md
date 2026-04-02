@@ -18,11 +18,14 @@ Treat the compiler repo as having this contract:
 ```text
 arch-compiler/
 ├── README.md
+├── AGENTS.md
 ├── README-AGENTS.md
 ├── tools/        <-- read-only for agents
 ├── schemas/      <-- read-only for agents
 ├── patterns/     <-- read-only for agents
 └── skills/
+    ├── using-arch-compiler/
+    │   └── SKILL.md
     ├── compiling-architecture/
     │   └── SKILL.md
     └── implementing-architecture/
@@ -31,13 +34,14 @@ arch-compiler/
 
 Before acting:
 
-1. Read `README-AGENTS.md` for repo-wide agent rules and boundaries.
+1. Read `AGENTS.md` for repo-wide agent rules and boundaries.
 2. Read this `SKILL.md` for the task-specific workflow.
 3. Treat `tools/`, `schemas/`, and `patterns/` as read-only unless the human explicitly asks for compiler-maintenance work in this repo.
 4. Use this skill only to turn human inputs and constraints into approved architecture artifacts. Do not use it to implement application code.
 
 The important split is:
-- `README-AGENTS.md` = global agent rules for this repo
+- `AGENTS.md` = global agent rules for this repo
+- `skills/using-arch-compiler/SKILL.md` = workflow router
 - `skills/compiling-architecture/SKILL.md` = how to compile and finalise architecture
 - `skills/implementing-architecture/SKILL.md` = how to implement an already-approved architecture
 
@@ -57,6 +61,20 @@ The important split is:
 - You are designing a one-off system with no need for repeatability
 - The constraints, targets for nfr/operating_model/cost aren't supported by schemas (check `schemas/` first)
 - You want patterns that account for business logic or domain-specific rules not expressible in the spec schema (check `schemas/` first)
+
+## Provider-Binding Gate
+
+Pattern-level approval is not the same as provider-level approval.
+
+Treat the architecture as still provisional if any of these remain unresolved:
+- concrete cloud/runtime target
+- OIDC/auth provider or enforcement boundary
+- database/storage/queue provider choice
+- AI provider or model class
+- retention/deletion mechanism for `nfr.data.retention_days`
+- message transport and delivery semantics behind `async_messaging`
+
+If those choices are deferred, say so explicitly to the human before finalising. Once they become concrete later, return to this skill, update the spec, recompile, diff the pattern set, and obtain fresh approval before implementation continues.
 
 ---
 
@@ -227,6 +245,13 @@ The path mapping is direct: `assumptions.<section>.<field>` → `<section>.<fiel
 
 **Do not silently promote a defaultConfig value that contradicts a spec-level constraint.** The defaultConfig is a registry default, not a user decision — it must be validated against what the user actually specified before it becomes part of the authoritative architecture.
 
+**MUST-DO before final approval when provider-specific variants are selected:** inspect the promoted pattern config as a system, not field-by-field. Look for contradictions such as:
+- cloud-specific architecture pattern defaults that imply a different auth or database provider than the human approved
+- generic pattern config and provider-specific variant config disagreeing on timeout, persistence, or transport semantics
+- a provider default changing the architecture from "agnostic" to provider-bound without that being reflected in `constraints.cloud` or `constraints.saas-providers`
+
+If you find a contradiction, stop and resolve it in the spec before finalising. Do not bury the conflict in the approval header.
+
 ---
 
 ## Pre-Approval Validation Gate
@@ -279,6 +304,8 @@ Then ask: **"Do all of these reflect your actual system requirements? Any correc
 Wait for explicit confirmation. Do not proceed to finalisation until the human confirms (or makes corrections and confirms the updated values). If corrections are made, update the spec and recompile before finalising.
 
 **Why this gate exists:** The compiler promotes defaults into these sections — values the human never explicitly typed. A pattern list review does not surface these defaults. This gate ensures the human is signing off on the actual architecture contract, not just the pattern names.
+
+**MUST-DO before asking for approval:** call out any architecture-binding decisions that are still open. If the user is treating them as "implementation details" but they would change providers, runtimes, message semantics, auth boundaries, retention handling, or accepted data-processing risk, tell them these are still architecture decisions and must be resolved before final approval.
 
 ---
 

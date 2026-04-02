@@ -25,12 +25,19 @@ Thank you for your interest in contributing to the Architecture Compiler! This p
 git clone https://github.com/inetgas/arch-compiler.git
 cd arch-compiler
 
+# Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
 # Install dependencies (including test tools)
-pip install ".[test]"
+python -m pip install -r tools/requirements.txt
+python -m pip install -e .
 
 # Run tests to verify setup
-pytest tests/ -q
+python -m pytest tests/ -q
 ```
+
+Run tests and compiler commands from the `arch-compiler/` repo root. Some integration tests invoke `tools/archcompiler.py` using cwd-relative paths.
 
 ## How to Contribute
 
@@ -49,7 +56,7 @@ Please check existing issues first. When creating a report, include exact steps 
 
 This repository has strict governance for AI contributors to ensure the integrity of the deterministic compiler:
 
-- **Staging-Only:** Agents **MUST** author new patterns to `patterns-staging/`. They are strictly forbidden from writing directly to `patterns/`.
+- **Staging-Only:** Agents **MUST** author new patterns in a human-designated staging location outside `patterns/`. They are strictly forbidden from writing directly to `patterns/`.
 - **Immutable Core:** Agents may not modify `schemas/`, `config/defaults.yaml`, or existing pattern JSONs in `patterns/`.
 - **Procedural Guidance:** Agents must read and follow the relevant `SKILL.md` before taking action.
 
@@ -70,7 +77,7 @@ Patterns are JSON files. Follow these strict rules:
 2. Update `schemas/canonical-schema.yaml` if a new spec field is needed (Human only).
 3. Add/edit pattern files.
 4. Run `python tools/audit_patterns.py` to check metadata quality.
-5. Run `pytest tests/` to verify nothing is broken.
+5. Run `python -m pytest tests/ -q` from the repo root to verify nothing is broken.
 
 ## Testing & CI/CD
 
@@ -89,7 +96,7 @@ Before publishing or cutting a release, run:
 
 ```bash
 python -m pip install --upgrade pip setuptools wheel build
-python -m build
+python -m build --no-isolation
 python scripts/package_smoke_test.py dist/*.whl tests/fixtures/no-advisory-success.yaml
 ```
 

@@ -1,6 +1,13 @@
-# Architecture Compiler
+# Architecture Compiler: An Architecture-Level AI Harness
 
-ArchCompiler compiles constraints and NFRs into explicit, reviewable architectural decisions with clear trade-offs and cost impact. It is a deterministic system that selects architecture design patterns and produces decision artifacts from  a canonical specification. No LLM, no hidden defaults, no inference — same input always produces the same output.
+ArchCompiler compiles constraints and NFRs into explicit, reviewable architectural decisions with clear trade-offs and cost impact.
+
+It is an architecture-level AI harness built from three parts: a deterministic compiler, a curated pattern registry, and three workflow skills for agents. Together they turn requirements into compiled architecture, route work through approval and re-approval when architectural decisions change, and guide implementation against an explicit architectural contract.
+
+The compiler itself is intentionally simple: no LLM inference, no hidden defaults, and no black-box selection logic. The architectural intelligence lives in the registry and in the workflow discipline carried by:
+- `using-arch-compiler`
+- `compiling-architecture`
+- `implementing-architecture`
 
 [![CI - Test Suite](https://github.com/inetgas/arch-compiler/actions/workflows/main.yml/badge.svg)](https://github.com/inetgas/arch-compiler/actions/workflows/main.yml)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -57,6 +64,47 @@ python -m pip install -e .
 # Run the compiler from the source tree
 python tools/archcompiler.py tests/fixtures/no-advisory-success.yaml
 ```
+
+Run development commands from the `arch-compiler/` repo root. Some tests invoke `tools/archcompiler.py` via a cwd-relative path and will fail if you run them from a parent directory.
+
+---
+
+## Install The Agent Skills
+
+This repo also ships installable agent skills.
+
+### Codex
+
+Tell Codex:
+
+```text
+Fetch and follow instructions from https://raw.githubusercontent.com/inetgas/arch-compiler/refs/heads/main/.codex/INSTALL.md
+```
+
+Or follow the native install steps directly:
+
+```bash
+git clone https://github.com/inetgas/arch-compiler.git ~/.codex/arch-compiler
+mkdir -p ~/.agents/skills
+ln -s ~/.codex/arch-compiler/skills ~/.agents/skills/arch-compiler
+```
+
+Restart Codex after installing.
+
+### Skill Entry Points
+
+- `skills/using-arch-compiler` = choose the correct workflow and route back to compilation if architecture changes
+- `skills/compiling-architecture` = compile and finalise architecture
+- `skills/implementing-architecture` = implement an approved architecture
+
+### Claude Code
+
+Claude Code does not use Codex native skill discovery, but this repo includes ready-to-copy command adapters in `adapters/claude-code/commands/`, including a router entrypoint.
+
+Available command adapters:
+- `using-arch-compiler.md`
+- `compile-architecture.md`
+- `implement-architecture.md`
 
 ---
 

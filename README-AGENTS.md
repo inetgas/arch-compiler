@@ -1,5 +1,7 @@
 # Agent Guide — Architecture Compiler
 
+`AGENTS.md` is the canonical root agent file for tooling that looks for standard agent-memory filenames. This file is the human-readable companion guide with the same repo-specific intent.
+
 This repo contains a deterministic architecture compiler and a registry of curated design patterns. Read this before acting.
 
 ---
@@ -10,10 +12,11 @@ Given a YAML spec (constraints, targets for nfr/operating_model/cost), the compi
 
 ---
 
-## Two Skills — Use the Right One
+## Three Skills — Use the Right One
 
 | Situation | Skill to use |
 |-----------|-------------|
+| User wants help choosing the correct architecture workflow, or planning uncovered new architecture choices | `skills/using-arch-compiler/SKILL.md` |
 | User wants to compile a spec, select patterns, or finalise an architecture | `skills/compiling-architecture/SKILL.md` |
 | User wants to implement a system from an already-approved `docs/architecture/` folder | `skills/implementing-architecture/SKILL.md` |
 
@@ -29,6 +32,8 @@ These skills are independent and composable with any requirements-gathering or p
 2. **Compile** — once requirements are known, use `skills/compiling-architecture/SKILL.md` to produce a deterministic pattern selection and finalise `docs/architecture/`
 3. **Plan implementation** — use any planning approach to break the approved pattern set into tasks
 4. **Implement** — use `skills/implementing-architecture/SKILL.md` before writing any code; it consumes `docs/architecture/` as its input contract
+
+If planning or implementation exposes provider-binding decisions that would change `constraints.*`, `constraints.saas-providers`, top-level `patterns.*`, or accepted risk posture, stop and return to the compiling workflow. That is architecture work, not routine implementation detail.
 
 Each skill defines its input interface clearly — satisfy the interface however fits your workflow.
 
@@ -107,7 +112,7 @@ Test spec naming: `<category>_<sub-category>_<description>_<pass\|fail>.yaml`
 | Run the compiler (`tools/archcompiler.py`) | ✅ Yes |
 | Run audit tools (`tools/audit_*.py`) | ✅ Yes |
 | Run tests (`pytest tests/`) | ✅ Yes |
-| Author a new pattern to `patterns-staging/` | ✅ Yes — staging only, never directly to `patterns/` |
+| Author a new pattern in a human-designated staging location outside `patterns/` | ✅ Yes — staging only, never directly to `patterns/` |
 | Edit an existing pattern in `patterns/` | ❌ No — human-only |
 | Edit `schemas/canonical-schema.yaml` or `schemas/pattern-schema.yaml` | ❌ No — human-only |
 | Edit `config/defaults.yaml` | ❌ No — human-only |
@@ -118,6 +123,9 @@ Test spec naming: `<category>_<sub-category>_<description>_<pass\|fail>.yaml`
 ## Running the Compiler
 
 ```bash
+# Run from the arch-compiler repo root
+cd arch-compiler
+
 # Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
@@ -135,5 +143,7 @@ archcompiler tests/fixtures/no-advisory-success.yaml -o compiled_output/ -v
 # Or run directly from the source tree
 python tools/archcompiler.py tests/fixtures/no-advisory-success.yaml -o compiled_output/ -v
 ```
+
+Run tests and compiler commands from the `arch-compiler/` repo root. Several tests call `tools/archcompiler.py` using cwd-relative paths.
 
 Exit code `0` = success. Exit code `1` = validation error — read the `💡 Suggestions` block in stdout.

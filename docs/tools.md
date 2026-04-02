@@ -8,6 +8,8 @@ Five Python tools live in `tools/`. One runs the compiler; the rest are validati
 
 The main compiler. Reads a canonical YAML spec, selects matching patterns from the registry, resolves conflicts, runs cost feasibility, and emits decision artifacts.
 
+Run all commands in this document from the `arch-compiler/` repo root unless noted otherwise.
+
 ### Usage
 
 ```bash

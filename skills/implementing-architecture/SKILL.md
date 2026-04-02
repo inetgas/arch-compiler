@@ -18,11 +18,14 @@ Treat the compiler repo as having this contract:
 ```text
 arch-compiler/
 ├── README.md
+├── AGENTS.md
 ├── README-AGENTS.md
 ├── tools/        <-- read-only for agents
 ├── schemas/      <-- read-only for agents
 ├── patterns/     <-- read-only for agents
 └── skills/
+    ├── using-arch-compiler/
+    │   └── SKILL.md
     ├── compiling-architecture/
     │   └── SKILL.md
     └── implementing-architecture/
@@ -31,13 +34,14 @@ arch-compiler/
 
 Before acting:
 
-1. Read `README-AGENTS.md` for repo-wide agent rules and boundaries.
+1. Read `AGENTS.md` for repo-wide agent rules and boundaries.
 2. Read this `SKILL.md` for the task-specific workflow.
 3. Treat `tools/`, `schemas/`, and `patterns/` as read-only unless the human explicitly asks for compiler-maintenance work in this repo.
 4. Use this skill only when `docs/architecture/` already exists and is approved. If architecture is missing or unapproved, switch to `skills/compiling-architecture/SKILL.md` instead of inventing architecture choices.
 
 The important split is:
-- `README-AGENTS.md` = global agent rules for this repo
+- `AGENTS.md` = global agent rules for this repo
+- `skills/using-arch-compiler/SKILL.md` = workflow router
 - `skills/compiling-architecture/SKILL.md` = how to compile and finalise architecture
 - `skills/implementing-architecture/SKILL.md` = how to implement an already-approved architecture
 
@@ -53,6 +57,7 @@ The important split is:
 - No `docs/architecture/` folder exists — a compiled and approved architecture must be produced first (see `skills/compiling-architecture/SKILL.md` if available)
 - The `architecture.yaml` has no `STATUS: APPROVED` header — do not implement an unapproved architecture
 - You have architecture artifacts but no functional requirements — ask the human for features, user stories, design doc, or API specs before writing application code. The architecture tells you which database to use; functional requirements tell you what to store in it.
+- Planning or pre-flight reveals unresolved provider/runtime/auth-boundary/retention/message-path decisions that would materially change `constraints.*`, `constraints.saas-providers`, `patterns.*`, or accepted risk posture — that is architecture work, not implementation. Stop and return to `skills/compiling-architecture/SKILL.md`.
 
 ---
 
@@ -109,6 +114,15 @@ Collect **all** flags across all patterns, then raise them together with the hum
 - "Deployment logs exist" is not `audit-logging`
 - "We can do it manually" is not a provided capability
 - "It's close enough" is not satisfiable
+
+**Architecture-binding flags are a stop signal, not plan TODOs.** If pre-flight exposes unresolved choices such as:
+- which provider actually satisfies a selected pattern
+- where auth is enforced
+- which transport implements async delivery semantics
+- how retention/deletion is operationalised
+- whether an external AI provider changes accepted risk posture
+
+then stop and route back to the compiling skill. Do not keep planning around the ambiguity.
 
 If you catch yourself reasoning that a thin platform feature satisfies a `requires: optional: false` entry, stop. That is a flag.
 
@@ -264,6 +278,8 @@ After resolving, note in the human-facing summary what the adversarial review fo
 
 **Rewrite vs patch:** If more than 3 gaps are confirmed, rewrite the full plan rather than patching individual tasks. Patching accumulates on top of the original blindspots — the same mental model that produced the gaps is now editing its own output. A full rewrite forces you to trace every task from scratch with the gap list in hand, which surfaces secondary issues invisible in a diff. (Example: fixing a retry flow reveals a polling cleanup bug that only shows up when reading the whole `JobPoller` spec in one pass — not when diffing the retry step in isolation.)
 
+**Re-review trigger:** If the architecture is recompiled or re-approved after the plan was drafted, the plan is stale by default. Re-run the adversarial review against the new `docs/architecture/` before presenting or executing the plan. If the pattern set or top-level constraints changed materially, rewrite the plan instead of carrying the old one forward.
+
 ### Step 2 — Establish implementation order
 
 **Primary: derive sequencing from `requires`/`provides`.** For each selected pattern, read its `requires` list and find which other selected patterns `provides` those capabilities — those providers must be implemented first. Build the full dependency order before writing any code. Do not skip this: the category table below is a manually authored approximation and can diverge from actual dependencies.
@@ -357,6 +373,7 @@ The approved `docs/architecture/` folder is the source of truth. A pattern liste
 | Ignoring NFR targets | Check each NFR field and verify your implementation meets it |
 | Implementing a feature not in `constraints.features` | Only implement features explicitly enabled |
 | Modifying files in `docs/architecture/` | Read-only for implementing agents; changes require re-compilation and human re-approval |
+| Treating provider binding as an implementation detail | AWS vs agnostic, Auth0 vs Cognito, SQS vs generic queue, or OpenAI vs self-hosted model all change the architecture contract. Route back to the compiling skill instead of coding through it. |
 | Self-resolving a `requires` gap with a thin justification | "Platform has logs" ≠ `monitoring`. "Deployment records exist" ≠ `audit-logging`. If no selected pattern provides the capability, it is an unresolved gap — flag it to the human, do not decide it is fine. |
 | Ignoring a pattern's internal contradiction between `requires` and `supports_nfr` | If a pattern requires a capability its own `supports_nfr` says it cannot support, that is a registry bug — raise it explicitly rather than quietly accepting both claims. |
 | Delegating the pre-flight check to a subagent | Subagents return "green" by finding creative resolutions. You must do Step 1.5–1.7 yourself. A subagent's "no issues found" verdict is not pre-flight completion. |
@@ -369,5 +386,6 @@ The approved `docs/architecture/` folder is the source of truth. A pattern liste
 | Using a runtime-incompatible API because `defaultConfig` wasn't checked | `function_runtime: nodejs` and `edge_functions: false` mean Edge-only APIs (e.g. `globalThis.waitUntil`) are unavailable. Check `defaultConfig` runtime values before choosing packages and APIs — mismatches compile silently and fail at runtime. |
 | Missing functional requirements with no plan task | Error/retry/empty states and other UX flows are functional requirements not derivable from pattern `provides`. Cross-check the requirements source explicitly — they will not appear in any pattern JSON. |
 | Patching the plan after an adversarial review instead of rewriting | Patches layer on top of the original blindspots. When the confirmed gap count exceeds 3, rewrite from scratch — a full rewrite traces every task and surfaces secondary issues invisible when diffing individual steps. |
+| Continuing with an old plan after architecture re-approval | Recompilation changes the contract. Re-run adversarial review against the new architecture, and rewrite the plan if constraints or pattern set changed materially. |
 | Writing approved architecture.yaml with assumptions block still present | Finalisation requires promoting every field under `assumptions.*` to its top-level path and removing the block entirely. An approved file with `assumptions:` still in it is compiler output, not a finalised architecture — implementing agents cannot distinguish decided fields from defaulted ones. |
 | Assuming page-reload survival without tracing state to a durable source | State held in `URL.createObjectURL`, a query param, or in-memory React state is lost on reload. For any state a user might reload into, trace it to a durable read (database, Blob URL, cookie) — not a locally-constructed value. |

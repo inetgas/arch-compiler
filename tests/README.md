@@ -5,18 +5,24 @@ Comprehensive regression test suite for the pattern registry. These tests valida
 ## Quick Start
 
 ```bash
+# Run from the arch-compiler repo root
+cd arch-compiler
+
 # Install dependencies (if not already installed)
-pip install pytest pyyaml
+python -m pip install -r tools/requirements.txt
+python -m pip install -e .
 
 # Run all tests
-python3 tests/run_all_tests.py
+python -m pytest tests -q
 
 # Or run specific test suites
-python3 -m pytest tests/test_pattern_schema_validation.py -v
-python3 -m pytest tests/test_nfr_constraint_logic.py -v
-python3 -m pytest tests/test_pattern_conflicts.py -v
-python3 -m pytest tests/test_pattern_quality.py -v
+python -m pytest tests/test_pattern_schema_validation.py -v
+python -m pytest tests/test_nfr_constraint_logic.py -v
+python -m pytest tests/test_pattern_conflicts.py -v
+python -m pytest tests/test_pattern_quality.py -v
 ```
+
+Run tests from the `arch-compiler/` repo root. Several integration tests invoke `tools/archcompiler.py` using cwd-relative paths.
 
 ## Test Suites
 
@@ -117,7 +123,7 @@ Run tests before committing pattern changes:
 
 ```bash
 # Before committing
-python3 tests/run_all_tests.py
+python -m pytest tests -q
 
 # If tests pass, commit
 git add patterns/*.json
@@ -141,8 +147,9 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - run: pip install pytest pyyaml
-      - run: python3 tests/run_all_tests.py
+      - run: python -m pip install -r tools/requirements.txt
+      - run: python -m pip install -e .
+      - run: python -m pytest tests -q
 ```
 
 ### Pre-Push Hook
@@ -152,7 +159,7 @@ Create `.git/hooks/pre-push`:
 ```bash
 #!/bin/bash
 echo "Running regression tests..."
-python3 tests/run_all_tests.py
+python -m pytest tests -q
 exit $?
 ```
 
@@ -234,20 +241,20 @@ When all tests pass, we guarantee:
 
 1. **Run specific audit tool to see details:**
    ```bash
-   python3 tools/audit_patterns.py
-   python3 tools/audit_nfr_logic.py
-   python3 tools/audit_asymmetric_conflicts.py
+   python tools/audit_patterns.py
+   python tools/audit_nfr_logic.py
+   python tools/audit_asymmetric_conflicts.py
    ```
 
 2. **Fix issues manually or use fix tools:**
    ```bash
-   python3 tools/fix_asymmetric_conflicts.py
-   python3 tools/fix_nfr_logic.py
+   python tools/fix_asymmetric_conflicts.py
+   python tools/fix_nfr_logic.py
    ```
 
 3. **Re-run tests:**
    ```bash
-   python3 tests/run_all_tests.py
+   python -m pytest tests -q
    ```
 
 ### False Positives
