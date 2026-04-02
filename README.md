@@ -13,9 +13,10 @@ The compiler itself is intentionally simple: no LLM inference, no hidden default
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
 ![Patterns](https://img.shields.io/badge/Patterns-180+-success)
-![Documentation](https://img.shields.io/badge/Documentation-Agent--Skills-orange)
+![Skills](https://img.shields.io/badge/Skills-3-orange)
+![Core](https://img.shields.io/badge/Core-No--LLM%20Inference-black)
 
-> **Tags:** `architecture-as-code`, `design-patterns`, `harness-engineering`, `agent-harness`, `deterministic-compiler`, `cloud-native`, `pattern-registry`, `agentic-engineering`, `on-the-loop`, `nfr-enforcement`
+> **Tags:** `architecture-as-code`, `architecture-harness`, `agent-harness`, `deterministic-compiler`, `pattern-registry`, `nfr-enforcement`, `ai-governance`
 
 ## Core Philosophy
 
