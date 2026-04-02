@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "arch-compiler"
 version = "1.0.0"
 description = "ArchCompiler compiles constraints and NFRs into explicit, reviewable architectural decisions with clear trade-offs and cost impact."
-readme = "README-HUMAN.md"
+readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [
@@ -47,6 +47,11 @@ addopts = "-ra -q"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["tools*", "patterns*", "schemas*", "config*"]
+
+[tool.setuptools.package-data]
+patterns = ["*.json"]
+schemas = ["*.yaml", "*.md"]
+config = ["*.yaml"]
 
 [tool.coverage.run]
 source = ["tools"]

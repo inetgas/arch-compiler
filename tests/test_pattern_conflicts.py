@@ -17,7 +17,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 def test_no_asymmetric_conflicts():
     """All conflict relationships must be symmetric (bidirectional)."""
     result = subprocess.run(
-        ["python3", "tools/audit_asymmetric_conflicts.py"],
+        [sys.executable, "tools/audit_asymmetric_conflicts.py"],
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True
@@ -32,7 +32,7 @@ def test_no_asymmetric_conflicts():
 
     assert total_asymmetric == 0, (
         f"Found {total_asymmetric} asymmetric conflict relationships.\n"
-        f"Run 'python3 tools/audit_asymmetric_conflicts.py' for details."
+        f"Run '{sys.executable} tools/audit_asymmetric_conflicts.py' for details."
     )
 
 def test_all_conflict_references_valid():

@@ -25,6 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install build wheel setuptools
         pip install -r tools/requirements.txt
         pip install -r tests/requirements.txt
 
@@ -37,3 +38,11 @@ jobs:
     - name: Run pytest
       run: |
         python -m pytest tests/ -v
+
+    - name: Build distribution artifacts
+      run: |
+        python -m build
+
+    - name: Smoke test built wheel
+      run: |
+        python scripts/package_smoke_test.py dist/*.whl tests/fixtures/no-advisory-success.yaml

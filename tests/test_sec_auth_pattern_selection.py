@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Tests for sec-auth-* pattern selection based on nfr.security.auth value."""
 import subprocess
+import sys
 import yaml
 from pathlib import Path
 import tempfile
@@ -12,7 +13,7 @@ def _compile(spec_content: str) -> list[str]:
         spec_file = Path(tmpdir) / "spec.yaml"
         spec_file.write_text(spec_content)
         result = subprocess.run(
-            ["python3", "tools/archcompiler.py", str(spec_file), "-o", tmpdir],
+            [sys.executable, "tools/archcompiler.py", str(spec_file), "-o", tmpdir],
             capture_output=True, text=True
         )
         assert result.returncode == 0, f"Compiler failed:\n{result.stderr}"

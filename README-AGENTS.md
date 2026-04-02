@@ -118,14 +118,22 @@ Test spec naming: `<category>_<sub-category>_<description>_<pass\|fail>.yaml`
 ## Running the Compiler
 
 ```bash
-python3 -m pip install -r tools/requirements.txt
+# Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install repo dependencies
+python -m pip install -r tools/requirements.txt
+python -m pip install -e .
 
 # Compile to stdout
-python3 tools/archcompiler.py my-spec.yaml
+archcompiler tests/fixtures/no-advisory-success.yaml
 
 # Compile and write artifacts
-mkdir -p compiled_output/
-python3 tools/archcompiler.py my-spec.yaml -o compiled_output/ -v
+archcompiler tests/fixtures/no-advisory-success.yaml -o compiled_output/ -v
+
+# Or run directly from the source tree
+python tools/archcompiler.py tests/fixtures/no-advisory-success.yaml -o compiled_output/ -v
 ```
 
 Exit code `0` = success. Exit code `1` = validation error — read the `💡 Suggestions` block in stdout.

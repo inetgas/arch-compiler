@@ -78,9 +78,20 @@ Patterns are JSON files. Follow these strict rules:
 
 Every Pull Request triggers a GitHub Actions workflow that:
 - Runs audits for pattern metadata, NFR logic, and conflict symmetry.
-- Executes the full test suite across Python 3.10, 3.11, and 3.12.
+- Executes the full test suite across Python 3.11 and 3.12.
+- Builds the wheel and smoke-tests the installed `archcompiler` CLI outside the repo root.
 
 **PRs will not be merged until all CI checks pass.**
+
+### Local packaging check
+
+Before publishing or cutting a release, run:
+
+```bash
+python -m pip install --upgrade pip setuptools wheel build
+python -m build
+python scripts/package_smoke_test.py dist/*.whl tests/fixtures/no-advisory-success.yaml
+```
 
 ### Writing Tests
 

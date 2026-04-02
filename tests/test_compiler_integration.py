@@ -42,6 +42,7 @@ import subprocess
 import tempfile
 import os
 import re
+import sys
 import yaml
 from pathlib import Path
 
@@ -56,7 +57,7 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 def run_compiler(fixture_name: str, *extra_args, outdir: str = None) -> tuple[int, str]:
     """Run compiler on a named fixture; return (returncode, stdout+stderr)."""
     spec = FIXTURES_DIR / fixture_name
-    cmd = ["python3", "tools/archcompiler.py", str(spec)]
+    cmd = [sys.executable, "tools/archcompiler.py", str(spec)]
     if outdir:
         cmd += ["-o", outdir]
     if "--verbose" in extra_args or "-v" in extra_args:
@@ -71,7 +72,7 @@ def run_compiler_dict(spec_dict: dict, *extra_args) -> tuple[int, str]:
         yaml.dump(spec_dict, f)
         fname = f.name
     try:
-        cmd = ["python3", "tools/archcompiler.py", fname] + list(extra_args)
+        cmd = [sys.executable, "tools/archcompiler.py", fname] + list(extra_args)
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(PROJECT_ROOT))
         return result.returncode, result.stdout + result.stderr
     finally:

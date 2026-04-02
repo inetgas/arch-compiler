@@ -69,7 +69,7 @@ def _compile(spec_dict: dict, extra_args=()) -> tuple[dict, dict, dict]:
         spec_path = Path(out) / "input.yaml"
         spec_path.write_text(yaml.dump(spec_dict, default_flow_style=False))
         result = subprocess.run(
-            ["python3", str(PROJECT_ROOT / "tools" / "archcompiler.py"),
+            [sys.executable, str(PROJECT_ROOT / "tools" / "archcompiler.py"),
              str(spec_path), "-o", out, "-v", *extra_args],
             capture_output=True, text=True
         )

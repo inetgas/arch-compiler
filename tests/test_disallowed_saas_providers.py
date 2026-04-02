@@ -1,5 +1,6 @@
 """Tests for constraints.disallowed-saas-providers enforcement."""
 import subprocess
+import sys
 import tempfile
 import yaml
 from pathlib import Path
@@ -12,7 +13,7 @@ def _run_compiler(spec_text: str, tmpdir: str) -> subprocess.CompletedProcess:
     spec_file = Path(tmpdir) / "spec.yaml"
     spec_file.write_text(spec_text)
     return subprocess.run(
-        ["python3", COMPILER, str(spec_file), "-o", tmpdir],
+        [sys.executable, COMPILER, str(spec_file), "-o", tmpdir],
         capture_output=True,
         text=True,
         cwd=Path(__file__).parent.parent,

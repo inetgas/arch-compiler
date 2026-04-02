@@ -35,7 +35,7 @@ def test_minimal_spec_no_empty_sections():
         # Run compiler
         output_dir = tempfile.mkdtemp()
         result = subprocess.run(
-            ['python3', str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), spec_file, '-o', output_dir],
+            [sys.executable, str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), spec_file, '-o', output_dir],
             capture_output=True,
             text=True
         )
@@ -97,7 +97,7 @@ def test_compiled_spec_recompilation():
         # First compilation
         output_dir1 = tempfile.mkdtemp()
         result1 = subprocess.run(
-            ['python3', str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), spec_file, '-o', output_dir1],
+            [sys.executable, str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), spec_file, '-o', output_dir1],
             capture_output=True,
             text=True
         )
@@ -112,7 +112,7 @@ def test_compiled_spec_recompilation():
         # Second compilation - use first output as input
         output_dir2 = tempfile.mkdtemp()
         result2 = subprocess.run(
-            ['python3', str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), 
+            [sys.executable, str(PROJECT_ROOT / 'tools' / 'archcompiler.py'),
              str(compiled_spec_path1), '-o', output_dir2],
             capture_output=True,
             text=True
@@ -157,7 +157,7 @@ def test_assumptions_properties_allowed():
         # Run compiler
         output_dir = tempfile.mkdtemp()
         result = subprocess.run(
-            ['python3', str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), spec_file, '-o', output_dir],
+            [sys.executable, str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), spec_file, '-o', output_dir],
             capture_output=True,
             text=True
         )
@@ -223,7 +223,7 @@ def test_partial_assumptions_preserved_during_recompile():
         # Compile the spec
         output_dir = tempfile.mkdtemp()
         result = subprocess.run(
-            ['python3', str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), spec_file, '-o', output_dir],
+            [sys.executable, str(PROJECT_ROOT / 'tools' / 'archcompiler.py'), spec_file, '-o', output_dir],
             capture_output=True,
             text=True
         )

@@ -3,6 +3,8 @@ docs/plans/
 docs/reports/
 patterns-staging/
 compiled_output/
+reports/
+arch_compiler.egg-info/
 /.DS_Store
 # Byte-compiled / optimized / DLL files
 __pycache__/

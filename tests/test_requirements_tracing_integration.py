@@ -3,6 +3,7 @@
 Integration test for requirements tracing in verbose mode.
 """
 import subprocess
+import sys
 import yaml
 from pathlib import Path
 
@@ -14,7 +15,7 @@ def test_requirements_tracing_verbose():
 
     # Compile with verbose mode
     result = subprocess.run([
-        "python3", "tools/archcompiler.py",
+        sys.executable, "tools/archcompiler.py",
         "test-specs/misc_persona_enterprise-production-full-requirements_pass.yaml",
         "-o", str(output_dir),
         "-v"
@@ -95,7 +96,7 @@ def test_non_verbose_no_comments():
 
     # Compile without verbose mode
     result = subprocess.run([
-        "python3", "tools/archcompiler.py",
+        sys.executable, "tools/archcompiler.py",
         "test-specs/misc_persona_enterprise-production-full-requirements_pass.yaml",
         "-o", str(output_dir)
     ], capture_output=True, text=True)
@@ -127,7 +128,7 @@ def test_verbose_assumptions_patterns_have_description_comments():
 
     # Minimal spec has no user-provided patterns, so all go into assumptions.patterns
     result = subprocess.run([
-        "python3", "tools/archcompiler.py",
+        sys.executable, "tools/archcompiler.py",
         "test-specs/input_minimal_required-fields-only_pass.yaml",
         "-o", str(output_dir),
         "-v"
@@ -163,7 +164,7 @@ def test_verbose_user_patterns_have_description_comments():
 
     # This spec has patterns.arch-serverless--aws as user-provided config (top-level patterns)
     result = subprocess.run([
-        "python3", "tools/archcompiler.py",
+        sys.executable, "tools/archcompiler.py",
         "test-specs/config_override_verbose-pattern-config-multiple-overrides_pass.yaml",
         "-o", str(output_dir),
         "-v"
@@ -196,7 +197,7 @@ def test_non_verbose_no_description_comments_on_pattern_keys():
     output_dir.mkdir(exist_ok=True)
 
     result = subprocess.run([
-        "python3", "tools/archcompiler.py",
+        sys.executable, "tools/archcompiler.py",
         "test-specs/input_minimal_required-fields-only_pass.yaml",
         "-o", str(output_dir)
     ], capture_output=True, text=True)

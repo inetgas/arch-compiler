@@ -16,12 +16,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def test_no_nfr_logic_errors():
     """NFR rules must use valid paths. Both lower and upper bounds on the same path are allowed."""
-    subprocess.run(
-        ["python3", "tools/audit_nfr_logic.py"],
+    result = subprocess.run(
+        [sys.executable, "tools/audit_nfr_logic.py"],
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True
     )
+    assert result.returncode == 0, result.stdout + result.stderr
 
     # Load audit report
     report_path = PROJECT_ROOT / "reports" / "nfr-constraint-logic-audit.json"
@@ -33,7 +34,7 @@ def test_no_nfr_logic_errors():
     assert nfr_issues == 0, (
         f"Found {nfr_issues} NFR logic errors:\n"
         f"  - Invalid paths: {nfr_issues}\n"
-        f"Run 'python3 tools/audit_nfr_logic.py' for details."
+        f"Run '{sys.executable} tools/audit_nfr_logic.py' for details."
     )
 
 def test_no_constraint_logic_errors():
@@ -54,7 +55,7 @@ def test_no_constraint_logic_errors():
         f"  - Multiple platform entries: {len(audit.get('multiple_platform_entries', []))}\n"
         f"  - Invalid operators: {len(audit.get('invalid_supports_operator', []))}\n"
         f"  - Missing mobile platform: {len(audit.get('missing_mobile_platform', []))}\n"
-        f"Run 'python3 tools/audit_nfr_logic.py' for details."
+        f"Run '{sys.executable} tools/audit_nfr_logic.py' for details."
     )
 
 def test_nfr_paths_in_canonical_schema():

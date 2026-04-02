@@ -28,7 +28,7 @@ def run_compiler_on_spec(spec_dict):
 
     try:
         result = subprocess.run(
-            ['python3', 'tools/archcompiler.py', spec_file, '-o', '/tmp/test-semantic-validation'],
+            [sys.executable, 'tools/archcompiler.py', spec_file, '-o', '/tmp/test-semantic-validation'],
             capture_output=True,
             text=True,
             timeout=10

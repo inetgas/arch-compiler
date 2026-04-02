@@ -1,5 +1,5 @@
 # tests/test_disallowed_patterns.py
-import subprocess, tempfile, yaml
+import subprocess, sys, tempfile, yaml
 from pathlib import Path
 
 COMPILER = str(Path(__file__).parent.parent / "tools" / "archcompiler.py")
@@ -23,7 +23,7 @@ def _run(spec_text, extra_args=None):
     with tempfile.TemporaryDirectory() as tmpdir:
         spec_file = Path(tmpdir) / "spec.yaml"
         spec_file.write_text(spec_text)
-        cmd = ["python3", COMPILER, str(spec_file), "-o", tmpdir] + (extra_args or [])
+        cmd = [sys.executable, COMPILER, str(spec_file), "-o", tmpdir] + (extra_args or [])
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)
         selected = []
         rejected = []
@@ -150,7 +150,7 @@ def test_flutter_spec_disallows_observability_patterns():
     spec_path = Path(__file__).parent.parent / "test-specs" / "disallowed_patterns_ops-patterns-excluded_pass.yaml"
     with tempfile.TemporaryDirectory() as tmpdir:
         result = subprocess.run(
-            ["python3", COMPILER, str(spec_path), "-o", tmpdir, "-v"],
+            [sys.executable, COMPILER, str(spec_path), "-o", tmpdir, "-v"],
             capture_output=True, text=True, cwd=ROOT
         )
         assert result.returncode == 0, f"Compilation failed:\n{result.stdout}"

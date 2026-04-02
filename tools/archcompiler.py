@@ -4,6 +4,8 @@ from pathlib import Path
 import pathlib
 from typing import Any, Dict, List, Optional, Tuple
 
+PACKAGE_ROOT = pathlib.Path(__file__).resolve().parent.parent
+
 def _strip_null_values(obj: Any) -> Any:
     """
     Recursively remove null/None values from the spec before processing.
@@ -34,7 +36,7 @@ def _load_spec(path: pathlib.Path) -> Dict[str, Any]:
             raise SystemExit(
                 "Missing dependency 'PyYAML'.\n"
                 "Install with:\n"
-                "  python3 -m pip install -r tools/requirements.txt\n"
+                "  python -m pip install arch-compiler\n"
             )
         loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
         if not isinstance(loaded, dict):
@@ -56,7 +58,7 @@ def _validate_spec_schema(spec: Dict[str, Any]) -> None:
         print(f"Warning: Skipping schema validation (missing {e.name})")
         return
 
-    schema_path = pathlib.Path(__file__).parent.parent / "schemas" / "canonical-schema.yaml"
+    schema_path = PACKAGE_ROOT / "schemas" / "canonical-schema.yaml"
     if not schema_path.exists():
         print("Warning: canonical-schema.yaml not found, skipping validation")
         return
@@ -597,7 +599,7 @@ def _load_patterns(root: pathlib.Path) -> Dict[str, Dict[str, Any]]:
 
 def _load_canonical_schema() -> Dict[str, Any]:
     """Load canonical-schema.yaml, return {} on failure (suggestions silently omitted)."""
-    schema_path = pathlib.Path(__file__).parent.parent / "schemas" / "canonical-schema.yaml"
+    schema_path = PACKAGE_ROOT / "schemas" / "canonical-schema.yaml"
     try:
         import yaml  # type: ignore
         return yaml.safe_load(schema_path.read_text(encoding="utf-8"))
@@ -616,13 +618,15 @@ def _load_defaults(defaults_path: str = "config/defaults.yaml") -> Dict[str, Any
     except ImportError:
         raise SystemExit(
             "Missing dependency 'PyYAML' for defaults loading.\n"
-            "Install with: python3 -m pip install PyYAML"
+            "Install with: python -m pip install PyYAML"
         )
 
     defaults_file = pathlib.Path(defaults_path)
+    if not defaults_file.is_absolute():
+        defaults_file = PACKAGE_ROOT / defaults_file
 
     if not defaults_file.exists():
-        raise SystemExit(f"Defaults file not found: {defaults_path}")
+        raise SystemExit(f"Defaults file not found: {defaults_file}")
 
     with open(defaults_file) as f:
         defaults = yaml.safe_load(f)
@@ -3663,7 +3667,7 @@ def main():
     _validate_semantic_consistency(spec)
 
     # Load patterns for validation
-    patterns = _load_patterns(pathlib.Path.cwd())
+    patterns = _load_patterns(PACKAGE_ROOT)
 
     # Reject unknown pattern IDs in disallowed-patterns (typo protection)
     disallowed_ids = spec.get("disallowed-patterns", [])

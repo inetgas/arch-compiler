@@ -20,23 +20,42 @@ ArchCompiler compiles constraints and NFRs into explicit, reviewable architectur
 
 ## Quick Start
 
+If `python` is unavailable on your system, replace it with `python3` in the commands below.
+
 ```bash
-# Install dependencies
-python3 -m pip install -r tools/requirements.txt
+# Install pipx if needed (recommended for Python CLI apps)
+brew install pipx
 
-# Compile a spec (output to stdout)
-python3 tools/archcompiler.py my-spec.yaml
+# Install the CLI from the current repo
+pipx install .
 
-# Compile and write artifacts to a directory (output directory must exist before running)
-mkdir -p compiled_output/
-python3 tools/archcompiler.py my-spec.yaml -o compiled_output/
+# Compile a real example spec (output to stdout)
+archcompiler tests/fixtures/no-advisory-success.yaml
+
+# Compile and write artifacts to a directory
+archcompiler tests/fixtures/no-advisory-success.yaml -o compiled_output/
 
 # Verbose mode — inline pattern comments + rejected-patterns file
-python3 tools/archcompiler.py my-spec.yaml -v                      # stdout only
-python3 tools/archcompiler.py my-spec.yaml -o compiled_output/ -v  # also writes rejected-patterns.yaml
+archcompiler tests/fixtures/no-advisory-success.yaml -v
+archcompiler tests/fixtures/no-advisory-success.yaml -o compiled_output/ -v
 
 # Add UTC timestamp to output filenames
-python3 tools/archcompiler.py my-spec.yaml -o compiled_output/ -v -t
+archcompiler tests/fixtures/no-advisory-success.yaml -o compiled_output/ -v -t
+```
+
+### Development Setup
+
+```bash
+# Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install repo dependencies for local development
+python -m pip install -r tools/requirements.txt
+python -m pip install -e .
+
+# Run the compiler from the source tree
+python tools/archcompiler.py tests/fixtures/no-advisory-success.yaml
 ```
 
 ---
@@ -413,16 +432,36 @@ This table follows the same progression as the demo video [[Architecture Compile
 
 ```bash
 # Run all tests
-python3 -m pytest tests/ -q
+python -m pytest tests/ -q
 
 # Verbose test output
-python3 -m pytest tests/ -v
+python -m pytest tests/ -v
 
 # Specific test file
-python3 -m pytest tests/test_compiler_integration.py -v
+python -m pytest tests/test_compiler_integration.py -v
 ```
 
 Tests cover the compiler pipeline end-to-end, pattern schema validation, conflict symmetry, NFR/constraint logic, cost feasibility, and more. See `docs/test-inventory.md` for the full list.
+
+---
+
+## Installing the Skills
+
+This repo also publishes two reusable agent skills:
+
+- `compiling-architecture`
+- `implementing-architecture`
+
+Codex users can install them directly from the GitHub repo path:
+
+```bash
+scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/compiling-architecture
+scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/implementing-architecture
+```
+
+Claude Code users can use the included adapters in `adapters/claude-code/commands/` by copying them into `.claude/commands/`.
+
+See `skills/README.md` for install details and cross-agent usage notes.
 
 ---
 
@@ -430,13 +469,13 @@ Tests cover the compiler pipeline end-to-end, pattern schema validation, conflic
 
 ```bash
 # Audit pattern metadata quality (descriptions, costs, NFR rules)
-python3 tools/audit_patterns.py
+python tools/audit_patterns.py
 
 # Audit NFR/constraint rule paths (catch stale JSON pointer references)
-python3 tools/audit_nfr_logic.py
+python tools/audit_nfr_logic.py
 
 # Audit conflict symmetry (if A conflicts B, B must conflict A)
-python3 tools/audit_asymmetric_conflicts.py
+python tools/audit_asymmetric_conflicts.py
 ```
 
 See `docs/tools.md` for full documentation of each tool.
@@ -448,8 +487,8 @@ See `docs/tools.md` for full documentation of each tool.
 1. Update `schemas/pattern-schema.yaml` if a new field is needed
 2. Update `schemas/canonical-schema.yaml` if a new spec field is needed
 3. Add or edit pattern files in `patterns/`
-4. Run `python3 tools/audit_patterns.py` to check quality
-5. Run `python3 -m pytest tests/ -q` to verify nothing is broken
+4. Run `python tools/audit_patterns.py` to check quality
+5. Run `python -m pytest tests/ -q` to verify nothing is broken
 
 Key rules:
 - Pattern IDs must match their filename (e.g. `cache-aside.json` → `id: "cache-aside"`)
