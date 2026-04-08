@@ -1,6 +1,16 @@
-# CHANGELOG - v1.0.0 (2026-04-02)
+# Changelog
 
-## 🚀 Initial Release: An Architecture-Level AI Harness
+## Unreleased
+
+- Added Simplified Chinese translations for the main public documentation under `docs/i18n/`:
+  - `docs/i18n/README.zh-CN.md`
+  - `docs/i18n/skills.README.zh-CN.md`
+- Added language-switch links to `README.md` and `skills/README.md`
+- Documented that English remains the canonical source of truth when translations differ
+
+## [1.0.0] - 2026-04-02
+
+### 🚀 Initial Release: An Architecture-Level AI Harness
 
 This release establishes Architecture Compiler as an architecture-level AI harness: a deterministic compiler, a curated pattern registry, and three workflow skills that let humans and agents move from requirements to approved architecture and implementation with an explicit contract.
 

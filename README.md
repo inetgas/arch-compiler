@@ -1,5 +1,9 @@
 # Architecture Compiler: An Architecture-Level AI Harness
 
+Languages: English | [简体中文](docs/i18n/README.zh-CN.md)
+
+Note: The English documentation is the canonical source of truth. If translations differ, follow the English version.
+
 ArchCompiler compiles constraints and NFRs into explicit, reviewable architectural decisions with clear trade-offs and cost impact.
 
 It is an architecture-level AI harness built from three parts: a deterministic compiler, a curated pattern registry, and three workflow skills for agents. Together they turn requirements into compiled architecture, route work through approval and re-approval when architectural decisions change, and guide implementation against an explicit architectural contract.

@@ -1,20 +1,20 @@
 # Skills
 
-Languages: English | [简体中文](../docs/i18n/skills.README.zh-CN.md)
+说明：英文文档为权威版本。如本翻译与英文版本存在差异，请以英文版本为准。
 
-Note: The English documentation is the canonical source of truth. If translations differ, follow the English version.
+语言： [English](../../skills/README.md) | 简体中文
 
-This repo publishes three reusable agent skills:
+本仓库发布了三个可复用的 agent skills：
 
 - `skills/using-arch-compiler`
 - `skills/compiling-architecture`
 - `skills/implementing-architecture`
 
-Each skill is packaged as a self-contained folder with a top-level `SKILL.md`.
+每个 skill 都被打包为一个独立文件夹，顶层包含一个 `SKILL.md`。
 
-## Install in Codex
+## 在 Codex 中安装
 
-Recommended: install the whole skill pack via native Codex skill discovery.
+推荐方式：通过 Codex 原生 skill discovery 安装整个 skill 包。
 
 ```bash
 git clone https://github.com/inetgas/arch-compiler.git ~/.codex/arch-compiler
@@ -22,9 +22,9 @@ mkdir -p ~/.agents/skills
 ln -s ~/.codex/arch-compiler/skills ~/.agents/skills/arch-compiler
 ```
 
-Restart Codex after installing new skills.
+安装新 skills 后，请重启 Codex。
 
-Advanced option: install directly from this GitHub repo by path:
+高级方式：直接按路径从这个 GitHub 仓库安装：
 
 ```bash
 scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/using-arch-compiler
@@ -32,7 +32,7 @@ scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/
 scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/implementing-architecture
 ```
 
-Or use the GitHub URL form:
+也可以使用 GitHub URL 形式：
 
 ```bash
 scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/using-arch-compiler
@@ -40,17 +40,17 @@ scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compi
 scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/implementing-architecture
 ```
 
-## Use in Claude Code
+## 在 Claude Code 中使用
 
-Claude Code does not install Codex skills natively, but the same behavior can be exposed as project slash commands.
+Claude Code 不会像 Codex 那样原生安装 skills，但你可以把相同能力映射为项目级 slash commands。
 
-This repo includes ready-to-copy command files:
+本仓库已经提供了可直接复制使用的命令文件：
 
 - `adapters/claude-code/commands/using-arch-compiler.md`
 - `adapters/claude-code/commands/compile-architecture.md`
 - `adapters/claude-code/commands/implement-architecture.md`
 
-Copy them into your target repo at `.claude/commands/`:
+将它们复制到目标仓库的 `.claude/commands/`：
 
 ```bash
 mkdir -p .claude/commands
@@ -59,22 +59,22 @@ cp adapters/claude-code/commands/implement-architecture.md .claude/commands/
 cp adapters/claude-code/commands/using-arch-compiler.md .claude/commands/
 ```
 
-These create Claude Code commands:
+这样会创建以下 Claude Code 命令：
 
 - `/using-arch-compiler`
 - `/compile-architecture`
 - `/implement-architecture`
 
-They point Claude at the canonical skill files in this repo:
+这些命令会把 Claude 指向本仓库中的权威 skill 文件：
 
 - `skills/using-arch-compiler/SKILL.md`
 - `skills/compiling-architecture/SKILL.md`
 - `skills/implementing-architecture/SKILL.md`
 
-If you want Claude Code to always load repo guidance, you can also add project memory in `CLAUDE.md` and reference the same skill files from there.
+如果你希望 Claude Code 始终加载仓库级指导，也可以在 `CLAUDE.md` 中加入项目记忆，并引用同样的 skill 文件。
 
-## Portability Notes
+## 可移植性说明
 
-- Codex: installable directly by GitHub path because the skill unit is a folder containing `SKILL.md`
-- Claude Code: best mapped to custom slash commands in `.claude/commands/` or project memory in `CLAUDE.md`
-- Other agent frameworks: use `skills/<name>/SKILL.md` as the source of truth and wrap it in that tool's native prompt or command format
+- Codex：由于 skill 单元是包含 `SKILL.md` 的文件夹，因此可以直接通过 GitHub 路径安装
+- Claude Code：更适合通过 `.claude/commands/` 中的自定义 slash commands 或 `CLAUDE.md` 项目记忆来映射
+- 其他 agent 框架：将 `skills/<name>/SKILL.md` 作为权威来源，再包装成该工具的原生 prompt 或命令格式
