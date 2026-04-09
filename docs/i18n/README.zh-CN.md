@@ -103,6 +103,22 @@ ln -s ~/.codex/arch-compiler/skills ~/.agents/skills/arch-compiler
 
 安装完成后请重启 Codex。
 
+或者直接从公开仓库安装这三个 skill：
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo inetgas/arch-compiler \
+  --path skills/using-arch-compiler skills/compiling-architecture skills/implementing-architecture
+```
+
+Codex 安装器说明：如果要从这个仓库一次安装多个 skill，请把所有 skill 路径都放在同一个 `--path` 参数后面。不要重复写 `--path`；当前安装器只会保留最后一个重复值。
+
+安装后，可以这样确认三个目录都存在：
+
+```bash
+ls ~/.codex/skills | rg 'using-arch-compiler|compiling-architecture|implementing-architecture'
+```
+
 ### Skill 入口
 
 - `skills/using-arch-compiler` = 选择正确工作流；如果架构发生变化，路由回编译阶段

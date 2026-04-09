@@ -98,6 +98,22 @@ Restart Codex after installing.
 
 Important: the skill files are not sufficient by themselves. The workflows depend on the full repo being available in a stable local path so agents can access the compiler, pattern registry, schemas, and adapters without re-cloning or relying on `/tmp/`.
 
+Or install the three skills directly from the public repo:
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo inetgas/arch-compiler \
+  --path skills/using-arch-compiler skills/compiling-architecture skills/implementing-architecture
+```
+
+Codex installer note: when installing multiple skills from this repo, pass all skill paths after a single `--path` argument. Do not repeat `--path`; in the current installer only the last repeated value is kept.
+
+After installation, verify the three directories exist:
+
+```bash
+ls ~/.codex/skills | rg 'using-arch-compiler|compiling-architecture|implementing-architecture'
+```
+
 ### Skill Entry Points
 
 - `skills/using-arch-compiler` = choose the correct workflow and route back to compilation if architecture changes

@@ -24,20 +24,28 @@ ln -s ~/.codex/arch-compiler/skills ~/.agents/skills/arch-compiler
 
 安装新 skills 后，请重启 Codex。
 
-高级方式：直接按路径从这个 GitHub 仓库安装：
+高级方式：直接按路径从这个 GitHub 仓库一次安装这三个 skill：
 
 ```bash
-scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/using-arch-compiler
-scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/compiling-architecture
-scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/implementing-architecture
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo inetgas/arch-compiler \
+  --path skills/using-arch-compiler skills/compiling-architecture skills/implementing-architecture
 ```
 
-也可以使用 GitHub URL 形式：
+Codex 安装器说明：如果要从这个仓库一次安装多个 skill，请把所有 skill 路径都放在同一个 `--path` 参数后面。不要重复写 `--path`；当前安装器只会保留最后一个重复值。
+
+安装后，可以这样确认三个目录都存在：
 
 ```bash
-scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/using-arch-compiler
-scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/compiling-architecture
-scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/implementing-architecture
+ls ~/.codex/skills | rg 'using-arch-compiler|compiling-architecture|implementing-architecture'
+```
+
+也可以使用 GitHub URL 形式逐个安装：
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/using-arch-compiler
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/compiling-architecture
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/implementing-architecture
 ```
 
 ## 在 Claude Code 中使用

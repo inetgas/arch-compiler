@@ -30,20 +30,28 @@ Restart Codex after installing new skills.
 
 The stable repo path above is also the canonical runtime location the skills should use when invoking the compiler. Avoid cloning the repo into `/tmp/` for normal use; that creates session-to-session drift and forces unnecessary re-installs.
 
-Advanced option: install directly from this GitHub repo by path:
+Advanced option: install all three skills directly from this GitHub repo by path:
 
 ```bash
-scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/using-arch-compiler
-scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/compiling-architecture
-scripts/install-skill-from-github.py --repo inetgas/arch-compiler --path skills/implementing-architecture
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py \
+  --repo inetgas/arch-compiler \
+  --path skills/using-arch-compiler skills/compiling-architecture skills/implementing-architecture
 ```
 
-Or use the GitHub URL form:
+Codex installer note: when installing multiple skills from this repo, pass all skill paths after a single `--path` argument. Do not repeat `--path`; in the current installer only the last repeated value is kept.
+
+After installation, verify the three directories exist:
 
 ```bash
-scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/using-arch-compiler
-scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/compiling-architecture
-scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/implementing-architecture
+ls ~/.codex/skills | rg 'using-arch-compiler|compiling-architecture|implementing-architecture'
+```
+
+Or use the GitHub URL form to install them one-by-one:
+
+```bash
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/using-arch-compiler
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/compiling-architecture
+python3 ~/.codex/skills/.system/skill-installer/scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compiler/tree/main/skills/implementing-architecture
 ```
 
 ## Use in Claude Code

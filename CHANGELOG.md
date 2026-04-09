@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Clarified Codex skill installation for direct GitHub installs:
+  - documented the working single-`--path` multi-skill install command for the three Architecture Compiler skills
+  - warned that repeating `--path` keeps only the last value in the current installer
+  - added post-install verification steps in the English and Simplified Chinese human-facing docs
+
 ## [1.0.1] - 2026-04-09
 
 - Added a shared workflow preflight helper:
