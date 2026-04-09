@@ -21,13 +21,14 @@
       "fal",
       "replicate",
       "huggingface",
-      "openai"
+      "openai",
+      "vertex-ai"
     ],
     "costNotes": "Choose provider based on model availability, pricing, latency requirements, and free tier needs. Implement usage monitoring and caching to control costs.",
     "provenance": {
       "estimatedMonthlyRangeUsd": "Min $0 represents free tier usage (e.g., HuggingFace Inference API free tier, Replicate small quotas). Low usage scenarios ($10-100/mo) cover ~100-1000 API calls for text generation or ~50-500 image generations. Medium usage ($100-1000/mo) represents production applications with moderate traffic: ~10K-100K text API calls or ~1K-10K image generations. Max $5000 represents high-volume production usage: ~500K+ LLM API calls, ~50K+ image generations, or intensive fine-tuning workloads. Actual costs highly dependent on: model complexity (GPT-4 vs GPT-3.5), output length, image resolution, and provider pricing (OpenAI $0.01-0.12/1K tokens, Replicate $0.0002-0.02/second, Fal $0.001-0.10/generation).",
       "adoptionCost": "Medium-low complexity integration. Most GenAI APIs provide REST endpoints with good SDKs (Python, Node.js, etc.), making basic integration straightforward (2-5 days). However, production-ready implementation requires: error handling and retry logic (1-2 days), rate limiting and queuing mechanisms (1-2 days), prompt engineering and optimization (2-3 days), cost monitoring and usage tracking (1-2 days), response caching strategies (1-2 days), and multi-provider fallback logic if needed (2-3 days). Total effort: 8-15 developer days at ~$100-150/hour = $6,400-18,000 internal cost, but with AI coding assistants and good documentation, effective implementation time reduces to 5-8 days ($800 represents accelerated adoption cost with modern tooling).",
-      "licenseCost": "No upfront license costs for GenAI inference APIs. All major providers (OpenAI, Anthropic, Replicate, Fal, HuggingFace) operate on pay-as-you-go consumption models without license fees. Free tiers available from HuggingFace (free inference API with rate limits), Replicate (free credits), and occasionally promotional credits from OpenAI/Anthropic. Enterprise agreements may require minimum commitments ($1K-10K/month) but these are consumption commitments, not license fees. Open-source self-hosted alternatives (vLLM, TGI) are also $0 license cost but shift costs to infrastructure.",
+      "licenseCost": "No upfront license costs for GenAI inference APIs. Major providers (OpenAI, Anthropic, Replicate, Fal, HuggingFace, Vertex AI) operate on pay-as-you-go or usage-tied cloud billing models without standalone software license fees. Free tiers or credits may be available from some vendors, while enterprise agreements can introduce spend commitments, but these are consumption commitments rather than license purchases. Open-source self-hosted alternatives (vLLM, TGI) are also $0 license cost but shift costs to infrastructure.",
       "source": "LLM analysis (as of 18-Feb-2026)"
     }
   },
@@ -123,9 +124,10 @@
           "anthropic",
           "huggingface",
           "replicate",
-          "fal"
+          "fal",
+          "vertex-ai"
         ],
-        "description": "AI model provider - OpenAI (GPT-4, DALL-E), Anthropic (Claude), HuggingFace (open models), Replicate (community models), Fal (fast inference)"
+        "description": "AI model provider - OpenAI (GPT-4, DALL-E), Anthropic (Claude), HuggingFace (open models), Replicate (community models), Fal (fast inference), Vertex AI (Gemini, Imagen, embeddings on GCP)"
       },
       "model_type": {
         "type": "string",

@@ -67,7 +67,7 @@ Each skill defines its input interface clearly — satisfy the interface however
 
 | Path | What it is |
 |------|-----------|
-| `patterns/` | 180 curated pattern JSON files — the knowledge base |
+| `patterns/` | Curated pattern JSON files — the knowledge base |
 | `patterns/<id>.json` | Pattern ID must match filename exactly (e.g. `cache-aside.json` → `id: "cache-aside"`) |
 
 Pattern file naming convention: `<family>-<name>[--<provider-or-variant>].json`
@@ -78,10 +78,10 @@ Pattern file naming convention: `<family>-<name>[--<provider-or-variant>].json`
 
 | Path | What it is |
 |------|-----------|
-| `tests/` | pytest test suite (34 test files) |
+| `tests/` | pytest test suite |
 | `tests/README.md` | Test suite overview and how to run |
 | `tests/fixtures/` | Reusable YAML fixtures for warn_nfr / cost tests |
-| `test-specs/` | 116 named integration specs |
+| `test-specs/` | Named integration specs |
 
 Test spec naming: `<category>_<sub-category>_<description>_<pass\|fail>.yaml`
 - `_pass` = must compile with exit 0

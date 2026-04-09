@@ -1,0 +1,363 @@
+{
+  "id": "genai-inference--vertex-ai",
+  "version": "1.0.0",
+  "title": "Google Vertex AI: Managed GenAI Inference",
+  "description": "Managed GenAI inference on Google Cloud Vertex AI with Gemini, Imagen, and embedding models; strong multimodal support; GCP IAM and regional controls; suitable when AI inference should stay inside a GCP-governed architecture.",
+  "types": [
+    "design",
+    "build",
+    "deploy",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 900.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 10.0,
+      "max": 12000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "vertex-ai"
+    ],
+    "costNotes": "Managed GenAI pricing varies by model family, token volume, and modality. Track prompt/response tokens, image generation volume, and regional usage to control spend. Use model tiering and caching to avoid overpaying for simple requests.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Pay-as-you-go model inference pricing on Vertex AI creates highly variable monthly cost. Min ($10): light prototyping or internal tooling with low request volume using Gemini Flash or embeddings. Max ($12,000): production workloads with sustained multimodal inference, large-context prompts, or high image generation volume using premium Gemini/Imagen tiers. Typical production assistant or document-analysis workload with moderate traffic can range from $100-800/month depending on token volume and model choice.",
+      "adoptionCost": "Low-to-medium integration complexity. Basic Vertex AI SDK or REST integration is straightforward for teams already on GCP, but production readiness requires: service account/IAM setup, quota management, region selection, monitoring, retry logic, and cost controls. Teams also need to understand model routing, context limits, and provider-specific auth. Basic integration: 4-8 hours. Production hardening and observability: additional 6-10 hours. Total: 10-18 hours at typical cloud-platform engineering rates.",
+      "licenseCost": "No separate software license fee. Vertex AI uses consumption-based billing tied to model inference usage, optional managed features, and standard GCP billing/account setup. Enterprise commitments may exist at the GCP contract level, but there is no standalone Vertex AI license purchase required for basic API use.",
+      "source": "LLM analysis (as of 09-Apr-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "genai-inference",
+      "confidence": "strong",
+      "reasoning": "Core capability - this pattern provides managed generative AI inference through Google Vertex AI."
+    },
+    {
+      "capability": "text-generation",
+      "confidence": "strong",
+      "reasoning": "Gemini models on Vertex AI provide primary text generation and transformation capabilities for prompts, summaries, and structured outputs."
+    },
+    {
+      "capability": "chat-completion",
+      "confidence": "strong",
+      "reasoning": "Vertex AI supports conversational and multi-turn interaction patterns through Gemini chat-style inference."
+    },
+    {
+      "capability": "image-generation",
+      "confidence": "high",
+      "reasoning": "Vertex AI provides managed image generation through Imagen models, making image generation a first-class capability."
+    },
+    {
+      "capability": "embeddings",
+      "confidence": "strong",
+      "reasoning": "Vertex AI provides managed text embedding models for retrieval, semantic search, and similarity workloads."
+    },
+    {
+      "capability": "embedding-generation",
+      "confidence": "strong",
+      "reasoning": "Dedicated embedding endpoints generate vector representations directly from raw text and multimodal inputs where supported."
+    },
+    {
+      "capability": "multimodal-generation",
+      "confidence": "strong",
+      "reasoning": "Gemini models support multimodal inputs and outputs, enabling text-plus-image reasoning and generation workflows."
+    },
+    {
+      "capability": "document-analysis",
+      "confidence": "high",
+      "reasoning": "Gemini on Vertex AI is well-suited to document summarisation, extraction, and multimodal analysis workloads operating inside GCP."
+    },
+    {
+      "capability": "function-calling",
+      "confidence": "high",
+      "reasoning": "Gemini models support structured tool or function invocation for agentic and orchestration scenarios."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "http-client",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Vertex AI inference is exposed through managed APIs and SDK-backed HTTP requests."
+    },
+    {
+      "capability": "cloud-iam",
+      "confidence": "strong",
+      "optional": false,
+      "reasoning": "Vertex AI is tightly coupled to Google Cloud IAM, project scoping, and permission boundaries."
+    },
+    {
+      "capability": "service-account-authentication",
+      "confidence": "strong",
+      "optional": false,
+      "reasoning": "Production access typically relies on GCP service accounts or workload identity rather than anonymous or simple static auth."
+    },
+    {
+      "capability": "cost-visibility",
+      "confidence": "strong",
+      "optional": true,
+      "reasoning": "Managed GenAI billing varies significantly by model family, token volume, and modality; explicit cost monitoring is needed."
+    },
+    {
+      "capability": "rate-limiting",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Vertex AI enforces quotas and rate limits that must be respected to avoid throttling or quota exhaustion."
+    },
+    {
+      "capability": "error-handling",
+      "confidence": "high",
+      "optional": true,
+      "reasoning": "Model inference requests can fail due to transient service issues, quota exhaustion, or malformed requests and need robust retry/error handling."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "genai-inference--openai",
+      "genai-inference--anthropic",
+      "genai-inference--huggingface",
+      "genai-inference--replicate",
+      "genai-inference--fal"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "ai",
+    "genai",
+    "inference",
+    "gcp",
+    "google-cloud",
+    "vertex-ai",
+    "gemini",
+    "imagen",
+    "embeddings",
+    "multimodal",
+    "managed-service"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Pattern for a publicly available managed Google Cloud service."
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9995,
+      "reason": "Vertex AI runs on managed Google Cloud infrastructure and can support high availability expectations within regional managed-service limits."
+    },
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 300,
+      "reason": "Managed GenAI inference on Vertex AI still requires network transit and model execution time, so sub-300ms p95 targets are unrealistic."
+    },
+    {
+      "path": "/nfr/latency/p99Milliseconds",
+      "op": ">=",
+      "value": 800,
+      "reason": "Tail latency includes model queueing, multimodal processing, and managed-service variance; p99 below 800ms is not a safe planning assumption."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 1,
+      "reason": "Managed Google Cloud services can typically recover within minutes through platform failover and operational automation."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 3600000,
+      "reason": "Enterprise Vertex AI quotas can support large-scale throughput, but capacity is still bounded by per-project quotas and model-specific limits."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR support depends on region selection, retention configuration, and application-layer controls, not on the provider pattern alone."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA support depends on data handling and deletion controls implemented around the managed service."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA support depends on covered-service scope, BAA status, and application controls; this provider pattern alone does not guarantee it."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX support depends on audit logging, change controls, and environment governance implemented around the managed service."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "gcp",
+      "reason": "Vertex AI is a Google Cloud managed service and should be selected only when the architecture is explicitly GCP-based."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "php",
+        "ruby",
+        "scala",
+        "swift",
+        "dart",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Vertex AI is accessible through REST APIs and SDKs for major languages, with strongest first-party support for Python, JavaScript/TypeScript, Java, and Go."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-inference",
+        "cli"
+      ],
+      "reason": "Vertex AI can be called from any application or service platform able to use Google-authenticated API access."
+    },
+    {
+      "path": "/constraints/features/ai_inference",
+      "op": "==",
+      "value": true,
+      "reason": "Pattern is specifically for AI inference workloads and should only match when that feature is enabled."
+    }
+  ],
+  "defaultConfig": {
+    "primary_model": "gemini-2.5-flash",
+    "fallback_model": "gemini-2.0-flash-lite",
+    "image_model": "imagen-3",
+    "max_tokens": 8192,
+    "temperature": 0.7,
+    "enable_streaming": true,
+    "timeout_seconds": 60,
+    "retry_strategy": "exponential-backoff",
+    "service_auth_method": "service_account"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "primary_model": {
+        "type": "string",
+        "enum": [
+          "gemini-2.5-pro",
+          "gemini-2.5-flash",
+          "gemini-2.0-flash",
+          "gemini-2.0-flash-lite"
+        ],
+        "description": "Primary Vertex AI model. gemini-2.5-pro: highest quality for complex reasoning; gemini-2.5-flash: recommended default for balanced latency/cost; gemini-2.0-flash: lower-latency general use; gemini-2.0-flash-lite: cheapest fallback for simple tasks."
+      },
+      "fallback_model": {
+        "type": "string",
+        "enum": [
+          "gemini-2.0-flash",
+          "gemini-2.0-flash-lite",
+          "none"
+        ],
+        "description": "Fallback model if the primary model is unavailable or quota-limited."
+      },
+      "image_model": {
+        "type": "string",
+        "enum": [
+          "imagen-3",
+          "none"
+        ],
+        "description": "Managed image generation model. Use none if the workload is text-only."
+      },
+      "max_tokens": {
+        "type": "integer",
+        "minimum": 256,
+        "maximum": 32768,
+        "description": "Maximum generated tokens per response. Higher values increase latency and spend."
+      },
+      "temperature": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 2,
+        "description": "Sampling temperature controlling determinism versus creativity."
+      },
+      "enable_streaming": {
+        "type": "boolean",
+        "description": "Stream partial responses for interactive UX when supported by the selected model."
+      },
+      "timeout_seconds": {
+        "type": "integer",
+        "minimum": 10,
+        "maximum": 300,
+        "description": "Request timeout in seconds for inference calls."
+      },
+      "retry_strategy": {
+        "type": "string",
+        "enum": [
+          "exponential-backoff",
+          "fixed-delay",
+          "none"
+        ],
+        "description": "Retry strategy for transient Vertex AI failures or quota throttling."
+      },
+      "service_auth_method": {
+        "type": "string",
+        "enum": [
+          "service_account"
+        ],
+        "description": "Service credential method for Vertex AI. Use Google Cloud service account or workload identity, not static provider keys embedded in code."
+      }
+    }
+  },
+  "warn_nfr": [
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<",
+      "value": 10,
+      "reason": "Very low-volume usage may not justify the extra project, IAM, and quota setup overhead of Vertex AI compared with simpler external APIs.",
+      "message": "genai-inference--vertex-ai: peak_jobs_per_hour is {actual} (<10). Vertex AI setup and governance overhead may outweigh the benefit at very low volume."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "==",
+      "value": true,
+      "reason": "PII workloads on Vertex AI require explicit region, logging, retention, and access-control decisions; treating provider selection alone as sufficient is risky.",
+      "message": "genai-inference--vertex-ai: spec indicates PII handling. Verify Vertex AI region, logging, retention, and IAM settings before treating this as compliant."
+    }
+  ]
+}

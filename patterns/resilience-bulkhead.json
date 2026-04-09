@@ -55,7 +55,7 @@
       "reasoning": "The pattern fundamentally requires the ability to partition resources (thread pools, connection pools, memory, CPU) into isolated segments. This is the essential prerequisite for implementing bulkhead isolation."
     },
     {
-      "capability": "quota-enforcement",
+      "capability": "rate-limiting",
       "confidence": "high",
       "reasoning": "Implementation requires the ability to set and enforce limits on resources allocated to each partition (e.g., max threads, max connections, max memory). Without limiting mechanisms, partitioning alone cannot prevent resource exhaustion.",
       "optional": true

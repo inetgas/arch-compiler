@@ -6,6 +6,15 @@
   - documented the working single-`--path` multi-skill install command for the three Architecture Compiler skills
   - warned that repeating `--path` keeps only the last value in the current installer
   - added post-install verification steps in the English and Simplified Chinese human-facing docs
+- Added Vertex AI provider support and related registry hardening:
+  - added `patterns/genai-inference--vertex-ai.json` as a GCP-managed GenAI inference provider variant
+  - aligned the generic `genai-inference` provider vocabulary and reciprocal provider conflicts
+  - updated `schemas/capability-vocabulary.yaml` for GenAI and cloud-auth capabilities, and normalized older `quota-enforcement` aliases to canonical `rate-limiting`
+  - added Vertex AI integration specs under `test-specs/` for positive GCP selection and non-GCP fallback behavior
+- Tightened pattern-authoring guidance:
+  - `compiling-architecture` now requires checking `schemas/capability-vocabulary.yaml` during new pattern authoring
+  - agent guidance now makes staging-first the default for new pattern authoring; “author a new pattern” does not by itself authorize placing it directly into `patterns/`
+- Removed exact live counts from README-family docs so pattern, skill, and test-spec growth no longer forces routine documentation churn
 
 ## [1.0.1] - 2026-04-09
 

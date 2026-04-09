@@ -1,7 +1,7 @@
 docs/architecture/
 docs/plans/
 docs/reports/
-patterns-staging/
+staging/
 compiled_output/
 reports/
 arch_compiler.egg-info/

@@ -6,7 +6,7 @@ Note: The English documentation is the canonical source of truth. If translation
 
 ArchCompiler compiles constraints and NFRs into explicit, reviewable architectural decisions with clear trade-offs and cost impact.
 
-It is an architecture-level AI harness built from three parts: a deterministic compiler, a curated pattern registry, and three workflow skills for agents. Together they turn requirements into compiled architecture, route work through approval and re-approval when architectural decisions change, and guide implementation against an explicit architectural contract.
+It is an architecture-level AI harness built from three parts: a deterministic compiler, a curated pattern registry, and workflow skills for agents. Together they turn requirements into compiled architecture, route work through approval and re-approval when architectural decisions change, and guide implementation against an explicit architectural contract.
 
 The compiler itself is intentionally simple: no LLM inference, no hidden defaults, and no black-box selection logic. The architectural intelligence lives in the registry and in the workflow discipline carried by:
 - `using-arch-compiler`
@@ -16,8 +16,8 @@ The compiler itself is intentionally simple: no LLM inference, no hidden default
 [![CI - Test Suite](https://github.com/inetgas/arch-compiler/actions/workflows/main.yml/badge.svg)](https://github.com/inetgas/arch-compiler/actions/workflows/main.yml)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
-![Patterns](https://img.shields.io/badge/Patterns-180+-success)
-![Skills](https://img.shields.io/badge/Skills-3-orange)
+![Registry](https://img.shields.io/badge/Registry-Curated-success)
+![Skills](https://img.shields.io/badge/Skills-Workflow-orange)
 ![Core](https://img.shields.io/badge/Core-No--LLM%20Inference-black)
 
 > **Tags:** `architecture-as-code`, `architecture-harness`, `agent-harness`, `deterministic-compiler`, `pattern-registry`, `nfr-enforcement`, `ai-governance`
@@ -482,7 +482,7 @@ This table follows the same progression as the demo video [[Architecture Compile
 │   ├── test_requirements_tracing.py        Requirements tracing
 │   └── test_requirements_tracing_integration.py  Requirements tracing integration
 │
-├── test-specs/                 116 named integration specs
+├── test-specs/                 Named integration specs
 │   │                           Naming: <category>_<sub-category>_<description>_<pass|fail>.yaml
 │   │                           _pass = must compile with exit 0
 │   │                           _fail = must compile with exit 1

@@ -1,0 +1,36 @@
+# Feature - AI Inference with Vertex AI Selected on GCP
+#
+# A GCP-hosted Python API with ai_inference: true. Vertex AI is modeled as a
+# GCP-managed service rather than a generic SaaS provider, so selection should
+# be driven by cloud: gcp plus the ai_inference feature flag rather than by
+# saas-providers allowlisting.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - genai-inference--vertex-ai IS selected (cloud: gcp + ai_inference: true)
+#   - generic genai-inference may also be selected as the generic companion pattern
+#   - GCP-native hosting/platform patterns may coexist if their own constraints match
+
+project:
+  name: Vertex AI Document Assistant
+  domain: ai
+functional:
+  summary: Document analysis API backed by Vertex AI Gemini models
+constraints:
+  platform: api
+  cloud: gcp
+  language: python
+  saas-providers: []
+  features:
+    ai_inference: true
+nfr:
+  data:
+    pii: false
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 1000
+    p99Milliseconds: 2000
+cost:
+  ceilings:
+    monthly_operational_usd: 3000

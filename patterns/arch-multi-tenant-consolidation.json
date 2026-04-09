@@ -37,7 +37,7 @@
       "reasoning": "This pattern explicitly optimizes for cost efficiency in multi-tenant architectures by consolidating resources rather than isolating them per tenant. This is the core value proposition."
     },
     {
-      "capability": "quota-enforcement",
+      "capability": "rate-limiting",
       "confidence": "medium",
       "reasoning": "The pattern description explicitly mentions enforcing isolation via quotas, which is essential for preventing noisy neighbor problems in shared resource environments."
     },

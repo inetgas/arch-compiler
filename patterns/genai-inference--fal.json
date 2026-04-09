@@ -81,7 +81,8 @@
       "genai-inference--huggingface",
       "genai-inference--openai",
       "genai-inference--replicate",
-      "genai-inference--anthropic"
+      "genai-inference--anthropic",
+      "genai-inference--vertex-ai"
     ],
     "incompatibleAssumptions": []
   },

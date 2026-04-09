@@ -221,6 +221,16 @@ capabilities:
     aliases: []
     description: Cloud provider compute, storage, and networking resources available in the deployment account
 
+  cloud-iam:
+    category: environment
+    aliases: [iam]
+    description: Cloud identity and access management primitives such as roles, permissions, and workload identity
+
+  service-account-authentication:
+    category: environment
+    aliases: [workload-identity-authentication]
+    description: Service-to-service authentication using a cloud service account or workload identity rather than static secrets
+
   cost-visibility:
     category: pattern
     aliases: [cost-reporting, cost-monitoring]
@@ -258,6 +268,68 @@ capabilities:
     category: environment
     aliases: []
     description: Language-level interface or protocol conformance mechanism
+
+  # ── GenAI / model inference capabilities ───────────────────────────────────
+
+  genai-inference:
+    category: pattern
+    aliases: [llm-inference, model-inference]
+    description: Managed generative AI inference capability for text, image, embedding, or multimodal workloads
+
+  text-generation:
+    category: pattern
+    aliases: [llm-text-generation]
+    description: Generate or transform text using a language model
+
+  chat-completion:
+    category: pattern
+    aliases: [chat-generation, conversational-completion]
+    description: Multi-turn conversational inference capability for chat-style interactions
+
+  image-generation:
+    category: pattern
+    aliases: [text-to-image-generation]
+    description: Generate images from prompts or other model inputs
+
+  audio-generation:
+    category: pattern
+    aliases: [speech-generation, music-generation]
+    description: Generate audio output such as speech, music, or other sound content
+
+  multimodal-generation:
+    category: pattern
+    aliases: [multimodal-inference]
+    description: Generate or reason across multiple modalities such as text, images, audio, or documents
+
+  embeddings:
+    category: pattern
+    aliases: [vector-embeddings]
+    description: Embedding capability for semantic similarity, retrieval, and vector-based workflows
+
+  embedding-generation:
+    category: pattern
+    aliases: [text-embedding-generation]
+    description: Generate dense vector embeddings from raw input content
+
+  function-calling:
+    category: pattern
+    aliases: [tool-calling]
+    description: Structured model output that can invoke tools or external functions
+
+  document-analysis:
+    category: pattern
+    aliases: [document-understanding]
+    description: Analyse, extract, or summarise content from documents and other rich inputs
+
+  rate-limiting:
+    category: pattern
+    aliases: [quota-enforcement]
+    description: Rate limiting and quota enforcement for external dependencies and internal request flows
+
+  api-key-authentication:
+    category: pattern
+    aliases: [api-key-auth]
+    description: Authentication using provider-issued API keys
 
   object-delegation:
     category: environment

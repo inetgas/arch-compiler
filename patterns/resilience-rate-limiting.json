@@ -42,7 +42,7 @@
       "reasoning": "Per-tenant quotas ensure fair resource distribution among tenants, preventing any single tenant from monopolizing system resources."
     },
     {
-      "capability": "quota-enforcement",
+      "capability": "rate-limiting",
       "confidence": "high",
       "reasoning": "This pattern explicitly enforces per-tenant quotas as stated in the description, making quota enforcement a core provided capability."
     },

@@ -583,11 +583,15 @@ Only proceed to author a new pattern if no existing pattern covers the need and 
 
 ### Authoring a new pattern (agent workflow)
 
+**Hard gate:** A user asking you to "author a new pattern" does **not** by itself authorize placing it in `patterns/`. Default to staging-only unless the human explicitly says to make the pattern live in `patterns/`.
+
 When a user asks you to create a new pattern:
 
 1. **Read `schemas/pattern-schema.yaml`** — every field, type, and required property
-2. **Read 2–3 similar existing patterns** in `patterns/` as structural reference
-3. **Write the new pattern file to a human-designated staging location outside `patterns/`** — e.g. `staging/patterns/<id>.json` — **never directly into `patterns/`**
+2. **Read `schemas/capability-vocabulary.yaml`** — check whether every `provides` / `requires` capability you plan to use already exists as a canonical name or alias
+3. **Read 2–3 similar existing patterns** in `patterns/` as structural reference
+4. **If you introduce a new capability name or alias, update `schemas/capability-vocabulary.yaml` as part of the same change** so the registry vocabulary stays aligned with the new pattern
+5. **Write the new pattern file to a human-designated staging location outside `patterns/`** — e.g. `staging/patterns/<id>.json` — **never directly into `patterns/`**
 
    **Verify before continuing:**
    ```bash
@@ -596,21 +600,22 @@ When a user asks you to create a new pattern:
    ```
    If the file is in `patterns/`, move it back to the staging location before proceeding — an unapproved pattern in `patterns/` is immediately live.
 
-4. **Self-review against the schema** — `audit_patterns.py` only scans `patterns/` and will not validate staged files. Instead, manually verify the staged file against `schemas/pattern-schema.yaml`: check all required fields are present, ID matches filename, rules use valid JSON pointer paths, and conflict declarations are bidirectional.
+6. **Self-review against the schema and vocabulary** — `audit_patterns.py` only scans `patterns/` and will not validate staged files. Instead, manually verify the staged file against `schemas/pattern-schema.yaml` and `schemas/capability-vocabulary.yaml`: check all required fields are present, ID matches filename, capability names are canonical (or intentionally added to the vocabulary), rules use valid JSON pointer paths, and conflict declarations are bidirectional.
 
    **Verify bidirectional conflicts:** For every pattern ID listed in your new pattern's conflict declarations, check that the other pattern also declares yours:
    ```bash
    grep -l "<your-new-pattern-id>" patterns/*.json
    ```
    Any file returned must contain your new pattern ID in its own conflict list — if not, flag it for the human to fix before approving.
-5. **Present the file to the human for review** — explicitly state it is not yet active and awaits approval
-6. **Human moves the file into `patterns/`** after review, then runs `python3 tools/audit_patterns.py` and `python3 -m pytest tests/ -q` to confirm it passes — this is the only step an agent must not perform unilaterally
+7. **Present the file to the human for review** — explicitly state it is not yet active and awaits approval
+8. **Human moves the file into `patterns/`** after review, then runs `python3 tools/audit_patterns.py` and `python3 -m pytest tests/ -q` to confirm it passes — this is the only step an agent must not perform unilaterally
 
 **Do not skip the staging step.** A pattern placed directly into `patterns/` is immediately picked up by the compiler and all tests. Unapproved patterns can silently change compiled output for all specs.
 
 ### Key pattern authoring rules
 
 - Pattern IDs must match filename (`cache-aside.json` → `id: "cache-aside"`)
+- `provides` / `requires` capability names must align with `schemas/capability-vocabulary.yaml`; if you add a new canonical capability or alias, update the vocabulary in the same change
 - `supports_constraints` and `supports_nfr` rules use AND logic — all must match for pattern to be selected
 - Conflict declarations must be **bidirectional** — if A conflicts B, B must also declare A
 - Sibling variant patterns (e.g. cloud-specific variants) must each conflict with all their siblings
