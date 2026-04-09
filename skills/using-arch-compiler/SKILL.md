@@ -1,6 +1,7 @@
 ---
 name: using-arch-compiler
 description: Use when starting architecture work and you need to decide whether to compile/finalise architecture or implement an already-approved architecture.
+tags: [architecture, workflow-routing, agent-harness, governance]
 ---
 
 # Using Architecture Compiler
@@ -10,7 +11,7 @@ description: Use when starting architecture work and you need to decide whether 
 Before doing anything else:
 
 1. Read `AGENTS.md`.
-2. Treat `tools/`, `schemas/`, and `patterns/` as read-only unless the human explicitly asked for compiler-maintenance work in this repo.
+2. Treat `tools/`, `schemas/`, `config/`, and `patterns/` as read-only unless the human explicitly asked for compiler-maintenance work in this repo.
 3. Decide whether the task is about architecture selection or architecture implementation.
 
 ## Routing Rule
@@ -32,6 +33,7 @@ Use `skills/implementing-architecture/SKILL.md` when:
 
 ## Hard Stops
 
+- If the full Architecture Compiler repo is not installed in a stable local path, stop and install it before routing further. Installing only copied skill files is not enough; the workflows depend on `tools/`, `schemas/`, `config/`, and `patterns/`.
 - If no application repo exists yet, do not write app architecture artifacts into the compiler repo.
 - If an implementation task lacks approved architecture, stop and switch to the compiling skill.
 - If planning starts under the implementing skill and reveals unresolved architecture-binding choices, stop and route back to the compiling skill before more planning or coding.

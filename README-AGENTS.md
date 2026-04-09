@@ -56,6 +56,7 @@ Each skill defines its input interface clearly — satisfy the interface however
 | Path | What it is |
 |------|-----------|
 | `tools/archcompiler.py` | The compiler — only file to run for compiling a spec |
+| `tools/archcompiler_preflight.py` | Shared workflow preflight for app-repo, git, and approval checks before compile/implement flows |
 | `tools/audit_patterns.py` | Pattern metadata quality audit (run after editing patterns) |
 | `tools/audit_nfr_logic.py` | Validates all rule `path` values reference valid spec fields |
 | `tools/audit_asymmetric_conflicts.py` | Finds A→B conflicts missing B→A declarations |
@@ -133,6 +134,9 @@ source .venv/bin/activate
 # Install repo dependencies
 python -m pip install -r tools/requirements.txt
 python -m pip install -e .
+
+# Run workflow preflight before app-facing compile or implement work
+archcompiler-preflight --app-repo /path/to/app-repo --mode compile
 
 # Compile to stdout
 archcompiler tests/fixtures/no-advisory-success.yaml

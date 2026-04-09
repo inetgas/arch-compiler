@@ -109,6 +109,21 @@ ln -s ~/.codex/arch-compiler/skills ~/.agents/skills/arch-compiler
 - `skills/compiling-architecture` = 编译并最终确认架构
 - `skills/implementing-architecture` = 按已审批架构实现系统
 
+### Agent 工作流 Preflight
+
+在面向应用仓库的架构编译或实现工作流开始前，请先运行共享 preflight helper。无论工作流是由 Codex、Claude Code 还是其他 agent 封装驱动，这一步都适用。
+
+```bash
+# 如果你已经把包安装为 CLI：
+archcompiler-preflight --app-repo /path/to/app-repo --mode compile
+
+# 或者直接从稳定的本地仓库路径运行 helper：
+python3 ~/.codex/arch-compiler/tools/archcompiler_preflight.py --app-repo /path/to/app-repo --mode compile
+python3 ~/.claude/arch-compiler/tools/archcompiler_preflight.py --app-repo /path/to/app-repo --mode compile
+```
+
+如果接下来要基于已审批的 `docs/architecture/` 开始实现，请使用 `--mode implement`。
+
 ### Claude Code
 
 Claude Code 不会像 Codex 那样原生发现 skills，但本仓库在 `adapters/claude-code/commands/` 中提供了可直接复制使用的命令适配文件，其中包括路由入口。

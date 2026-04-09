@@ -6,3 +6,7 @@ Read `AGENTS.md` first, then use:
 - `skills/using-arch-compiler/SKILL.md` if you need to choose the workflow
 - `skills/compiling-architecture/SKILL.md` to compile/finalise architecture
 - `skills/implementing-architecture/SKILL.md` to implement an approved architecture
+
+Before compile or implement workflows, run the shared preflight helper when applicable:
+- `~/.claude/arch-compiler/tools/archcompiler_preflight.py --app-repo <app-repo> --mode compile`
+- `~/.claude/arch-compiler/tools/archcompiler_preflight.py --app-repo <app-repo> --mode implement`

@@ -16,6 +16,7 @@ python -m pip install -e .
 python -m pytest tests -q
 
 # Or run specific test suites
+python -m pytest tests/test_archcompiler_preflight.py -q
 python -m pytest tests/test_pattern_schema_validation.py -v
 python -m pytest tests/test_nfr_constraint_logic.py -v
 python -m pytest tests/test_pattern_conflicts.py -v
@@ -23,6 +24,8 @@ python -m pytest tests/test_pattern_quality.py -v
 ```
 
 Run tests from the `arch-compiler/` repo root. Several integration tests invoke `tools/archcompiler.py` using cwd-relative paths.
+
+The suite also includes `tests/test_archcompiler_preflight.py`, which verifies the shared workflow preflight helper catches missing git initialization, missing initial commits, and missing approved architecture in implement mode.
 
 ## Test Suites
 

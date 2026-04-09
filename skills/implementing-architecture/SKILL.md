@@ -1,6 +1,7 @@
 ---
 name: implementing-architecture
 description: "Use when: about to write code and docs/architecture/ exists with STATUS: APPROVED in architecture.yaml. Not when: no approved architecture yet (use compiling-architecture first), or architecture.yaml lacks STATUS: APPROVED header."
+tags: [architecture, implementation, verification, planning, governance]
 ---
 
 # Architecture Pattern Implementer
@@ -22,6 +23,7 @@ arch-compiler/
 ├── README-AGENTS.md
 ├── tools/        <-- read-only for agents
 ├── schemas/      <-- read-only for agents
+├── config/       <-- read-only for agents
 ├── patterns/     <-- read-only for agents
 └── skills/
     ├── using-arch-compiler/
@@ -36,7 +38,7 @@ Before acting:
 
 1. Read `AGENTS.md` for repo-wide agent rules and boundaries.
 2. Read this `SKILL.md` for the task-specific workflow.
-3. Treat `tools/`, `schemas/`, and `patterns/` as read-only unless the human explicitly asks for compiler-maintenance work in this repo.
+3. Treat `tools/`, `schemas/`, `config/`, and `patterns/` as read-only unless the human explicitly asks for compiler-maintenance work in this repo.
 4. Use this skill only when `docs/architecture/` already exists and is approved. If architecture is missing or unapproved, switch to `skills/compiling-architecture/SKILL.md` instead of inventing architecture choices.
 
 The important split is:
@@ -99,6 +101,14 @@ Before writing any code:
 
 **You MUST perform this check yourself. Do not delegate it to a subagent.** Subagents optimise for "no blocking errors" and resolve flags creatively rather than raising them — which defeats the purpose. A subagent returning "Overall Status: GREEN" is not a substitute for your own verification.
 
+Before the detailed pattern-by-pattern checks below, run the shared workflow preflight helper:
+
+```bash
+python3 ~/.codex/arch-compiler/tools/archcompiler_preflight.py --app-repo <app-repo> --mode implement
+```
+
+If it fails, stop and fix the reported issue before continuing.
+
 After reading all pattern JSONs in Step 1, and **before writing a single line of code**, go through every pattern and verify:
 
 1. **`requires` is satisfiable** — every capability listed in `requires` is either provided by another selected pattern or already exists in the environment. If a required capability (e.g. `metrics-collection`, `distributed-tracing`, `time-series-database`) has no provider anywhere in the architecture, flag it.
@@ -106,6 +116,7 @@ After reading all pattern JSONs in Step 1, and **before writing a single line of
    **Before flagging a gap**, check `schemas/capability-vocabulary.yaml` if it exists in the project. Capabilities with `category: environment` are always satisfied by the deployment environment — skip them entirely, do not raise them as gaps. Examples: `internet-connectivity`, `git-repository`, `compute`, `persistent-storage`, `network-connectivity`, `cloud-infrastructure`, `storage`, `infrastructure`, `data-storage`, `system-architecture`.
 2. **`provides` is deliverable** — you can concretely implement every capability listed in `provides` given the current constraints (cloud, language, platform). If delivering a capability would need infrastructure or tooling not present in the architecture, flag it.
 3. **Pattern integrity** — if a pattern's `requires` lists a capability that the same pattern's own `supports_nfr`, `provides`, or description explicitly states it cannot deliver, that is a registry bug. Flag it as: "Pattern X requires capability Y but its own NFR section declares it cannot support Y — this looks like a pattern authoring bug."
+4. **Runtime semantics are compatible with the selected patterns** — check whether the chosen runtime is stateless, ephemeral, edge-restricted, or otherwise hostile to process-local assumptions. If a pattern implementation would rely on durable in-process state, sticky sessions, local filesystem persistence, or long-lived memory, either bind it to a persistent store or flag it before planning proceeds.
 
 Collect **all** flags across all patterns, then raise them together with the human before proceeding. Do not start implementing and discover blockers mid-way — a partial codebase with unresolved blockers is harder to reason about than a clean pre-implementation conversation.
 
@@ -131,6 +142,9 @@ Example raise:
 
 Example integrity flag:
 > "`pattern-x` requires `audit-logging` (optional: false) but its own `supports_nfr` declares `audit_logging` must equal `false` because the pattern has no built-in access tracking. This is a contradiction in the pattern registry — should I raise a fix, and how do you want to handle the missing audit trail?"
+
+Example runtime-semantics flag:
+> "`resilience-circuit-breaker` is selected, but the target runtime is stateless Lambda-style execution. A module-global circuit breaker will reset across invocations and does not provide durable breaker state. Should I back it with a persistent store, or should we re-evaluate whether this pattern belongs in the approved architecture?"
 
 **Human gate — required even when no flags found.** After completing Steps 1.5, 1.6, and 1.7, present a summary to the human regardless of whether flags were raised:
 
@@ -198,19 +212,30 @@ If any row has no task, stop and either add the task or flag the gap to the huma
 
 **MUST-DO before finalising any plan:**
 
+Every plan document must include a **Pattern Coverage Matrix** in addition to the functional coverage matrix:
+
+| Selected pattern | Task that delivers it | Concrete artifact(s) |
+|------------------|-----------------------|----------------------|
+| `pattern-id` | Task N: [name] | `path/to/file`, infrastructure resource type/name, config file, migration, named test function, or other concrete artifact |
+
+The artifact column must name something concrete: a source file, infrastructure resource type/name, configuration file, migration, named test function, runbook, or other durable implementation artifact. A pattern mapped only to an area such as "backend", "infra", or "observability" is not coverage. An environment variable reference, a client call that assumes an externally-created resource, or a comment that mentions a resource without defining it is also not coverage.
+
 For EVERY selected pattern, immediately before writing that pattern's task in the plan:
 
 1. Read `patterns/<id>.json` — specifically the `provides` array
 2. List every `provides` capability explicitly inside that task's steps
-3. Verify each capability has a named, testable step — not just a table entry
-4. Do NOT add a pattern to any "done" or summary table unless its task delivers ALL capabilities in `provides`
+3. Verify each capability has a named, testable step and at least one concrete artifact target — not just a table entry
+4. Add or update the Pattern Coverage Matrix row for that pattern
+5. Do NOT add a pattern to any "done" or summary table unless its task delivers ALL capabilities in `provides`
 
 **This resolves the planning/coding tension:** "read pattern JSON immediately before writing its code" means immediately before writing that pattern's *task in the plan* — not deferred to implementation time. The plan is the first form of code.
 
 **Red flags during plan writing:**
 - Writing a "done" summary table before writing the tasks
 - Mapping a pattern to an "area of code" without listing its `provides` capabilities
+- Mapping a pattern to a task without naming any concrete artifact it will produce
 - Any pattern whose only plan entry is a one-liner in a summary table
+- Leaving the Pattern Coverage Matrix incomplete or with vague artifact targets
 - Finishing the plan before checking every pattern's `provides` array
 
 **A pattern in a summary table without a task that delivers ALL its `provides` capabilities is a silent skip.**
@@ -238,6 +263,8 @@ Once the plan is drafted and before presenting it to the human, dispatch a subag
 >
 > **Area 3 — Pattern provides delivery:** For each selected pattern, read its `provides` array in `docs/architecture/patterns/<id>.json`. For each capability, ask: "Which specific step in which task delivers this?" If a pattern appears only in a summary table with no task that walks through its `provides` capabilities, flag it.
 >
+> **Area 3.5 — Concrete artifact coverage:** For each selected pattern, ask: "What concrete artifact will exist after implementation?" Acceptable answers include a code file, infrastructure resource type/name, migration, configuration file, named test function, or runbook. If the plan only names a subsystem or workstream and not an artifact, flag it. If the answer is only an environment variable reference, a client call that assumes an externally-created resource, or a comment, flag it as non-implementation.
+>
 > **Area 4 — Runtime and API compatibility:** For each pattern with runtime-specific `defaultConfig` values (`function_runtime`, `edge_functions`, `compute_type`), ask: "Do the packages and APIs chosen in the plan actually work in this runtime?" Name the specific API or package you are questioning.
 >
 > **Area 5 — Error and edge cases:** For each main user-facing flow in the requirements source, ask: "Where does the plan handle the failure scenario?" Look for: upload failures, external API timeouts, empty results, retry flows, unauthenticated access attempts. Additionally, for any state that persists across page reloads (poll results, uploaded image URLs, job status), ask: "Does the plan preserve or re-fetch this state from a durable source — or does it survive only in-memory or in a URL parameter that is unavailable after a reload?"
@@ -255,6 +282,9 @@ Once the plan is drafted and before presenting it to the human, dispatch a subag
 >
 > ### Area 3: Pattern provides delivery
 > 1. [pattern-id] provides [capability]: [Specific question].
+>
+> ### Area 3.5: Concrete artifact coverage
+> 1. [pattern-id]: [Specific question about missing concrete artifact].
 >
 > ### Area 4: Runtime and API compatibility
 > 1. [pattern-id] sets [config key]: [value]. Plan uses [package/API]. Question: [compatibility concern].
@@ -275,6 +305,12 @@ For each item the reviewer raises, respond with exactly one of:
 Do not dismiss items with vague reassurances ("handled by the framework", "implied by the pattern", "standard practice"). If it is not explicitly in the plan, it is a gap.
 
 After resolving, note in the human-facing summary what the adversarial review found and what was added.
+
+**Final Verification must be structured as numbered tasks, not prose.** After resolving adversarial-review gaps, write a `Final Verification` section in the plan as explicitly numbered tasks with exact commands and expected output. A prose appendix is not a task and will not be tracked by plan executors.
+
+At minimum, `Final Verification` must include:
+1. A smoke-test task that starts the service (or nearest equivalent), performs at least one real call, and verifies a valid response
+2. A post-implementation adversarial-review task matching Step 5 below
 
 **Rewrite vs patch:** If more than 3 gaps are confirmed, rewrite the full plan rather than patching individual tasks. Patching accumulates on top of the original blindspots — the same mental model that produced the gaps is now editing its own output. A full rewrite forces you to trace every task from scratch with the gap list in hand, which surfaces secondary issues invisible in a diff. (Example: fixing a retry flow reveals a polling cleanup bug that only shows up when reading the whole `JobPoller` spec in one pass — not when diffing the retry step in isolation.)
 
@@ -313,8 +349,9 @@ For each pattern:
 2. Read `defaultConfig` — use these values directly; they are the approved choices
 3. Read `configSchema` descriptions — understand the trade-offs and wire config into environment variables or config files accordingly
 4. **Check `defaultConfig` for runtime-specific values** (e.g. `function_runtime`, `edge_functions`, `compute_type`) and verify that the packages and APIs in your implementation are compatible with that runtime. `function_runtime: nodejs` means Edge-only APIs are unavailable — use Node.js equivalents. `edge_functions: true` means Node.js built-ins are unavailable — use Web APIs. Mismatches compile and deploy silently but fail at runtime.
-5. Check `requires` as a pre-implementation checklist — confirm each required capability is already in place before starting. If a required capability (e.g. a metrics backend, CI/CD integration, SLO tracking tool) does not exist anywhere in the current architecture, **stop — do not write code for this pattern.** Follow the unimplementable pattern workflow below.
-6. After implementing, verify your implementation delivers **every** capability listed in `provides`. If any capability is undelivered, **stop — do not move to the next pattern.** Follow the unimplementable pattern workflow below.
+5. Check whether the pattern relies on process-local state, sticky sessions, local filesystem persistence, or long-lived memory. If the selected runtime is stateless or ephemeral, do not implement a thin in-process approximation and call it done — either bind it to a durable backing service or flag the mismatch.
+6. Check `requires` as a pre-implementation checklist — confirm each required capability is already in place before starting. If a required capability (e.g. a metrics backend, CI/CD integration, SLO tracking tool) does not exist anywhere in the current architecture, **stop — do not write code for this pattern.** Follow the unimplementable pattern workflow below.
+7. After implementing, verify your implementation delivers **every** capability listed in `provides`. If any capability is undelivered, **stop — do not move to the next pattern.** Follow the unimplementable pattern workflow below.
 
 **Do not deviate from `defaultConfig` values without human approval.** If a value is unachievable or breaks NFR targets and/or compliance requirements, surface it to the human — do not substitute silently. Ask human to review and recompile architecture if needed.
 
@@ -329,6 +366,38 @@ After implementing each pattern, verify configuration correctness against `archi
 | `nfr.rpo_minutes` / `nfr.rto_minutes` | Backup schedule interval ≤ RPO target; recovery procedure documented; failover config present |
 | `nfr.data.compliance.*` | Required controls active: encryption at rest/in-transit enabled, audit log destination configured, data retention policies set |
 | `nfr.security.auth` | Exactly the specified auth mechanism implemented — not a different one |
+
+### Step 5 — Post-implementation verification
+
+After all patterns are implemented, complete two verification tasks before declaring implementation done. Both must appear in the plan as explicit numbered tasks inside `Final Verification`.
+
+#### 5a. Smoke test (mandatory)
+
+Start the service and verify at least one real call succeeds end-to-end.
+
+| Type | Owner | Scope |
+|------|-------|-------|
+| Configuration correctness | Implementing agent (Step 4) | Are the approved values wired correctly? |
+| Integration smoke test | Implementing agent (Step 5a) | Does the service start and respond correctly to one real call? |
+| Load/performance testing | Human, out-of-band | Does the system hold under traffic? |
+
+Step 4 covers configuration correctness. Step 5a covers whether the implementation actually runs. The carve-out in Step 4 for human-run live testing applies to load/performance testing only — not to the smoke test.
+
+If the smoke test hits a runtime environment blocker (for example SDK incompatibility, missing cloud access, expired credentials, or unavailable external infrastructure), make one reasonable workaround attempt. If it still fails, surface the blocker to the human and stop iterating around it. An environment blocker is not the same thing as an implementation bug.
+
+#### 5b. Post-implementation adversarial review
+
+Run an adversarial review of the actual implementation against `docs/architecture/` — not just the plan. The plan adversarial review asks "does the plan cover the architecture?" This review asks "does the implementation in the working tree or commit candidate deliver what the plan said?"
+
+The reviewer must be forbidden from producing a pass/fail verdict or positive summary. Its only output is a gap list. Prefer a reviewer with no prior implementation context so it is less likely to rationalize gaps away.
+
+Focus areas:
+- Does each selected pattern's `provides` capability appear in actual code, infrastructure, config, or tests — not stubs, comments, or log lines?
+- Are NFR targets wired in running code, not only in config or documentation files?
+- Do any implementation details contradict the approved `defaultConfig` values?
+- Are cross-task integration points correct?
+
+Resolve findings the same way as the plan adversarial review: cite the exact file and line, or confirm the gap and fix it.
 
 ---
 
@@ -383,6 +452,11 @@ The approved `docs/architecture/` folder is the source of truth. A pattern liste
 | Applying generic heuristics before reading the requirements source | Read the actual source (design doc, user stories, feature specs) first and extract requirements verbatim. The "common silent misses" list is a fallback for when no source exists — not a first check. Flag an item from the heuristic list only if the source does not explicitly mark it out of scope. |
 | Dismissing adversarial reviewer items with vague reassurances | "Handled by the framework" or "implied by the pattern" are not resolutions. For every reviewer item, cite the exact task, step, and file — or confirm the gap and add a task. |
 | Using the adversarial reviewer as a validator instead of a fault-finder | If you prompt the reviewer to confirm coverage rather than find gaps, it will return green. The reviewer's mandate is to assume incompleteness. Never ask it "does the plan cover X?" — only "what is missing?" |
+| Treating the smoke test as load testing and therefore out of scope | A smoke test is mandatory before declaring the work done: start the service, make one real call, and verify a valid response. Load/performance testing remains human-owned. |
+| Writing `Final Verification` as a prose appendix instead of numbered tasks | Prose is not tracked as work. `Final Verification` must be numbered tasks with exact commands and expected output, including smoke test and post-implementation adversarial review. |
+| Iterating through multiple workarounds for a runtime environment blocker | Make one reasonable workaround attempt. If the blocker persists, raise it to the human instead of continuing to churn on environment issues. |
+| Treating per-task reviews as a substitute for post-implementation adversarial review | Per-task review catches isolated issues. Post-implementation adversarial review catches cross-task integration mistakes and implementation-vs-architecture drift. Both are required. |
+| Referencing a resource by name without defining it | An env var like `FIREHOSE_STREAM_NAME` and a `put_record()` call do not create a Firehose stream. Every required resource needs a real definition: cloud resource, Terraform block, provisioning script, config, or explicit externally-managed dependency noted in the plan. |
 | Using a runtime-incompatible API because `defaultConfig` wasn't checked | `function_runtime: nodejs` and `edge_functions: false` mean Edge-only APIs (e.g. `globalThis.waitUntil`) are unavailable. Check `defaultConfig` runtime values before choosing packages and APIs — mismatches compile silently and fail at runtime. |
 | Missing functional requirements with no plan task | Error/retry/empty states and other UX flows are functional requirements not derivable from pattern `provides`. Cross-check the requirements source explicitly — they will not appear in any pattern JSON. |
 | Patching the plan after an adversarial review instead of rewriting | Patches layer on top of the original blindspots. When the confirmed gap count exceeds 3, rewrite from scratch — a full rewrite traces every task and surfaces secondary issues invisible when diffing individual steps. |

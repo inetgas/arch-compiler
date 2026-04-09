@@ -1,6 +1,7 @@
 ---
 name: compiling-architecture
 description: "Use when: user wants to select architecture patterns, compile a spec, iterate on constraints/NFRs, audit why patterns were selected/rejected, or finalise an architecture for implementation. Not when: no repeatable decisions needed, or constraints/NFRs are not yet known (gather those first)."
+tags: [architecture, nfr, cost, patterns, deterministic, governance]
 ---
 
 # Architecture Compiler
@@ -22,6 +23,7 @@ arch-compiler/
 ├── README-AGENTS.md
 ├── tools/        <-- read-only for agents
 ├── schemas/      <-- read-only for agents
+├── config/       <-- read-only for agents
 ├── patterns/     <-- read-only for agents
 └── skills/
     ├── using-arch-compiler/
@@ -36,7 +38,7 @@ Before acting:
 
 1. Read `AGENTS.md` for repo-wide agent rules and boundaries.
 2. Read this `SKILL.md` for the task-specific workflow.
-3. Treat `tools/`, `schemas/`, and `patterns/` as read-only unless the human explicitly asks for compiler-maintenance work in this repo.
+3. Treat `tools/`, `schemas/`, `config/`, and `patterns/` as read-only unless the human explicitly asks for compiler-maintenance work in this repo.
 4. Use this skill only to turn human inputs and constraints into approved architecture artifacts. Do not use it to implement application code.
 
 The important split is:
@@ -61,6 +63,57 @@ The important split is:
 - You are designing a one-off system with no need for repeatability
 - The constraints, targets for nfr/operating_model/cost aren't supported by schemas (check `schemas/` first)
 - You want patterns that account for business logic or domain-specific rules not expressible in the spec schema (check `schemas/` first)
+
+## Session-Start Checklist
+
+Run these checks before writing any spec file, compiling anything, or creating any architecture artifact.
+
+1. **Verify the compiler repo is installed in a stable location**
+
+   Use a persistent path, not `/tmp/`. The canonical examples in this skill assume one of:
+
+   - Codex: `~/.codex/arch-compiler`
+   - Claude Code: `~/.claude/arch-compiler`
+
+   Verify one of them exists:
+
+   ```bash
+   ls ~/.codex/arch-compiler/tools/archcompiler.py
+   ls ~/.claude/arch-compiler/tools/archcompiler.py
+   ```
+
+   If neither exists, install the repo to a stable path before continuing. Do not clone to `/tmp/` for normal use.
+
+2. **Confirm the application repo location with the user**
+
+   All spec files and approved architecture artifacts belong in the application repo, not in the compiler repo.
+
+3. **Run the shared preflight helper**
+
+   Preferred command:
+
+   ```bash
+   python3 ~/.codex/arch-compiler/tools/archcompiler_preflight.py --app-repo <app-repo> --mode compile
+   ```
+
+   If the helper reports a failure, stop and follow the exact next action it prints before writing any files.
+
+4. **Verify git is initialised in the application repo**
+
+   The helper above already checks this. The command below is the manual fallback if the helper cannot be run:
+
+   ```bash
+   git -C <app-repo> rev-parse --git-dir
+   ```
+
+   If this exits non-zero, initialise git and create an initial commit before writing any files:
+
+   ```bash
+   git -C <app-repo> init
+   git -C <app-repo> commit --allow-empty -m "chore: initial commit"
+   ```
+
+5. **Do not write any files until all checks pass**
 
 ## Provider-Binding Gate
 
@@ -345,6 +398,16 @@ When the user approves the compiled spec as the definitive architectural record:
    ```
    If the counts differ, find and copy the missing pattern JSONs before continuing.
 
+   Commit the approved artifacts explicitly:
+
+   ```bash
+   git -C <app-repo> add docs/architecture/ <spec-file>.yaml
+   git -C <app-repo> commit -m "feat: add approved architecture"
+   git -C <app-repo> log --oneline -1
+   ```
+
+   If `git -C <app-repo> log --oneline -1` does not show the approved architecture commit, stop and fix that before proceeding to implementation. Approved architecture artifacts must be versioned.
+
 3. **Add an approval header** to `architecture.yaml` so any agent reading the repo knows this is finalised and not a work-in-progress:
    ```yaml
    # STATUS: APPROVED
@@ -381,30 +444,41 @@ When the user approves the compiled spec as the definitive architectural record:
 ## Running the Compiler
 
 ```bash
+# Choose the canonical stable install path for your environment:
+#   Codex:  ~/.codex/arch-compiler
+#   Claude: ~/.claude/arch-compiler
+#
+# Examples below use the Codex path; substitute ~/.claude/arch-compiler if needed.
+
 # See all options
-python3 tools/archcompiler.py --help
+python3 ~/.codex/arch-compiler/tools/archcompiler.py --help
+
+# Run shared workflow preflight before compiling
+python3 ~/.codex/arch-compiler/tools/archcompiler_preflight.py --app-repo <app-repo> --mode compile
 
 # Install dependencies
-python3 -m pip install -r tools/requirements.txt
+python3 -m pip install -r ~/.codex/arch-compiler/tools/requirements.txt
 
 # Compile to stdout
-python3 tools/archcompiler.py my-spec.yaml
+python3 ~/.codex/arch-compiler/tools/archcompiler.py my-spec.yaml
 
 # Compile + write artifact files (output directory must exist before running)
 mkdir -p compiled_output/
-python3 tools/archcompiler.py my-spec.yaml -o compiled_output/
+python3 ~/.codex/arch-compiler/tools/archcompiler.py my-spec.yaml -o compiled_output/
 
 # Verbose mode — annotates each spec field with triggered patterns; primarily useful for human review.
 # For agents, selected-patterns.yaml and rejected-patterns.yaml are more actionable.
-python3 tools/archcompiler.py my-spec.yaml -v                       # stdout only
-python3 tools/archcompiler.py my-spec.yaml -o compiled_output/ -v  # also writes rejected-patterns.yaml
+python3 ~/.codex/arch-compiler/tools/archcompiler.py my-spec.yaml -v                       # stdout only
+python3 ~/.codex/arch-compiler/tools/archcompiler.py my-spec.yaml -o compiled_output/ -v  # also writes rejected-patterns.yaml
 
 # Add UTC timestamp to output filenames
-python3 tools/archcompiler.py my-spec.yaml -o compiled_output/ -v -t
+python3 ~/.codex/arch-compiler/tools/archcompiler.py my-spec.yaml -o compiled_output/ -v -t
 
 # Include coding-level patterns (GoF, DI, test strategies — excluded by default)
-python3 tools/archcompiler.py my-spec.yaml --include-coding-patterns
+python3 ~/.codex/arch-compiler/tools/archcompiler.py my-spec.yaml --include-coding-patterns
 ```
+
+Run commands against a canonical stable install path. Relative examples like `python3 tools/archcompiler.py ...` assume you are already in the compiler repo; agents often are not. Prefer a persistent install path so the compiler is discoverable across sessions without re-cloning.
 
 ---
 

@@ -4,6 +4,8 @@ Languages: English | [简体中文](../docs/i18n/skills.README.zh-CN.md)
 
 Note: The English documentation is the canonical source of truth. If translations differ, follow the English version.
 
+Official Architecture Compiler skill pack for deterministic architecture selection, approval/re-approval workflow, and implementation against an approved architecture contract.
+
 This repo publishes three reusable agent skills:
 
 - `skills/using-arch-compiler`
@@ -11,6 +13,8 @@ This repo publishes three reusable agent skills:
 - `skills/implementing-architecture`
 
 Each skill is packaged as a self-contained folder with a top-level `SKILL.md`.
+
+Important: installing the skill files alone does not install the Architecture Compiler runtime. The skills depend on the full repo — compiler, patterns, schemas, and docs — being available in a stable local path such as `~/.codex/arch-compiler` or `~/.claude/arch-compiler`.
 
 ## Install in Codex
 
@@ -23,6 +27,8 @@ ln -s ~/.codex/arch-compiler/skills ~/.agents/skills/arch-compiler
 ```
 
 Restart Codex after installing new skills.
+
+The stable repo path above is also the canonical runtime location the skills should use when invoking the compiler. Avoid cloning the repo into `/tmp/` for normal use; that creates session-to-session drift and forces unnecessary re-installs.
 
 Advanced option: install directly from this GitHub repo by path:
 
@@ -43,6 +49,8 @@ scripts/install-skill-from-github.py --url https://github.com/inetgas/arch-compi
 ## Use in Claude Code
 
 Claude Code does not install Codex skills natively, but the same behavior can be exposed as project slash commands.
+
+For Claude Code, keep the full Architecture Compiler repo in a stable path such as `~/.claude/arch-compiler` so the commands and skills can find the compiler, patterns, and schemas without re-cloning.
 
 This repo includes ready-to-copy command files:
 
@@ -67,11 +75,13 @@ These create Claude Code commands:
 
 They point Claude at the canonical skill files in this repo:
 
-- `skills/using-arch-compiler/SKILL.md`
-- `skills/compiling-architecture/SKILL.md`
-- `skills/implementing-architecture/SKILL.md`
+- `~/.claude/arch-compiler/skills/using-arch-compiler/SKILL.md`
+- `~/.claude/arch-compiler/skills/compiling-architecture/SKILL.md`
+- `~/.claude/arch-compiler/skills/implementing-architecture/SKILL.md`
 
-If you want Claude Code to always load repo guidance, you can also add project memory in `CLAUDE.md` and reference the same skill files from there.
+If your local install path differs, edit the copied command files to reference that stable path before first use.
+
+If you want Claude Code to always load repo guidance, you can also add project memory in `CLAUDE.md` and reference the same stable-path skill files from there.
 
 ## Portability Notes
 

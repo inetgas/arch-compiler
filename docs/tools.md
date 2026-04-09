@@ -1,6 +1,6 @@
 # Tools Reference
 
-Five Python tools live in `tools/`. One runs the compiler; the rest are validation and auditing utilities used during development and by the test suite.
+Five Python tools live in `tools/`. One runs the compiler, one runs shared workflow preflight checks, and the rest are validation and auditing utilities used during development and by the test suite.
 
 ---
 
@@ -37,6 +37,39 @@ python3 tools/archcompiler.py spec.yaml -o compiled_output/ -t
 | `--include-coding-patterns` | Include coding-level patterns (GoF, DI, test strategies, etc.) |
 
 **Exit codes:** `0` = success, `1` = validation errors or requirement violations.
+
+---
+
+## archcompiler_preflight.py
+
+Shared preflight checks for architecture compilation and implementation workflows. This tool verifies that:
+
+- the Architecture Compiler repo is available in a stable local path and contains required runtime folders
+- the target application repo exists
+- git is initialized in the application repo
+- the application repo has an initial commit
+- in `implement` mode, `docs/architecture/architecture.yaml` exists and contains `STATUS: APPROVED`
+
+### Usage
+
+```bash
+python3 tools/archcompiler_preflight.py --app-repo /path/to/app-repo --mode compile
+python3 tools/archcompiler_preflight.py --app-repo /path/to/app-repo --mode implement
+```
+
+Or, if the package is installed:
+
+```bash
+archcompiler-preflight --app-repo /path/to/app-repo --mode compile
+```
+
+| Argument | Description |
+|----------|-------------|
+| `--app-repo PATH` | Path to the application repository |
+| `--mode {compile,implement}` | Which workflow is about to run |
+| `--compiler-root PATH` | Optional stable local path to the Architecture Compiler repo; defaults to the repo containing the script |
+
+**Exit codes:** `0` = preflight passed, `1` = one or more required checks failed.
 
 ### Input files
 
@@ -285,6 +318,7 @@ No arguments. Writes to stdout and two files in `reports/`. **Exit codes:** `0` 
 | Tool | Run when... |
 |------|-------------|
 | `archcompiler.py` | Compiling a spec into selected patterns and decisions |
+| `archcompiler_preflight.py` | Checking app-repo git initialization and approved-architecture readiness before compile/implement workflows |
 | `audit_patterns.py` | Checking pattern metadata quality (also run by test suite) |
 | `audit_nfr_logic.py` | Verifying NFR/constraint rule paths are valid (also run by test suite) |
 | `audit_asymmetric_conflicts.py` | Checking conflict symmetry after adding/editing patterns (also run by test suite) |

@@ -67,11 +67,13 @@ cp adapters/claude-code/commands/using-arch-compiler.md .claude/commands/
 
 这些命令会把 Claude 指向本仓库中的权威 skill 文件：
 
-- `skills/using-arch-compiler/SKILL.md`
-- `skills/compiling-architecture/SKILL.md`
-- `skills/implementing-architecture/SKILL.md`
+- `~/.claude/arch-compiler/skills/using-arch-compiler/SKILL.md`
+- `~/.claude/arch-compiler/skills/compiling-architecture/SKILL.md`
+- `~/.claude/arch-compiler/skills/implementing-architecture/SKILL.md`
 
-如果你希望 Claude Code 始终加载仓库级指导，也可以在 `CLAUDE.md` 中加入项目记忆，并引用同样的 skill 文件。
+如果你的本地安装路径不同，请在首次使用前修改复制过去的命令文件，使其指向正确的稳定路径。
+
+如果你希望 Claude Code 始终加载仓库级指导，也可以在 `CLAUDE.md` 中加入项目记忆，并引用同样的稳定路径 skill 文件。
 
 ## 可移植性说明
 

@@ -2,11 +2,25 @@
 
 ## Unreleased
 
+## [1.0.1] - 2026-04-09
+
+- Added a shared workflow preflight helper:
+  - `tools/archcompiler_preflight.py`
+  - installed CLI entrypoint: `archcompiler-preflight`
+  - test coverage in `tests/test_archcompiler_preflight.py`
+- Hardened architecture workflow skills and agent docs:
+  - front-loaded stable-path and app-repo setup checks in `compiling-architecture`
+  - explicit app-repo git initialization and initial-commit verification before architecture work
+  - explicit approved-architecture commit verification during finalisation
+  - stronger implementation-plan enforcement with Pattern Coverage Matrix, artifact-level coverage, runtime-semantics checks, post-implementation smoke testing, and post-implementation adversarial review
+  - clarified that `config/` is part of the read-only agent boundary alongside `tools/`, `schemas/`, and `patterns/`
+- Aligned Claude Code adapters and install docs with the stable-path repo model instead of implicit `@skills/...` resolution
 - Added Simplified Chinese translations for the main public documentation under `docs/i18n/`:
   - `docs/i18n/README.zh-CN.md`
   - `docs/i18n/skills.README.zh-CN.md`
 - Added language-switch links to `README.md` and `skills/README.md`
 - Documented that English remains the canonical source of truth when translations differ
+- Updated packaging metadata in `pyproject.toml` to remove setuptools license deprecation warnings
 
 ## [1.0.0] - 2026-04-02
 

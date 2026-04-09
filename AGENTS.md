@@ -11,6 +11,7 @@ arch-compiler/
 ├── README-AGENTS.md
 ├── tools/        <-- read-only for agents
 ├── schemas/      <-- read-only for agents
+├── config/       <-- read-only for agents
 ├── patterns/     <-- read-only for agents
 └── skills/
     ├── using-arch-compiler/
@@ -48,6 +49,7 @@ Agents may read any file in this repo.
 Unless the human explicitly asks for compiler-maintenance work in this repo:
 - treat `tools/` as read-only
 - treat `schemas/` as read-only
+- treat `config/` as read-only
 - treat `patterns/` as read-only
 
 Agents may:
@@ -72,6 +74,7 @@ Agents may not, unless explicitly directed by the human:
 ## Key Files
 
 - `tools/archcompiler.py` = compiler entrypoint
+- `tools/archcompiler_preflight.py` = shared workflow preflight for compile/implement checks
 - `config/defaults.yaml` = default spec values
 - `schemas/canonical-schema.yaml` = spec contract
 - `schemas/pattern-schema.yaml` = pattern contract

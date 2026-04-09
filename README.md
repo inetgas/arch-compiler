@@ -96,15 +96,34 @@ ln -s ~/.codex/arch-compiler/skills ~/.agents/skills/arch-compiler
 
 Restart Codex after installing.
 
+Important: the skill files are not sufficient by themselves. The workflows depend on the full repo being available in a stable local path so agents can access the compiler, pattern registry, schemas, and adapters without re-cloning or relying on `/tmp/`.
+
 ### Skill Entry Points
 
 - `skills/using-arch-compiler` = choose the correct workflow and route back to compilation if architecture changes
 - `skills/compiling-architecture` = compile and finalise architecture
 - `skills/implementing-architecture` = implement an approved architecture
 
+### Agent Workflow Preflight
+
+Before app-facing architecture compilation or implementation workflows, run the shared preflight helper. This applies regardless of whether the workflow is being driven by Codex, Claude Code, or another agent wrapper.
+
+```bash
+# If you installed the package as a CLI:
+archcompiler-preflight --app-repo /path/to/app-repo --mode compile
+
+# Or run the helper directly from a stable local repo path:
+python3 ~/.codex/arch-compiler/tools/archcompiler_preflight.py --app-repo /path/to/app-repo --mode compile
+python3 ~/.claude/arch-compiler/tools/archcompiler_preflight.py --app-repo /path/to/app-repo --mode compile
+```
+
+Use `--mode implement` when the workflow is about to write code from an approved `docs/architecture/` folder.
+
 ### Claude Code
 
 Claude Code does not use Codex native skill discovery, but this repo includes ready-to-copy command adapters in `adapters/claude-code/commands/`, including a router entrypoint.
+
+Keep the full repo in a stable local path such as `~/.claude/arch-compiler` so commands can consistently find the compiler, patterns, and schemas across sessions.
 
 Available command adapters:
 - `using-arch-compiler.md`

@@ -33,6 +33,9 @@ source .venv/bin/activate
 python -m pip install -r tools/requirements.txt
 python -m pip install -e .
 
+# Verify the shared workflow preflight helper is available
+archcompiler-preflight --help
+
 # Run tests to verify setup
 python -m pytest tests/ -q
 ```
@@ -59,6 +62,7 @@ This repository has strict governance for AI contributors to ensure the integrit
 - **Staging-Only:** Agents **MUST** author new patterns in a human-designated staging location outside `patterns/`. They are strictly forbidden from writing directly to `patterns/`.
 - **Immutable Core:** Agents may not modify `schemas/`, `config/defaults.yaml`, or existing pattern JSONs in `patterns/`.
 - **Procedural Guidance:** Agents must read and follow the relevant `SKILL.md` before taking action.
+- **Workflow Gatekeeping:** For app-facing compile or implement workflows, agents should run `tools/archcompiler_preflight.py` first and stop on any reported failure.
 
 ## Pattern Development
 
@@ -105,6 +109,7 @@ python scripts/package_smoke_test.py dist/*.whl tests/fixtures/no-advisory-succe
 - `test_*.py` — Unit/component tests.
 - `test-specs/` — Integration/end-to-end tests.
 - Integration spec naming: `<category>_<sub-category>_<description>_<pass|fail>.yaml`.
+- `tests/test_archcompiler_preflight.py` — Shared workflow preflight coverage for git-init, initial-commit, and approved-architecture checks.
 
 ## Code Review Guidelines
 
