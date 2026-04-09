@@ -380,7 +380,7 @@ This table follows the same progression as the demo video [[Architecture Compile
 ├── .codex/                     Codex-native install and integration helpers
 ├── .github/                    GitHub configuration (CI/CD workflows)
 ├── adapters/                   Cross-agent command adapters
-├── patterns/                   180 pattern JSON files — the knowledge base
+├── patterns/                   Curated pattern JSON files — the knowledge base
 │   ├── arch-*.json             Macro-architecture patterns (monolith, microservices, serverless, …)
 │   ├── api-*.json              API design patterns (REST, GraphQL, versioning)
 │   ├── async-*.json            Async messaging patterns (event-driven, fire-and-forget, …)

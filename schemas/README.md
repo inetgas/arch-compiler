@@ -105,10 +105,10 @@ Example: `genai-inference` activates on `constraints.features.ai_inference == tr
 
 ### Types
 
-Valid values for the `types` array. Patterns can have multiple types. Counts reflect the current registry (180 patterns).
+Valid values for the `types` array. Patterns can have multiple types. Counts below reflect a snapshot of the registry and may change as patterns are added or removed.
 
-| Value | Count | Meaning |
-|-------|-------|---------|
+| Value | Snapshot Count | Meaning |
+|-------|----------------|---------|
 | `design` | 121 | Architectural design patterns |
 | `ops` | 133 | Operations / SRE patterns |
 | `build` | 115 | Build and delivery patterns |
