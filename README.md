@@ -13,6 +13,24 @@ The compiler itself is intentionally simple: no LLM inference, no hidden default
 - `compiling-architecture`
 - `implementing-architecture`
 
+## Find This Repo
+
+If you are searching for:
+
+- architecture selection skill
+- deterministic architecture compiler
+- architecture-as-code tools
+- NFR enforcement for agent workflows
+- implementation from approved architecture
+- architecture harness / harness engineering
+- architecture design pattern registry
+
+Start with:
+
+- `skills/using-arch-compiler` — routes work to the correct architecture workflow
+- `skills/compiling-architecture` — compiles requirements, constraints, NFRs, and cost intent into explicit architecture decisions
+- `skills/implementing-architecture` — implements systems from an approved architecture contract
+
 [![CI - Test Suite](https://github.com/inetgas/arch-compiler/actions/workflows/main.yml/badge.svg)](https://github.com/inetgas/arch-compiler/actions/workflows/main.yml)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python Version](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
