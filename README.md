@@ -563,6 +563,10 @@ This table follows the same progression as the demo video [[Architecture Compile
 │   ├── audit_asymmetric_conflicts.py   Conflict symmetry audit (A↔B must be bidirectional)
 │   └── requirements.txt
 │
+├── scripts/
+│   ├── install_codex_skills.sh     Codex bootstrap installer
+│   └── package_smoke_test.py       Built-wheel smoke test helper
+│
 ├── tests/
 │   ├── README.md                   Test suite overview
 │   ├── run_all_tests.py            Helper to run the full suite

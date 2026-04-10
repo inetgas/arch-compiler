@@ -61,6 +61,8 @@ Each skill defines its input interface clearly — satisfy the interface however
 | `tools/audit_nfr_logic.py` | Validates all rule `path` values reference valid spec fields |
 | `tools/audit_asymmetric_conflicts.py` | Finds A→B conflicts missing B→A declarations |
 | `tools/requirements.txt` | Python dependencies |
+| `scripts/install_codex_skills.sh` | Official Codex bootstrap installer |
+| `scripts/package_smoke_test.py` | Built-wheel smoke test helper |
 | `docs/tools.md` | Full reference documentation for all tools above |
 
 ### Pattern registry

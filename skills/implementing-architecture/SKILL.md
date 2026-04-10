@@ -30,6 +30,7 @@ arch-compiler/
 ├── tools/        <-- read-only for agents
 ├── schemas/      <-- read-only for agents
 ├── config/       <-- read-only for agents
+├── scripts/      <-- read-only for agents
 ├── patterns/     <-- read-only for agents
 └── skills/
     ├── using-arch-compiler/
