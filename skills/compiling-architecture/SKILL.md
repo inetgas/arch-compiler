@@ -2,6 +2,12 @@
 name: compiling-architecture
 description: "Use when: user wants to select architecture patterns, compile a spec, iterate on constraints/NFRs, audit why patterns were selected/rejected, or finalise an architecture for implementation. Not when: no repeatable decisions needed, or constraints/NFRs are not yet known (gather those first)."
 tags: [architecture, nfr, cost, patterns, deterministic, governance]
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [deterministic-compiler, architecture-as-code, architecture-design-patterns, software-architecture-patterns, architectural-decision-records, architecture-trade-off-considerations, cost-optimization, nfr-enforcement]
+    category: devops
+    requires_toolsets: [terminal]
 ---
 
 # Architecture Compiler

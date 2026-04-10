@@ -2,6 +2,12 @@
 name: implementing-architecture
 description: "Use when: about to write code and docs/architecture/ exists with STATUS: APPROVED in architecture.yaml. Not when: no approved architecture yet (use compiling-architecture first), or architecture.yaml lacks STATUS: APPROVED header."
 tags: [architecture, implementation, verification, planning, governance]
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [architecture-as-code-tools, deterministic-execution, architectural-decision-records, software-architecture-patterns, architecture-constraints-enforcement, nfr-enforcement, developer-tools]
+    category: devops
+    requires_toolsets: [terminal]
 ---
 
 # Architecture Pattern Implementer

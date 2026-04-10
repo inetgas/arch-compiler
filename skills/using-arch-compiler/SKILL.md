@@ -2,6 +2,12 @@
 name: using-arch-compiler
 description: Use when starting architecture work and you need to decide whether to compile/finalise architecture or implement an already-approved architecture.
 tags: [architecture, workflow-routing, agent-harness, governance]
+version: 1.0.0
+metadata:
+  hermes:
+    tags: [architecture-harness, harness-engineering, ai-governance, architecture-as-code, developer-tools]
+    category: devops
+    requires_toolsets: [terminal]
 ---
 
 # Using Architecture Compiler

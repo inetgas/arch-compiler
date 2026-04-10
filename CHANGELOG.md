@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Improved cross-agent skill distribution and installation:
+  - added `scripts/install_codex_skills.sh` as an official Codex bootstrap installer that installs the three skills, clones or updates the runtime repo, and verifies both
+  - reorganized Codex install docs around the bootstrap path while clearly separating the `skills.sh`, native symlink, and direct GitHub-installer fallback layouts
+  - added matching verify/uninstall guidance for each documented Codex install layout
+  - added Hermes-specific `SKILL.md` metadata (`version`, `metadata.hermes.tags`, `category`, `requires_toolsets`) for the three workflow skills
+  - documented Hermes usage via `skills.external_dirs`, plus stable runtime-path guidance for `~/.hermes/arch-compiler`
 - Clarified Codex skill installation for direct GitHub installs:
   - documented the working single-`--path` multi-skill install command for the three Architecture Compiler skills
   - warned that repeating `--path` keeps only the last value in the current installer
