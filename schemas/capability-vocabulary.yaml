@@ -231,6 +231,21 @@ capabilities:
     aliases: [workload-identity-authentication]
     description: Service-to-service authentication using a cloud service account or workload identity rather than static secrets
 
+  data-lake-storage:
+    category: pattern
+    aliases: [lake-storage]
+    description: Object-storage-centered analytical data plane for lakehouse workloads
+
+  metadata-catalog:
+    category: pattern
+    aliases: [data-catalog]
+    description: Metadata and schema catalog used to discover and govern analytical datasets
+
+  open-table-format:
+    category: pattern
+    aliases: [iceberg-table-format, lakehouse-table-format]
+    description: Open analytical table format such as Apache Iceberg used for lakehouse interoperability
+
   cost-visibility:
     category: pattern
     aliases: [cost-reporting, cost-monitoring]

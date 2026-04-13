@@ -61,6 +61,12 @@
   ],
   "conflicts": {
     "incompatibleWithDesignPatterns": [
+      "data-olap-lakehouse--aws",
+      "data-olap-lakehouse--azure",
+      "data-olap-lakehouse--gcp",
+      "data-olap-lakehouse--self-hosted",
+      "data-olap-lakehouse--databricks",
+      "data-olap-lakehouse--snowflake",
       "data-olap-warehouse--aws",
       "data-olap-warehouse--azure",
       "data-olap-warehouse--snowflake",

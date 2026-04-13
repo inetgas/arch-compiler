@@ -1,0 +1,366 @@
+{
+  "id": "data-olap-lakehouse--databricks",
+  "version": "1.0.0",
+  "title": "OLAP Lakehouse: Databricks",
+  "description": "Databricks lakehouse pattern using Delta Lake tables, Unity Catalog, and Databricks SQL / BI integrations as the primary analytical platform. Best when the team explicitly wants Databricks as the managed lakehouse provider and values a unified data engineering, data science, and SQL-serving environment over cloud-native point services.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3500.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 300.0,
+      "max": 15000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 12000,
+    "costNotes": "Databricks combines compute, catalog, and SQL-serving costs. It is typically more expensive than the cheapest cloud-native lakehouse defaults, but offers a more integrated managed lakehouse experience.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($300): development SQL warehouse and modest jobs footprint. Max ($15,000): multiple SQL warehouses, pipelines, and larger compute for production workloads. Real spend varies heavily by workload shape and warehouse sizing.",
+      "adoptionCost": "Adoption cost covers workspace setup, Unity Catalog, Delta design, ingestion/job pipelines, and SQL-serving integration. Estimate 18-22 developer days at ~$160/day = $3,500.",
+      "licenseCost": "No traditional license fee beyond Databricks consumption pricing.",
+      "source": "LLM analysis informed by Databricks documentation (as of 13-Apr-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "Databricks SQL provides managed analytical query execution over Delta Lake data."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "Databricks SQL and external BI integrations support dashboards and reporting over the lakehouse."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Databricks supports batch and pipeline-oriented data engineering workloads in the same platform."
+    },
+    {
+      "capability": "data-lake-storage",
+      "confidence": "high",
+      "reasoning": "Databricks lakehouse data remains in cloud object storage under a managed lakehouse control plane."
+    },
+    {
+      "capability": "metadata-catalog",
+      "confidence": "high",
+      "reasoning": "Unity Catalog provides centralized metadata, governance, and access control."
+    },
+    {
+      "capability": "open-table-format",
+      "confidence": "high",
+      "reasoning": "Delta Lake is the default open table format for Databricks lakehouse workloads."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Databricks lakehouse value comes from actively managed ingestion, transformation, and table maintenance."
+    },
+    {
+      "capability": "cloud-iam",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Databricks still depends on cloud IAM and object-storage access controls."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-lakehouse--aws",
+      "data-olap-lakehouse--azure",
+      "data-olap-lakehouse--gcp",
+      "data-olap-lakehouse--self-hosted",
+      "data-olap-lakehouse--snowflake",
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--self-hosted",
+      "data-olap-warehouse--snowflake"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "lakehouse",
+    "databricks",
+    "delta-lake",
+    "unity-catalog"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Cross-cloud SaaS lakehouse pattern when Databricks is explicitly chosen"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "Databricks SQL warehouses can support sub-second interactive analytics, but the default lakehouse posture is not framed as sub-200ms serving."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Managed Databricks services can support up to four nines depending on service and cloud posture."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 3,
+      "reason": "Managed service recovery is usually faster than self-hosted but still bounded by workspace and warehouse restart behavior."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "RPO is tied to ingestion and Delta commit/update cadence."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 400,
+      "reason": "Databricks SQL can support moderate-to-high concurrent analytical usage, but the default posture does not assume warehouse fleets sized for the very highest BI concurrency."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 150,
+      "reason": "The default lakehouse posture assumes batch and streaming table maintenance rather than high-frequency point-write semantics."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Managed Databricks jobs and SQL-serving startup are faster than self-hosted stacks but still have non-zero orchestration and cluster warm-up overhead."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Tail job starts can be affected by warehouse warm-up, cluster spin-up, or queueing in the managed Databricks control plane."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 240,
+      "reason": "The default Databricks posture can handle more job churn than most cloud-native lakehouse defaults, but this family still does not assume extreme short-job frequency."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Databricks supports enterprise identity patterns and does not constrain application auth choices."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Managed service logging and catalog governance support auditability."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PII can be governed through Unity Catalog and cloud storage controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatibility depends on governance and data-handling controls rather than platform choice alone."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compatibility depends on workspace, cloud, encryption, and operational controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compatibility depends on lineage and deletion workflows across the lakehouse."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compatibility depends on catalog governance, auditability, and operational control."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability depends on the underlying cloud object storage and workspace configuration."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "databricks"
+      ],
+      "reason": "This variant activates only when Databricks is explicitly allowed as the lakehouse provider."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Databricks is available across the major public clouds."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Databricks lakehouse access is language-agnostic across SQL, jobs, and APIs."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training"
+      ],
+      "reason": "Databricks lakehouse can serve the analytical plane behind web, mobile, desktop, and API products while also supporting worker, batch, and data-pipeline execution."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Primary gate: this variant is for OLAP analytical workloads."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [],
+  "defaultConfig": {
+    "catalog": "unity-catalog",
+    "table_format": "delta-lake",
+    "sql_serving": "sql-warehouse-serverless",
+    "bi_layer": "databricks-sql",
+    "ingestion_mode": "autoloader-dlt"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "catalog": {
+        "type": "string",
+        "enum": [
+          "unity-catalog"
+        ],
+        "description": "Unity Catalog is the default metadata and governance plane for Databricks lakehouse workloads."
+      },
+      "table_format": {
+        "type": "string",
+        "enum": [
+          "delta-lake",
+          "iceberg-interop"
+        ],
+        "description": "Delta Lake is the default Databricks table format. Iceberg interoperability is an alternative when open-format portability is a stronger requirement."
+      },
+      "sql_serving": {
+        "type": "string",
+        "enum": [
+          "sql-warehouse-serverless",
+          "sql-warehouse-pro",
+          "classic-cluster-sql"
+        ],
+        "description": "Serverless SQL warehouse is the default because it best matches the advertised default interactive serving posture."
+      },
+      "bi_layer": {
+        "type": "string",
+        "enum": [
+          "databricks-sql",
+          "power-bi",
+          "tableau",
+          "external-bi"
+        ],
+        "description": "Databricks SQL is the default reporting surface; external BI tools are valid when the organization standardizes elsewhere."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "autoloader-dlt",
+          "batch-delta",
+          "structured-streaming"
+        ],
+        "description": "Auto Loader plus Delta Live Tables is the default managed ingestion posture."
+      }
+    }
+  },
+  "warn_nfr": []
+}

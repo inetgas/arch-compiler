@@ -1,0 +1,44 @@
+# Feature - Snowflake Lakehouse Selected
+#
+# This spec explicitly requests Snowflake and also indicates a batch-oriented
+# lake-first posture, which should distinguish the Snowflake lakehouse variant
+# from the existing Snowflake warehouse variant.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - data-olap-lakehouse--snowflake IS selected
+#   - data-olap-warehouse--snowflake is NOT selected
+
+project:
+  name: Snowflake Lakehouse
+  domain: analytics
+functional:
+  summary: Iceberg-oriented analytical platform on Snowflake
+constraints:
+  platform: data-pipeline
+  cloud: agnostic
+  language: sql
+  saas-providers:
+    - snowflake
+  features:
+    olap_workload: true
+    batch_processing: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 1000
+    p99Milliseconds: 2000
+    jobStartP95Seconds: 30
+    jobStartP99Seconds: 60
+  throughput:
+    peak_query_per_second_read: 150
+    peak_query_per_second_write: 40
+    peak_jobs_per_hour: 48
+  consistency:
+    needsReadYourWrites: false
+cost:
+  intent:
+    priority: optimize-tco
+  ceilings:
+    monthly_operational_usd: 9000

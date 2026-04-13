@@ -1,0 +1,353 @@
+{
+  "id": "data-olap-lakehouse--azure",
+  "version": "1.0.0",
+  "title": "OLAP Lakehouse: ADLS Gen2 + Synapse Serverless + Power BI",
+  "description": "Azure-native lakehouse pattern centered on ADLS Gen2 for storage, Synapse serverless SQL for query-on-lake access, lake databases / shared metadata for cataloging, and Power BI for BI/reporting. Default posture emphasizes low-storage-cost analytics over data in the lake, with Power BI import or semantic caching used to deliver dashboard responsiveness that raw query-on-lake alone would not guarantee.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2400.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 7000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "azure"
+    ],
+    "costCeilingCompatibleUsd": 5500,
+    "costNotes": "ADLS Gen2 storage is low-cost, Synapse serverless SQL is consumption-priced, and Power BI introduces user/capacity cost. This default posture is cheaper than a dedicated Synapse warehouse when storage volume is high and interactive serving needs are moderate.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($50): modest ADLS storage, low-volume serverless SQL scans, and limited Power BI footprint. Max ($7,000): larger analytical scans plus broader BI access and imported models. Still typically cheaper than always-on dedicated warehouse capacity for storage-heavy lake-first use cases.",
+      "adoptionCost": "Adoption cost covers ADLS layout, Synapse serverless external tables/lake databases, metadata organization, and Power BI model/report integration. Estimate 12-15 developer days at ~$160/day = $2,400.",
+      "licenseCost": "No separate software license beyond Azure and Power BI service consumption.",
+      "source": "LLM analysis informed by Azure Synapse lake database documentation (as of 13-Apr-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "Synapse serverless SQL provides query-on-lake SQL access over ADLS Gen2 datasets."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "Power BI is the default BI layer for curated analytics and dashboard delivery on top of the lakehouse."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "Azure-native pipelines commonly land curated Parquet or Delta-style files in ADLS for lake-first analytics."
+    },
+    {
+      "capability": "data-lake-storage",
+      "confidence": "high",
+      "reasoning": "ADLS Gen2 is the primary analytical data plane and storage system for the lakehouse."
+    },
+    {
+      "capability": "metadata-catalog",
+      "confidence": "high",
+      "reasoning": "Synapse lake databases and shared metadata provide a cataloged view over data in the lake."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "The lakehouse expects upstream batch or staged ingestion into ADLS and metadata refresh for queryable datasets."
+    },
+    {
+      "capability": "cloud-iam",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "ADLS, Synapse, and Power BI all rely on Azure identity and access control."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-lakehouse--aws",
+      "data-olap-lakehouse--gcp",
+      "data-olap-lakehouse--self-hosted",
+      "data-olap-lakehouse--databricks",
+      "data-olap-lakehouse--snowflake",
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--self-hosted",
+      "data-olap-warehouse--snowflake"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "lakehouse",
+    "azure",
+    "adls",
+    "synapse",
+    "power-bi"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable to Azure-native lakehouse workloads"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Synapse serverless over ADLS is a query-on-lake posture and Power BI caching/import is needed to stay within the claimed dashboard latency envelope."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "The default stack depends on ADLS, Synapse serverless SQL metadata/query layers, and Power BI refresh/serving, making three nines a defensible default target."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Recovery depends on storage, metadata, and BI refresh layers rather than an always-on warehouse cluster."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Freshness is bounded by ingestion cadence and metadata refresh rather than row-level transactional immediacy."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 120,
+      "reason": "The default stack targets low-to-medium BI concurrency with imported/cached reporting rather than large-scale direct-query concurrency."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 75,
+      "reason": "The lakehouse assumes batch or staged writes to ADLS-backed datasets and metadata updates, not high-frequency point writes."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Serverless SQL and metadata access over ADLS introduce non-trivial orchestration and startup overhead for lakehouse jobs."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 40,
+      "reason": "Tail job starts are affected by serverless query startup, metadata refresh, and Power BI/import coordination."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 100,
+      "reason": "The default Azure lakehouse posture assumes moderate batch and refresh frequency rather than very high job churn."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Azure identity and Power BI access controls make the stack compatible with multiple application auth choices."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Azure provides auditability across storage, Synapse, and BI layers."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PII can be handled with storage access control, Entra-based permissions, and BI governance."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR compatibility depends on governance, residency, and deletion workflows rather than the platform choice alone."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compatibility depends on encryption, access control, and operational safeguards."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compatibility depends on data discovery and deletion workflows across the lakehouse."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compatibility depends on access control, auditability, and reporting governance."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "ADLS-backed datasets can support strict durability when configured appropriately."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "azure",
+      "reason": "This variant is Azure-native."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Azure lakehouse access is SQL- and API-driven and does not constrain the application language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training"
+      ],
+      "reason": "Azure lakehouse can serve the analytical plane behind web, mobile, desktop, and API products while also supporting worker, batch, and data-pipeline execution."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Primary gate: this variant is for OLAP analytical workloads."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [],
+  "defaultConfig": {
+    "storage_layer": "adls-gen2",
+    "query_engine": "synapse-serverless-sql",
+    "metadata_catalog": "synapse-lake-database",
+    "table_format": "parquet",
+    "bi_layer": "power-bi-import",
+    "ingestion_mode": "batch-adls-parquet"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "storage_layer": {
+        "type": "string",
+        "enum": [
+          "adls-gen2"
+        ],
+        "description": "Default analytical storage layer. ADLS Gen2 is the source of truth for the Azure lakehouse."
+      },
+      "query_engine": {
+        "type": "string",
+        "enum": [
+          "synapse-serverless-sql"
+        ],
+        "description": "Serverless SQL is the default because it keeps the default stack aligned with lake-first, pay-per-query economics."
+      },
+      "metadata_catalog": {
+        "type": "string",
+        "enum": [
+          "synapse-lake-database",
+          "purview-plus-synapse"
+        ],
+        "description": "Lake databases are the default operational catalog. Add Purview when stronger enterprise cataloging and governance are required."
+      },
+      "table_format": {
+        "type": "string",
+        "enum": [
+          "parquet",
+          "delta"
+        ],
+        "description": "Parquet is the conservative default for broad Synapse serverless interoperability. Delta is an alternative when Spark-oriented lakehouse workflows dominate."
+      },
+      "bi_layer": {
+        "type": "string",
+        "enum": [
+          "power-bi-import",
+          "power-bi-directlake-like-cache",
+          "external-bi"
+        ],
+        "description": "Power BI import is the default because it better matches the claimed dashboard latency envelope than pure direct-query over the lake."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "batch-adls-parquet",
+          "adf-pipeline",
+          "spark-delta-writes"
+        ],
+        "description": "Default ingestion lands curated analytical files in ADLS. Spark-oriented Delta writes are an alternative when the lakehouse is more Spark-centric."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,255 @@
+{
+  "id": "data-olap-lakehouse",
+  "version": "1.0.0",
+  "title": "OLAP Lakehouse: NFR Specification Required",
+  "description": "Meta-policy pattern for object-storage-centered analytical architectures. Activates when OLAP workload and batch-oriented analytics are both present, and establishes lakehouse tradeoffs versus warehouse-first designs: lower storage cost, open table formats, and flexible data access at the expense of less predictable interactive serving performance. This pattern exists to make lakehouse selection explicit before choosing cloud-native, self-hosted, or SaaS variants.",
+  "types": [
+    "design"
+  ],
+  "cost": {
+    "adoptionCost": 0.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 0.0,
+      "max": 0.0
+    },
+    "freeTierEligible": true,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp",
+      "on-prem"
+    ],
+    "costCeilingCompatibleUsd": 99999,
+    "costNotes": "Meta-policy pattern only. Concrete cost is carried by the provider-specific lakehouse variants.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Zero cost — meta-policy pattern only.",
+      "adoptionCost": "Zero adoption cost — this pattern only encodes lakehouse selection posture and NFR interpretation.",
+      "licenseCost": "No license cost — no runtime infrastructure is provisioned by the meta pattern itself.",
+      "source": "LLM analysis (as of 13-Apr-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-nfr-enforcement",
+      "confidence": "high",
+      "reasoning": "Makes lakehouse selection explicit for OLAP workloads that are batch-oriented and cost-sensitive, so downstream provider variants can be evaluated against a consistent NFR posture."
+    },
+    {
+      "capability": "lakehouse-architecture",
+      "confidence": "high",
+      "reasoning": "Marks the selected analytical architecture as lakehouse-shaped rather than warehouse-first, enabling downstream implementation and planning guidance."
+    }
+  ],
+  "requires": [],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "lakehouse",
+    "meta-policy",
+    "nfr-enforcement"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General lakehouse-family policy pattern applicable across cloud-native, self-hosted, and SaaS analytical architectures"
+  },
+  "defaultConfig": {},
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 750,
+      "reason": "Lakehouse defaults in this registry are optimized for batch-oriented analytics and BI/reporting over object storage, not sub-500ms warehouse-style serving on every cold query."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Lakehouse stacks can reach four nines depending on provider and topology, but this family does not assume five-nines as the default analytical posture."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Lakehouse recovery posture depends on object storage, catalog, and query-service recovery. Five-minute-or-higher RTO is a realistic baseline across the family."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Lakehouse freshness and recoverability are bounded by ingestion and metadata update cadence. Five-minute-or-higher RPO is a realistic baseline across the family."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 300,
+      "reason": "The default lakehouse variants in this family target low-to-medium BI and analytical concurrency rather than ultra-high concurrent serving."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 150,
+      "reason": "Lakehouse ingestion is optimized for staged batch writes, micro-batches, or table-format commits rather than very high-frequency row-at-a-time writes."
+    },
+
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 15,
+      "reason": "Lakehouse jobs typically depend on query-service startup, metadata resolution, and batch scheduler orchestration. The family does not assume sub-15-second p95 job starts."
+    },
+
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 30,
+      "reason": "Cold starts, metadata refresh, and queueing can push tail job starts above p95. Thirty seconds is a defensible family-level p99 floor."
+    },
+
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 200,
+      "reason": "Default lakehouse stacks are designed for moderate batch and transformation frequency, not extremely high churn of short-lived jobs."
+    },
+    {
+      "path": "/nfr/consistency/needsReadYourWrites",
+      "op": "==",
+      "value": false,
+      "reason": "Lakehouse architectures assume analytical freshness lags source-of-truth writes by at least one ingestion or metadata commit cycle."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Lakehouse analytical stacks are compatible with multiple auth models; access is typically controlled through cloud IAM, service identities, SQL users, or BI-layer federation."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "All major lakehouse implementations can operate with or without audit logging depending on governance posture."
+    },
+    {
+      "path": "/nfr/security/tenant_isolation",
+      "op": "in",
+      "value": [
+        "shared-db-row-level",
+        "schema-per-tenant",
+        "per-tenant-db",
+        "n/a",
+        "unknown"
+      ],
+      "reason": "Lakehouse platforms can support multiple tenant-isolation models through catalogs, datasets, schemas, row-level controls, or separate workspaces."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PII workloads are possible with the right catalog, access control, encryption, and retention design; the family does not assume either absence or presence of PII."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR compatibility depends on governance and data handling rather than on lakehouse selection alone."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compatibility depends on lineage, discovery, and deletion workflows rather than on the family choice alone."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compatibility depends on provider controls, encryption, logging, and agreements rather than on the family choice alone."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compatibility depends on auditability, access controls, and reporting governance rather than on the family choice alone."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability depends on the underlying object storage and catalog design. Both strict and non-strict durability postures are possible within the family."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Primary gate: lakehouse variants are only relevant for analytical workloads."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp",
+        "on-prem"
+      ],
+      "reason": "Lakehouse architectures are valid across cloud-native and self-hosted environments."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training"
+      ],
+      "reason": "Lakehouse architectures can support analytical access for web, mobile, desktop, and API products, while still acting as the analytical storage and transformation plane."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [],
+  "warn_nfr": []
+}

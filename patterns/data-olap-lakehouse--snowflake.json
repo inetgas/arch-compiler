@@ -1,0 +1,365 @@
+{
+  "id": "data-olap-lakehouse--snowflake",
+  "version": "1.0.0",
+  "title": "OLAP Lakehouse: Snowflake Iceberg Tables",
+  "description": "Snowflake lakehouse pattern for teams explicitly choosing Snowflake but using an object-storage-centered, Iceberg-based analytical posture instead of a pure Snowflake warehouse-first serving model. Default posture assumes Snowflake Iceberg tables backed by external volume storage and catalog integration, keeping the lakehouse contract visible while still using Snowflake for query execution and BI connectivity.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 3000.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 100.0,
+      "max": 18000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws",
+      "azure",
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 14000,
+    "costNotes": "Snowflake Iceberg still uses Snowflake compute and external-volume storage coordination. It is generally more expensive than the cheapest cloud-native lakehouse defaults, but preserves a Snowflake-centric operational model while adopting an Iceberg/open-storage posture.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($100): small development warehouse plus modest external-volume storage. Max ($18,000): larger production warehouses and broader BI usage. Costs remain driven by Snowflake compute and BI access more than by raw storage alone.",
+      "adoptionCost": "Adoption cost covers external volume setup, catalog integration, Iceberg table management, and BI/reporting integration. Estimate 15-20 developer days at ~$160/day = $3,000.",
+      "licenseCost": "No traditional software license beyond Snowflake consumption pricing.",
+      "source": "LLM analysis informed by Snowflake Iceberg table documentation (as of 13-Apr-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "Snowflake queries Iceberg-backed analytical datasets while preserving a Snowflake SQL serving layer."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "Snowsight and external BI integrations provide reporting over the Snowflake-accessible lakehouse."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "The default posture assumes batch- or pipeline-oriented ingestion into Iceberg tables and external volumes."
+    },
+    {
+      "capability": "data-lake-storage",
+      "confidence": "high",
+      "reasoning": "The analytical data plane remains object-storage-centered through external volumes and Iceberg storage."
+    },
+    {
+      "capability": "metadata-catalog",
+      "confidence": "high",
+      "reasoning": "Catalog integration and Snowflake metadata manage table discovery and governance for the lakehouse posture."
+    },
+    {
+      "capability": "open-table-format",
+      "confidence": "high",
+      "reasoning": "The pattern is explicitly centered on Iceberg-backed analytical tables."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "This pattern assumes actively managed ingestion and Iceberg table maintenance rather than ad-hoc warehouse-only data loading."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-lakehouse--aws",
+      "data-olap-lakehouse--azure",
+      "data-olap-lakehouse--gcp",
+      "data-olap-lakehouse--self-hosted",
+      "data-olap-lakehouse--databricks",
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--self-hosted",
+      "data-olap-warehouse--snowflake"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "lakehouse",
+    "snowflake",
+    "iceberg",
+    "external-volume"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "Cross-cloud SaaS lakehouse pattern when Snowflake is explicitly chosen for an Iceberg/open-storage posture"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 500,
+      "reason": "Snowflake Iceberg can support sub-second analytics, but the default lakehouse posture is not framed as the most latency-aggressive warehouse serving option."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.9999,
+      "reason": "Managed Snowflake services can support up to four nines depending on edition and topology."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 3,
+      "reason": "Recovery posture is managed, but still bounded by warehouse/service restart behavior and metadata availability."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "RPO is tied to ingestion and Iceberg metadata commit cadence."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 500,
+      "reason": "The default Snowflake lakehouse posture can serve moderate-to-high concurrency, but the baseline config does not assume the largest warehouse fleets."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100,
+      "reason": "The default posture assumes batch and pipeline-oriented ingestion into Iceberg-backed tables rather than very high-frequency point writes."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 10,
+      "reason": "Snowflake Iceberg jobs still depend on warehouse startup and metadata coordination; the default lakehouse posture should not claim sub-10-second p95 starts."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 20,
+      "reason": "Tail job starts can be affected by warehouse warm-up, metadata synchronization, and queueing in the Snowflake control plane."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 180,
+      "reason": "The default Snowflake lakehouse posture supports moderate job churn, but this family does not assume extremely high short-job frequency."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Snowflake supports enterprise identity patterns and does not constrain application auth choices."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Snowflake metadata and access history support auditability."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PII governance is possible with Snowflake security and storage controls."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Compatibility depends on governance and data-handling controls rather than platform choice alone."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compatibility depends on edition, encryption, operational controls, and agreements."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compatibility depends on lineage and deletion workflows across the lakehouse data plane."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compatibility depends on access control, auditability, and reporting governance."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Durability depends on the external volume and Snowflake catalog/configuration choices."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/saas-providers",
+      "op": "contains-any",
+      "value": [
+        "snowflake"
+      ],
+      "reason": "This variant activates only when Snowflake is explicitly allowed as the analytical provider."
+    },
+    {
+      "path": "/constraints/cloud",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "reason": "Snowflake is available across the major public clouds."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "Snowflake lakehouse access is language-agnostic across SQL and external BI/tooling integrations."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training"
+      ],
+      "reason": "Snowflake lakehouse can serve the analytical plane behind web, mobile, desktop, and API products while also supporting worker, batch, and data-pipeline execution."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Primary gate: this variant is for OLAP analytical workloads."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [],
+  "defaultConfig": {
+    "table_mode": "managed-iceberg",
+    "catalog_mode": "snowflake-open-catalog",
+    "external_volume": true,
+    "query_warehouse_size": "small",
+    "bi_layer": "snowsight",
+    "ingestion_mode": "snowpipe-iceberg"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "table_mode": {
+        "type": "string",
+        "enum": [
+          "managed-iceberg",
+          "external-catalog-iceberg"
+        ],
+        "description": "Managed Iceberg is the default because it gives a usable first-cut Snowflake lakehouse posture without assuming the team already runs a separate catalog control plane."
+      },
+      "catalog_mode": {
+        "type": "string",
+        "enum": [
+          "snowflake-open-catalog",
+          "catalog-integration"
+        ],
+        "description": "The default assumes Snowflake-managed open catalog posture. Catalog integrations are the alternative when an external catalog is already part of the platform."
+      },
+      "external_volume": {
+        "type": "boolean",
+        "description": "External volume should remain enabled in the default posture because the pattern is object-storage-centered rather than warehouse-only."
+      },
+      "query_warehouse_size": {
+        "type": "string",
+        "enum": [
+          "x-small",
+          "small",
+          "medium",
+          "large"
+        ],
+        "description": "Small is the default because it fits the claimed moderate-concurrency NFR envelope without assuming an aggressively scaled serving tier."
+      },
+      "bi_layer": {
+        "type": "string",
+        "enum": [
+          "snowsight",
+          "external-bi"
+        ],
+        "description": "Snowsight is the default reporting surface; external BI remains valid where the organization standardizes elsewhere."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "snowpipe-iceberg",
+          "copy-into-iceberg",
+          "external-engine-writes"
+        ],
+        "description": "Snowpipe-into-Iceberg is the default managed ingestion posture for the Snowflake lakehouse variant."
+      }
+    }
+  },
+  "warn_nfr": []
+}

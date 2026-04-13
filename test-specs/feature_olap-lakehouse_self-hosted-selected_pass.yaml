@@ -1,0 +1,44 @@
+# Feature - Self-Hosted Lakehouse Selected
+#
+# This spec represents an on-prem analytics platform with real operations
+# ownership and an explicit batch-oriented lakehouse posture.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - data-olap-lakehouse IS selected
+#   - data-olap-lakehouse--self-hosted IS selected
+#   - data-olap-warehouse--self-hosted is NOT selected
+
+project:
+  name: Self Hosted Lakehouse
+  domain: analytics
+functional:
+  summary: On-prem object-storage-centered analytics platform
+constraints:
+  platform: data-pipeline
+  cloud: agnostic
+  language: sql
+  features:
+    olap_workload: true
+    batch_processing: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 1200
+    p99Milliseconds: 2500
+    jobStartP95Seconds: 45
+    jobStartP99Seconds: 90
+  throughput:
+    peak_query_per_second_read: 80
+    peak_query_per_second_write: 25
+    peak_jobs_per_hour: 24
+  consistency:
+    needsReadYourWrites: false
+operating_model:
+  ops_team_size: 2
+cost:
+  intent:
+    priority: optimize-tco
+  ceilings:
+    monthly_operational_usd: 5000

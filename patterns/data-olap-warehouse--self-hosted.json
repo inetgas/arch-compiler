@@ -64,6 +64,12 @@
   ],
   "conflicts": {
     "incompatibleWithDesignPatterns": [
+      "data-olap-lakehouse--aws",
+      "data-olap-lakehouse--azure",
+      "data-olap-lakehouse--gcp",
+      "data-olap-lakehouse--self-hosted",
+      "data-olap-lakehouse--databricks",
+      "data-olap-lakehouse--snowflake",
       "data-olap-warehouse--aws",
       "data-olap-warehouse--gcp",
       "data-olap-warehouse--azure",
@@ -265,6 +271,12 @@
       "op": "==",
       "value": true,
       "reason": "Self-hosted OLAP engines are selected specifically for analytical workloads requiring either high concurrency, low latency, or cost-efficiency beyond managed warehouses."
+    },
+    {
+      "path": "/operating_model/ops_team_size",
+      "op": ">=",
+      "value": 1,
+      "reason": "Self-hosted analytical engines require at least minimal operator capacity for provisioning, upgrades, storage management, and incident response. When ops_team_size is zero, prefer managed OLAP services instead."
     }
   ],
   "defaultConfig": {

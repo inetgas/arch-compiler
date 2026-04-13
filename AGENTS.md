@@ -94,6 +94,9 @@ When authoring or editing patterns:
 - also check `schemas/capability-vocabulary.yaml` for any new or changed `provides` / `requires` capability names
 - if you add canonical capability names or aliases, rerun `tools/audit_patterns.py` and fix any older alias usage the vocabulary update exposes elsewhere in the registry
 - for new patterns, follow the staging-first workflow in `skills/compiling-architecture/SKILL.md`; "author a new pattern" does not by itself mean "place it in patterns/"
+- do not put the exact opposite condition in `supports_nfr` and `warn_nfr` on the same pattern
+- `requires_constraints` / `requires_nfr` should express a real architectural implication after the pattern is selected, not merely enforce non-null fields that `config/defaults.yaml` already supplies
+- do not use `/constraints/saas-providers == []` on patterns that are orthogonal to unrelated SaaS providers; only gate on `saas-providers` when the provider is actually the pattern selector
 
 ## Running the Compiler
 

@@ -1,0 +1,361 @@
+{
+  "id": "data-olap-lakehouse--aws",
+  "version": "1.0.0",
+  "title": "OLAP Lakehouse: S3 + Athena + Glue + QuickSight",
+  "description": "AWS-native lakehouse pattern centered on Amazon S3 for storage, Athena for query-on-lake SQL, AWS Glue Data Catalog for dataset metadata, and QuickSight for BI/reporting. Default posture uses Apache Iceberg tables registered in Glue to keep data in object storage while enabling SQL analytics and dashboarding. Best for teams that want lower storage cost, open table formats, and AWS-native integration rather than a warehouse-first Redshift serving plane.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2200.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 6000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "aws"
+    ],
+    "costCeilingCompatibleUsd": 5000,
+    "costNotes": "S3 storage is low-cost and Athena is billed per TB scanned. QuickSight introduces per-user or capacity cost and SPICE can be added for dashboard acceleration. Glue catalog usage is low relative to query and BI cost.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($50): low-volume Athena queries over Parquet/Iceberg data with modest S3 storage and a small QuickSight footprint. Max ($6,000): multi-terabyte query scans, larger SPICE datasets, and broader BI access. Most teams land below Redshift for storage-heavy, moderately interactive workloads.",
+      "adoptionCost": "Adoption cost covers S3 layout, Glue catalog/table setup, Athena workgroup governance, and QuickSight dataset/dashboard integration. Estimate 12-15 developer days at ~$160/day = $2,200.",
+      "licenseCost": "No platform license beyond AWS service consumption. QuickSight seat or capacity pricing is usage-based rather than a separate software license.",
+      "source": "LLM analysis informed by AWS Athena Iceberg and Glue catalog documentation (as of 13-Apr-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "Athena provides serverless SQL query execution directly over S3-resident analytical datasets."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "QuickSight provides native BI and dashboarding over Athena datasets, including SPICE acceleration for repeated dashboard reads."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "AWS-native batch ingestion and transformation commonly land data in S3 as Parquet or Iceberg and register tables through Glue."
+    },
+    {
+      "capability": "data-lake-storage",
+      "confidence": "high",
+      "reasoning": "S3 is the primary analytical data plane and source of truth for the lakehouse."
+    },
+    {
+      "capability": "metadata-catalog",
+      "confidence": "high",
+      "reasoning": "AWS Glue Data Catalog stores schema and table metadata for Athena lakehouse queries."
+    },
+    {
+      "capability": "open-table-format",
+      "confidence": "high",
+      "reasoning": "Athena supports Apache Iceberg tables registered through Glue, enabling interoperable lakehouse storage semantics."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "The lakehouse expects upstream batch or staged ingestion into S3 and metadata registration in Glue."
+    },
+    {
+      "capability": "cloud-iam",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "Athena, Glue, S3, and QuickSight all depend on IAM for service access, data permissions, and workgroup governance."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-lakehouse--azure",
+      "data-olap-lakehouse--gcp",
+      "data-olap-lakehouse--self-hosted",
+      "data-olap-lakehouse--databricks",
+      "data-olap-lakehouse--snowflake",
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--self-hosted",
+      "data-olap-warehouse--snowflake"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "lakehouse",
+    "aws",
+    "athena",
+    "s3",
+    "glue",
+    "quicksight",
+    "iceberg"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable to AWS-native lakehouse workloads"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 1000,
+      "reason": "Athena query latency is appropriate for second-level analytical interactions and dashboard refreshes, not warehouse-style sub-500ms cold serving."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "The default stack depends on multiple serverless services plus object storage and BI refresh layers. Three nines is a defensible baseline for the default posture."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Recovery depends on S3 data availability, Glue metadata integrity, and BI dataset refresh. Five minutes or more is realistic for the default AWS-native posture."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Freshness is bounded by upstream ingestion cadence and Iceberg metadata commits rather than row-level transactional immediacy."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 150,
+      "reason": "The default stack is intended for low-to-medium concurrent dashboarding and ad-hoc analytics, especially when QuickSight SPICE absorbs repeated reads."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 75,
+      "reason": "Iceberg commits and staged object-storage writes are optimized for batch and micro-batch ingestion, not high-frequency point writes."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 15,
+      "reason": "Athena- and Glue-backed lakehouse jobs require metadata resolution and service startup overhead; the default AWS stack should not claim sub-15-second p95 starts."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 30,
+      "reason": "Tail job starts can be affected by query service warm-up, metadata refresh, and orchestration latency in the AWS-native stack."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 120,
+      "reason": "The default AWS lakehouse posture assumes moderate scheduled or event-driven batch activity, not extremely high churn of short-lived jobs."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "Access is governed by AWS IAM, QuickSight identities, and optional federation. The lakehouse does not constrain application auth choices."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "Athena, Glue, and QuickSight integrate with CloudTrail and other AWS audit mechanisms."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PII can be handled with IAM, Lake Formation/Glue governance, and BI-layer access control, though data-governance discipline remains necessary."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR compatibility depends on data handling, residency, and deletion workflows rather than on the lakehouse stack alone."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compatibility depends on encryption, IAM, logging, and organizational controls; the pattern itself is not a guarantee."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compatibility depends on data discovery and deletion workflows over S3 and cataloged datasets."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compatibility depends on auditability, access control, and change management around data pipelines and reporting."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "S3 and Iceberg metadata can support strict durability when configured appropriately."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "aws",
+      "reason": "This variant is AWS-native."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "AWS lakehouse access is SQL- and API-driven and does not constrain the application language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training"
+      ],
+      "reason": "AWS lakehouse can serve the analytical plane behind web, mobile, desktop, and API products while also supporting worker, batch, and data-pipeline execution."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Primary gate: this variant is for OLAP analytical workloads."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [],
+  "defaultConfig": {
+    "storage_layer": "s3",
+    "query_engine": "athena",
+    "metadata_catalog": "glue-data-catalog",
+    "table_format": "iceberg",
+    "bi_layer": "quicksight-spice",
+    "ingestion_mode": "batch-parquet-iceberg"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "storage_layer": {
+        "type": "string",
+        "enum": [
+          "s3"
+        ],
+        "description": "Default analytical storage layer. S3 is the source of truth for lakehouse datasets."
+      },
+      "query_engine": {
+        "type": "string",
+        "enum": [
+          "athena"
+        ],
+        "description": "Athena is the default serverless SQL engine for the AWS-native lakehouse posture."
+      },
+      "metadata_catalog": {
+        "type": "string",
+        "enum": [
+          "glue-data-catalog",
+          "glue-plus-lake-formation"
+        ],
+        "description": "Glue Data Catalog is the default metadata system. Add Lake Formation when stronger centralized permissions are required."
+      },
+      "table_format": {
+        "type": "string",
+        "enum": [
+          "iceberg",
+          "parquet-external"
+        ],
+        "description": "Iceberg is the default because it gives Athena a stronger lakehouse contract than plain external Parquet tables."
+      },
+      "bi_layer": {
+        "type": "string",
+        "enum": [
+          "quicksight-spice",
+          "quicksight-direct-query",
+          "external-bi"
+        ],
+        "description": "QuickSight SPICE is the default because it better supports the advertised latency envelope than pure direct-query dashboards."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "batch-parquet-iceberg",
+          "glue-etl",
+          "firehose-to-s3",
+          "spark-iceberg-writes"
+        ],
+        "description": "Default ingestion is staged batch writes to Parquet/Iceberg in S3. Streaming paths should still land as object-storage-backed table updates."
+      }
+    }
+  },
+  "warn_nfr": []
+}

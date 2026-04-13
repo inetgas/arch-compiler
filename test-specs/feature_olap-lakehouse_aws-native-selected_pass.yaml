@@ -1,0 +1,42 @@
+# Feature - AWS Native Lakehouse Selected
+#
+# This spec represents a batch-oriented AWS analytics platform where low storage
+# cost and lake-first design matter more than sub-second warehouse serving.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - data-olap-lakehouse IS selected
+#   - data-olap-lakehouse--aws IS selected
+#   - data-olap-warehouse--aws is NOT selected
+
+project:
+  name: Aws Native Lakehouse
+  domain: analytics
+functional:
+  summary: Batch analytics and BI over an S3-centered data lake
+constraints:
+  platform: data-pipeline
+  cloud: aws
+  language: python
+  features:
+    olap_workload: true
+    batch_processing: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 1500
+    p99Milliseconds: 3000
+    jobStartP95Seconds: 30
+    jobStartP99Seconds: 60
+  throughput:
+    peak_query_per_second_read: 75
+    peak_query_per_second_write: 20
+    peak_jobs_per_hour: 48
+  consistency:
+    needsReadYourWrites: false
+cost:
+  intent:
+    priority: minimize-opex
+  ceilings:
+    monthly_operational_usd: 3000

@@ -117,6 +117,7 @@ properties:
           - pinecone
           - neo4j-aura
           - redis-cloud
+          - databricks
           - snowflake
           - timescale-cloud
           - influxdb-cloud
@@ -153,6 +154,7 @@ properties:
           - pinecone
           - neo4j-aura
           - redis-cloud
+          - databricks
           - snowflake
           - timescale-cloud
           - influxdb-cloud

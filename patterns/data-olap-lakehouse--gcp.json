@@ -1,0 +1,365 @@
+{
+  "id": "data-olap-lakehouse--gcp",
+  "version": "1.0.0",
+  "title": "OLAP Lakehouse: GCS + BigLake + Looker",
+  "description": "GCP-native lakehouse pattern centered on customer-owned data in GCS, BigLake Iceberg tables in BigQuery for query and metadata management, and Looker for BI/reporting. Default posture uses BigLake-managed Iceberg tables to keep data in object storage while exposing SQL analytics and BI access through BigQuery-compatible interfaces. Best when teams want an open-format GCP lakehouse rather than a warehouse-first BigQuery-only serving posture.",
+  "types": [
+    "design",
+    "build",
+    "ops"
+  ],
+  "cost": {
+    "adoptionCost": 2300.0,
+    "licenseCost": 0.0,
+    "estimatedMonthlyRangeUsd": {
+      "min": 50.0,
+      "max": 7000.0
+    },
+    "freeTierEligible": false,
+    "preferredProviders": [
+      "gcp"
+    ],
+    "costCeilingCompatibleUsd": 5500,
+    "costNotes": "GCS provides low-cost storage, BigLake/BigQuery query cost is consumption-based, and Looker adds BI/platform cost. This posture is attractive when open-format data in customer storage is a requirement.",
+    "provenance": {
+      "estimatedMonthlyRangeUsd": "Min ($50): small GCS dataset, low-volume scans, and limited BI use. Max ($7,000): larger analytical scans and broader BI usage. Costs remain driven by scan volume and BI footprint rather than always-on warehouse capacity.",
+      "adoptionCost": "Adoption cost covers GCS dataset layout, BigLake Iceberg table setup, metadata/governance wiring, and Looker model/report integration. Estimate 12-15 developer days at ~$160/day = $2,300.",
+      "licenseCost": "No separate software license beyond GCP and BI service consumption.",
+      "source": "LLM analysis informed by BigLake Iceberg table documentation (as of 13-Apr-2026)"
+    }
+  },
+  "provides": [
+    {
+      "capability": "olap-query-engine",
+      "confidence": "high",
+      "reasoning": "BigLake Iceberg tables queried through BigQuery provide SQL analytics over GCS-resident lakehouse data."
+    },
+    {
+      "capability": "analytical-reporting",
+      "confidence": "high",
+      "reasoning": "Looker provides BI and semantic modeling on top of the BigQuery-accessible lakehouse data."
+    },
+    {
+      "capability": "batch-etl",
+      "confidence": "high",
+      "reasoning": "BigLake and BigQuery support batch and staged ingestion into GCS-backed analytical tables."
+    },
+    {
+      "capability": "data-lake-storage",
+      "confidence": "high",
+      "reasoning": "GCS is the primary analytical data plane and source of truth."
+    },
+    {
+      "capability": "metadata-catalog",
+      "confidence": "high",
+      "reasoning": "BigLake metadata and BigQuery table management provide cataloged access to the lakehouse datasets."
+    },
+    {
+      "capability": "open-table-format",
+      "confidence": "high",
+      "reasoning": "BigLake Iceberg tables provide an open-format lakehouse contract over customer-owned storage."
+    }
+  ],
+  "requires": [
+    {
+      "capability": "data-pipeline",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "The lakehouse expects upstream ingestion and table maintenance into GCS-backed analytical datasets."
+    },
+    {
+      "capability": "cloud-iam",
+      "confidence": "high",
+      "optional": false,
+      "reasoning": "GCS, BigLake/BigQuery, and Looker all rely on cloud IAM and service identities."
+    },
+    {
+      "capability": "service-account-authentication",
+      "confidence": "medium",
+      "optional": false,
+      "reasoning": "The default posture assumes service-account-based access between ingestion, query, and BI layers on GCP."
+    }
+  ],
+  "conflicts": {
+    "incompatibleWithDesignPatterns": [
+      "data-olap-lakehouse--aws",
+      "data-olap-lakehouse--azure",
+      "data-olap-lakehouse--self-hosted",
+      "data-olap-lakehouse--databricks",
+      "data-olap-lakehouse--snowflake",
+      "data-olap-warehouse--aws",
+      "data-olap-warehouse--azure",
+      "data-olap-warehouse--gcp",
+      "data-olap-warehouse--self-hosted",
+      "data-olap-warehouse--snowflake"
+    ],
+    "incompatibleAssumptions": []
+  },
+  "tags": [
+    "data",
+    "olap",
+    "analytics",
+    "lakehouse",
+    "gcp",
+    "gcs",
+    "biglake",
+    "bigquery",
+    "looker",
+    "iceberg"
+  ],
+  "availability": {
+    "tier": "open",
+    "reason": "General architectural pattern applicable to GCP-native lakehouse workloads"
+  },
+  "supports_nfr": [
+    {
+      "path": "/nfr/latency/p95Milliseconds",
+      "op": ">=",
+      "value": 800,
+      "reason": "The default stack relies on BigLake/BigQuery over object storage and BI caching/modeling rather than warehouse-first cold-query serving."
+    },
+    {
+      "path": "/nfr/availability/target",
+      "op": "<=",
+      "value": 0.999,
+      "reason": "The default stack spans GCS, metadata/query layers, and BI delivery. Three nines is a defensible default target."
+    },
+    {
+      "path": "/nfr/rto_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Recovery depends on GCS data, BigLake/BigQuery metadata, and BI layers rather than a single always-on warehouse service."
+    },
+    {
+      "path": "/nfr/rpo_minutes",
+      "op": ">=",
+      "value": 5,
+      "reason": "Freshness is bounded by ingestion cadence and BigLake/Iceberg metadata update patterns."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_read",
+      "op": "<=",
+      "value": 200,
+      "reason": "The default stack targets moderate BI and analytical concurrency rather than the highest-concurrency warehouse serving posture."
+    },
+    {
+      "path": "/nfr/throughput/peak_query_per_second_write",
+      "op": "<=",
+      "value": 100,
+      "reason": "The default lakehouse assumes staged or batch-oriented writes through GCS-backed table maintenance rather than high-frequency point updates."
+    },
+    {
+      "path": "/nfr/latency/jobStartP95Seconds",
+      "op": ">=",
+      "value": 15,
+      "reason": "BigLake/BigQuery lakehouse jobs depend on table metadata resolution and query-service startup overhead; the default GCP stack should not claim sub-15-second p95 starts."
+    },
+    {
+      "path": "/nfr/latency/jobStartP99Seconds",
+      "op": ">=",
+      "value": 30,
+      "reason": "Tail job starts are affected by metadata resolution, query planner cold paths, and orchestration latency in the GCP-native stack."
+    },
+    {
+      "path": "/nfr/throughput/peak_jobs_per_hour",
+      "op": "<=",
+      "value": 140,
+      "reason": "The default GCP lakehouse posture assumes moderate scheduled or event-driven batch activity rather than extremely high job churn."
+    },
+    {
+      "path": "/nfr/security/auth",
+      "op": "in",
+      "value": [
+        "oauth2_oidc",
+        "api_key",
+        "jwt",
+        "mtls",
+        "saml",
+        "password",
+        "n/a"
+      ],
+      "reason": "The lakehouse is compatible with multiple application auth choices because GCP IAM governs the analytical control plane separately."
+    },
+    {
+      "path": "/nfr/security/audit_logging",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GCP provides auditability across storage, query, and metadata services."
+    },
+    {
+      "path": "/nfr/data/pii",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "PII can be handled through IAM, dataset controls, and governance practices."
+    },
+    {
+      "path": "/nfr/data/compliance/gdpr",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GDPR compatibility depends on data handling and governance rather than the lakehouse stack alone."
+    },
+    {
+      "path": "/nfr/data/compliance/hipaa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "HIPAA compatibility depends on encryption, IAM, audit logging, and organizational controls."
+    },
+    {
+      "path": "/nfr/data/compliance/ccpa",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "CCPA compatibility depends on data discovery and deletion workflows across the lakehouse."
+    },
+    {
+      "path": "/nfr/data/compliance/sox",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "SOX compatibility depends on change control, access control, and report/audit governance."
+    },
+    {
+      "path": "/nfr/durability/strict",
+      "op": "in",
+      "value": [
+        true,
+        false
+      ],
+      "reason": "GCS-backed datasets can support strict durability when configured appropriately."
+    }
+  ],
+  "supports_constraints": [
+    {
+      "path": "/constraints/cloud",
+      "op": "==",
+      "value": "gcp",
+      "reason": "This variant is GCP-native."
+    },
+    {
+      "path": "/constraints/language",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "python",
+        "typescript",
+        "javascript",
+        "java",
+        "go",
+        "csharp",
+        "rust",
+        "kotlin",
+        "sql",
+        "dart",
+        "swift",
+        "php",
+        "ruby",
+        "scala",
+        "objective-c",
+        "c",
+        "cpp"
+      ],
+      "reason": "GCP lakehouse access is SQL- and API-driven and does not constrain the application language."
+    },
+    {
+      "path": "/constraints/platform",
+      "op": "in",
+      "value": [
+        "agnostic",
+        "web",
+        "mobile",
+        "desktop",
+        "api",
+        "worker",
+        "batch",
+        "data-pipeline",
+        "ml-training"
+      ],
+      "reason": "GCP lakehouse can serve the analytical plane behind web, mobile, desktop, and API products while also supporting worker, batch, and data-pipeline execution."
+    },
+    {
+      "path": "/constraints/features/olap_workload",
+      "op": "==",
+      "value": true,
+      "reason": "Primary gate: this variant is for OLAP analytical workloads."
+    }
+  ],
+  "requires_constraints": [],
+  "requires_nfr": [],
+  "defaultConfig": {
+    "storage_layer": "gcs",
+    "query_engine": "biglake-iceberg-bigquery",
+    "metadata_catalog": "biglake",
+    "table_format": "iceberg",
+    "bi_layer": "looker",
+    "ingestion_mode": "batch-gcs-iceberg"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "storage_layer": {
+        "type": "string",
+        "enum": [
+          "gcs"
+        ],
+        "description": "Default analytical storage layer. GCS is the source of truth for the lakehouse."
+      },
+      "query_engine": {
+        "type": "string",
+        "enum": [
+          "biglake-iceberg-bigquery"
+        ],
+        "description": "BigLake Iceberg through BigQuery is the default because it provides a managed open-format lakehouse posture on GCP."
+      },
+      "metadata_catalog": {
+        "type": "string",
+        "enum": [
+          "biglake",
+          "biglake-plus-dataplex"
+        ],
+        "description": "BigLake is the default metadata/catalog surface. Add Dataplex when stronger data governance is required."
+      },
+      "table_format": {
+        "type": "string",
+        "enum": [
+          "iceberg"
+        ],
+        "description": "Iceberg is the default because this pattern is intentionally lakehouse-oriented and BigLake explicitly supports Iceberg tables."
+      },
+      "bi_layer": {
+        "type": "string",
+        "enum": [
+          "looker",
+          "looker-studio",
+          "external-bi"
+        ],
+        "description": "Looker is the default semantic and BI layer for the GCP lakehouse posture."
+      },
+      "ingestion_mode": {
+        "type": "string",
+        "enum": [
+          "batch-gcs-iceberg",
+          "storage-write-api",
+          "dataflow-spark-iceberg"
+        ],
+        "description": "Default ingestion writes curated analytical data to GCS-backed Iceberg tables. Streaming ingestion is supported through the Storage Write API and compatible connectors."
+      }
+    }
+  },
+  "warn_nfr": []
+}

@@ -1,0 +1,40 @@
+# Feature - AWS Warehouse Still Wins On Tight Serving
+#
+# This spec is intentionally interactive and latency-sensitive. It keeps OLAP on
+# AWS but removes the batch-oriented lakehouse signal and tightens latency/QPS
+# enough that the Redshift warehouse variant should remain the better fit.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - data-olap-warehouse--aws IS selected
+#   - data-olap-lakehouse--aws is NOT selected
+
+project:
+  name: Aws Warehouse Still Wins
+  domain: analytics
+functional:
+  summary: Interactive BI workload with tighter latency expectations
+constraints:
+  platform: api
+  cloud: aws
+  language: sql
+  features:
+    olap_workload: true
+    batch_processing: false
+    caching: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 500
+    p99Milliseconds: 1200
+  throughput:
+    peak_query_per_second_read: 250
+    peak_query_per_second_write: 40
+  consistency:
+    needsReadYourWrites: false
+cost:
+  intent:
+    priority: optimize-tco
+  ceilings:
+    monthly_operational_usd: 5000

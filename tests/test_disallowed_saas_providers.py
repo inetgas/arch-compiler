@@ -51,10 +51,11 @@ def test_disallowed_provider_blocks_pattern():
 
 def test_allowed_provider_not_affected():
     """Pattern requiring an allowed provider is still selected normally."""
-    # Uses snowflake pattern (data-olap-warehouse--snowflake) which requires
-    # /constraints/saas-providers contains-any ['snowflake'].
-    # When snowflake is in saas-providers (allowed) and NOT in disallowed-saas-providers,
-    # the pattern must be selected.
+    # This spec is intentionally warehouse-shaped rather than lakehouse-shaped:
+    # tighter serving latency, higher read concurrency than the Snowflake lakehouse
+    # default envelope, and no batch-processing signal.
+    # Under those conditions, the Snowflake warehouse variant should remain selected
+    # when snowflake is allowed and not disallowed.
     spec = """
 project:
   name: Test
@@ -69,6 +70,19 @@ constraints:
   disallowed-saas-providers: []
   features:
     olap_workload: true
+    batch_processing: false
+    caching: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 300
+    p99Milliseconds: 1200
+  throughput:
+    peak_query_per_second_read: 600
+    peak_query_per_second_write: 40
+  consistency:
+    needsReadYourWrites: false
 """
     with tempfile.TemporaryDirectory() as tmpdir:
         result = _run_compiler(spec, tmpdir)

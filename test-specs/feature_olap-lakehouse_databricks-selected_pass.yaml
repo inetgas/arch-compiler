@@ -1,0 +1,42 @@
+# Feature - Databricks Lakehouse Selected
+#
+# This spec explicitly requests Databricks as the SaaS lakehouse provider.
+#
+# Expected outcome:
+#   - compilation SUCCEEDS
+#   - data-olap-lakehouse--databricks IS selected
+#   - cloud-native lakehouse variants are NOT selected
+
+project:
+  name: Databricks Lakehouse
+  domain: analytics
+functional:
+  summary: Managed lakehouse platform on Databricks
+constraints:
+  platform: data-pipeline
+  cloud: aws
+  language: python
+  saas-providers:
+    - databricks
+  features:
+    olap_workload: true
+    batch_processing: true
+nfr:
+  availability:
+    target: 0.999
+  latency:
+    p95Milliseconds: 900
+    p99Milliseconds: 1800
+    jobStartP95Seconds: 20
+    jobStartP99Seconds: 40
+  throughput:
+    peak_query_per_second_read: 120
+    peak_query_per_second_write: 40
+    peak_jobs_per_hour: 60
+  consistency:
+    needsReadYourWrites: false
+cost:
+  intent:
+    priority: optimize-tco
+  ceilings:
+    monthly_operational_usd: 8000

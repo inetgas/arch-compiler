@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Added OLAP lakehouse pattern family and validation coverage:
+  - added `data-olap-lakehouse` meta-policy plus provider variants for `aws`, `azure`, `gcp`, `self-hosted`, `databricks`, and `snowflake`
+  - added supporting schema and capability-vocabulary updates, including `databricks` as a canonical SaaS provider and explicit lakehouse-oriented capabilities
+  - added regression specs covering AWS-native, self-hosted, Databricks, Snowflake, and warehouse-preferred selection cases
+  - normalized OLAP conflict semantics so lakehouse and warehouse variants conflict consistently as alternative primary analytical architectures
+- Tightened pattern authoring and OLAP gating semantics:
+  - removed orthogonality-breaking `saas-providers == []` requirements from cloud-native and self-hosted lakehouse variants
+  - aligned the Snowflake warehouse control test with an explicitly warehouse-biased NFR envelope instead of relying on an under-specified SaaS-provider-only spec
+  - recorded pattern-authoring rules for future work: avoid exact opposite `supports_nfr`/`warn_nfr` pairs, avoid fake `requires_*` null checks when defaults already populate fields, and only gate on `saas-providers` when the provider is actually the selector
 - Improved cross-agent skill distribution and installation:
   - added `scripts/install_codex_skills.sh` as an official Codex bootstrap installer that installs the three skills, clones or updates the runtime repo, and verifies both
   - reorganized Codex install docs around the bootstrap path while clearly separating the `skills.sh`, native symlink, and direct GitHub-installer fallback layouts
