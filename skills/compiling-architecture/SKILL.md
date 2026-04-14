@@ -2,7 +2,7 @@
 name: compiling-architecture
 description: "Use when: user wants to select architecture patterns, compile a spec, iterate on constraints/NFRs, audit why patterns were selected/rejected, or finalise an architecture for implementation. Not when: no repeatable decisions needed, or constraints/NFRs are not yet known (gather those first)."
 tags: [architecture, nfr, cost, patterns, deterministic, governance]
-version: 1.0.0
+version: 1.0.2
 metadata:
   hermes:
     tags: [deterministic-compiler, architecture-as-code, architecture-design-patterns, software-architecture-patterns, architectural-decision-records, architecture-trade-off-considerations, cost-optimization, nfr-enforcement]
@@ -63,6 +63,8 @@ The important split is:
 - You are iterating progressively on a spec — starting minimal and adding constraints over time
 - You need to audit why specific patterns were selected or rejected
 - You want cost feasibility analysis
+- You have an existing prototype or codebase and need to compile, validate, or re-approve the architecture it should converge to
+- Implementation or refactoring uncovered architecture drift, and you need to update the spec and recompile before coding continues
 
 ## When NOT to Use
 
@@ -70,6 +72,8 @@ The important split is:
 - You are designing a one-off system with no need for repeatability
 - The constraints, targets for nfr/operating_model/cost aren't supported by schemas (check `schemas/` first)
 - You want patterns that account for business logic or domain-specific rules not expressible in the spec schema (check `schemas/` first)
+- Do not treat an existing prototype or codebase as architectural authority by default. Existing code is evidence about current reality, not approval of future architecture.
+- Do not use this skill to retroactively bless accidental prototype choices without making them explicit in the spec and obtaining approval.
 
 ## Session-Start Checklist
 
@@ -136,6 +140,8 @@ Treat the architecture as still provisional if any of these remain unresolved:
 
 If those choices are deferred, say so explicitly to the human before finalising. Once they become concrete later, return to this skill, update the spec, recompile, diff the pattern set, and obtain fresh approval before implementation continues.
 
+For brownfield systems, an existing prototype may reveal provider/runtime/boundary choices that are missing from the approved or in-progress spec. Treat those as inputs that must be made explicit in the spec review loop — not as automatically approved architecture. If the prototype exposes architecture drift, return here, update the spec, recompile, diff the result, and obtain approval before implementation continues.
+
 ---
 
 ## Artifacts Generated
@@ -177,6 +183,8 @@ When the spec is rejected (exit 1), the compiler prints a `💡 Suggestions` blo
 1. **Read `schemas/canonical-schema.yaml` first** — this is the authoritative contract for every field, allowed value, and constraint. Do not guess field names or structure.
 2. **Read `config/defaults.yaml`** — fields omitted from the spec are filled from here; knowing defaults prevents spec over-specification.
 3. **Consult `test-specs/`** — comprehensive examples covering edge cases, compliance requirements, and platform combinations. Use these as reference, not templates to copy blindly.
+
+For brownfield systems, inspect the existing codebase to extract actual providers, runtime assumptions, storage/auth boundaries, and feature signals. Use that information to inform the spec, but do not treat the prototype stack as approved architecture until it is explicit in the spec and reviewed by the human.
 
 **If the user hasn't specified `constraints.cloud`, `constraints.language`, or `constraints.platform`, ask before proceeding.** These three fields drive the majority of pattern selection — defaulting them silently produces a spec that doesn't reflect the user's system. Same applies to any NFR target the user cares about (availability, latency, compliance).
 

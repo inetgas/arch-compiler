@@ -2,7 +2,7 @@
 name: using-arch-compiler
 description: Use when starting architecture work and you need to decide whether to compile/finalise architecture or implement an already-approved architecture.
 tags: [architecture, workflow-routing, agent-harness, governance]
-version: 1.0.0
+version: 1.0.2
 metadata:
   hermes:
     tags: [architecture-harness, harness-engineering, ai-governance, architecture-as-code, developer-tools]
@@ -26,15 +26,18 @@ Use `skills/compiling-architecture/SKILL.md` when:
 - the user wants to turn requirements into architecture decisions
 - the user wants to write or refine a spec
 - the user wants to compile, recompile, inspect pattern selection, or finalise an architecture
+- the user has an existing prototype or codebase and needs to compile, validate, or re-approve the architecture it should converge to
 - `docs/architecture/` does not exist yet
 - `docs/architecture/architecture.yaml` is missing approval
 - implementation planning or coding exposes unresolved provider/runtime/auth/retention/message-path decisions
 - any later decision would change `constraints.*`, `constraints.saas-providers`, top-level `patterns.*`, or accepted risk posture
+- the user wants existing prototype choices to replace approved providers, boundaries, or selected patterns
 
 Use `skills/implementing-architecture/SKILL.md` when:
 - `docs/architecture/architecture.yaml` exists
 - it is approved
 - the task is to write code that follows that architecture
+- the task is to refactor an existing prototype or codebase so it conforms to the approved architecture
 - provider/runtime bindings are already concrete enough that coding will not silently replace the approved contract
 
 ## Hard Stops

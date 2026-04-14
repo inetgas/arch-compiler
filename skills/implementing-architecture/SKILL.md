@@ -2,7 +2,7 @@
 name: implementing-architecture
 description: "Use when: about to write code and docs/architecture/ exists with STATUS: APPROVED in architecture.yaml. Not when: no approved architecture yet (use compiling-architecture first), or architecture.yaml lacks STATUS: APPROVED header."
 tags: [architecture, implementation, verification, planning, governance]
-version: 1.0.0
+version: 1.0.2
 metadata:
   hermes:
     tags: [architecture-as-code-tools, deterministic-execution, architectural-decision-records, software-architecture-patterns, architecture-constraints-enforcement, nfr-enforcement, developer-tools]
@@ -60,6 +60,7 @@ The important split is:
 
 - You have a `docs/architecture/` folder with approved artifacts
 - You are about to write code and need to know which technology choices are authorised
+- You have an existing prototype or codebase and need to refactor it to conform to an approved architecture
 
 ## When NOT to Use
 
@@ -67,6 +68,14 @@ The important split is:
 - The `architecture.yaml` has no `STATUS: APPROVED` header — do not implement an unapproved architecture
 - You have architecture artifacts but no functional requirements — ask the human for features, user stories, design doc, or API specs before writing application code. The architecture tells you which database to use; functional requirements tell you what to store in it.
 - Planning or pre-flight reveals unresolved provider/runtime/auth-boundary/retention/message-path decisions that would materially change `constraints.*`, `constraints.saas-providers`, `patterns.*`, or accepted risk posture — that is architecture work, not implementation. Stop and return to `skills/compiling-architecture/SKILL.md`.
+- Do not treat an existing prototype or codebase as architectural authority. Existing code that conflicts with the approved artifacts must be refactored to match, or raised as an architecture mismatch. Do not silently treat the prototype as the source of truth.
+- Do not use this skill if making the existing prototype fit the system would require changing the approved architecture itself. That is architecture work and must return to `skills/compiling-architecture/SKILL.md`.
+- If the human explicitly wants existing prototype choices to replace approved providers, boundaries, or selected patterns, treat that as architecture work immediately instead of starting implementation and discovering the stop condition later.
+
+**Brownfield rule:** existing code is still implementation scope when the job is to bring it into compliance with an approved architecture. This skill applies to both greenfield implementation and brownfield refactoring. The stop condition is not "code already exists"; the stop condition is "the approved architecture itself must change."
+
+Example:
+> A prototype stores files on local disk and uses ad hoc session auth, but the approved architecture selects object storage and managed OAuth/OIDC. Refactoring the prototype to use the approved storage and auth stack is implementation work, so this skill applies.
 
 ---
 

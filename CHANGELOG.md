@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Improved brownfield routing across the three workflow skills:
+  - `using-arch-compiler` now routes existing-prototype cases explicitly between architecture compilation/re-approval and implementation/refactoring
+  - `compiling-architecture` now treats prototype/codebase reality as input to spec compilation and re-approval, not as architectural authority
+  - `implementing-architecture` now explicitly supports refactoring an existing prototype into compliance with an approved architecture, while routing any request to replace approved choices back to architecture compilation
 - Added OLAP lakehouse pattern family and validation coverage:
   - added `data-olap-lakehouse` meta-policy plus provider variants for `aws`, `azure`, `gcp`, `self-hosted`, `databricks`, and `snowflake`
   - added supporting schema and capability-vocabulary updates, including `databricks` as a canonical SaaS provider and explicit lakehouse-oriented capabilities
