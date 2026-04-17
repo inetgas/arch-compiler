@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added Spanish public documentation for the main repo README:
+  - added `docs/i18n/README.es.md`
+  - updated language-switch links in `README.md` and `docs/i18n/README.zh-CN.md`
+  - preserved English as the canonical source of truth when translations differ
 - Improved brownfield routing across the three workflow skills:
   - `using-arch-compiler` now routes existing-prototype cases explicitly between architecture compilation/re-approval and implementation/refactoring
   - `compiling-architecture` now treats prototype/codebase reality as input to spec compilation and re-approval, not as architectural authority

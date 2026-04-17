@@ -2,7 +2,7 @@
 
 说明：英文文档为权威版本。如本翻译与英文版本存在差异，请以英文版本为准。
 
-语言：[English](../../README.md) | 简体中文
+语言：[English](../../README.md) | 简体中文 | [Español](README.es.md)
 
 ArchCompiler 会将约束条件和非功能性需求（NFR）编译成明确、可审查的架构决策，并给出清晰的权衡与成本影响。
 
