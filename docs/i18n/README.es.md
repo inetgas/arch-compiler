@@ -2,7 +2,7 @@
 
 Nota: la documentación en inglés es la fuente de verdad canónica. Si esta traducción difiere de la versión en inglés, sigue la versión en inglés.
 
-Idiomas: [English](../../README.md) | [简体中文](README.zh-CN.md) | Español
+Idiomas: [English](../../README.md) | [简体中文](README.zh-CN.md) | Español | [日本語](README.ja.md)
 
 ArchCompiler compila restricciones y requisitos no funcionales (NFR) en decisiones arquitectónicas explícitas y revisables, con trade-offs claros y una visión concreta del impacto en costes.
 

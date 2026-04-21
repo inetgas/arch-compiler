@@ -1,6 +1,6 @@
 # Architecture Compiler: An Architecture-Level AI Harness
 
-Languages: English | [简体中文](docs/i18n/README.zh-CN.md) | [Español](docs/i18n/README.es.md)
+Languages: English | [简体中文](docs/i18n/README.zh-CN.md) | [Español](docs/i18n/README.es.md) | [日本語](docs/i18n/README.ja.md)
 
 Note: The English documentation is the canonical source of truth. If translations differ, follow the English version.
 
