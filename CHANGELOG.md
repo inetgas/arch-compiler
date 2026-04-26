@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added Korean public documentation for the main repo README:
+  - added `docs/i18n/README.ko.md`
+  - updated language-switch links in `README.md`, `docs/i18n/README.es.md`, `docs/i18n/README.ja.md`, and `docs/i18n/README.zh-CN.md`
+  - preserved English as the canonical source of truth when translations differ
 - Added Japanese public documentation for the main repo README:
   - added `docs/i18n/README.ja.md`
   - updated language-switch links in `README.md`, `docs/i18n/README.es.md`, and `docs/i18n/README.zh-CN.md`

@@ -2,7 +2,7 @@
 
 注意: 英語版ドキュメントが正本です。翻訳と英語版に差異がある場合は、英語版を優先してください。
 
-言語: [English](../../README.md) | [简体中文](README.zh-CN.md) | [Español](README.es.md) | 日本語
+言語: [English](../../README.md) | [简体中文](README.zh-CN.md) | [Español](README.es.md) | 日本語 | [한국어](README.ko.md)
 
 ArchCompiler は、制約と非機能要件（NFR）を、明示的でレビュー可能なアーキテクチャ判断へとコンパイルし、トレードオフとコスト影響を明確にします。
 
